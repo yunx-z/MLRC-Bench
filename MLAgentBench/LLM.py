@@ -61,12 +61,12 @@ except Exception as e:
 try:
     import openai
     # setup OpenAI API key
-    openai.api_base, openai.api_key  =  open("openai_api_key.txt").read().strip().split("\n")    
-    openai.api_type = 'azure'
-    openai.api_version = '2024-02-15-preview' # this may change in the future
-
-    os.environ["OPENAI_API_KEY"] = openai.api_key 
-
+    openai_api_base, openai_api_key  =  open("openai_api_key.txt").read().strip().split("\n")    
+    openai_client = openai.AzureOpenAI(
+            azure_endpoint=openai_api_base,
+            api_key=openai_api_key,
+            api_version="2024-10-01-preview",
+            )
 except Exception as e:
     print(e)
     print("Could not load OpenAI API key openai_api_key.txt.")
@@ -100,15 +100,17 @@ class StopAtSpecificTokenCriteria(StoppingCriteria):
         return bool(torch.all(current_sequence == stop_sequence_tensor).item())
 
     
-def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample):
+def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=None, num_sample_tokens=None):
     """ Log the prompt and completion to a file."""
     with open(log_file, "a") as f:
         f.write("\n===================prompt=====================\n")
         f.write(f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}")
-        num_prompt_tokens = len(enc.encode(f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}"))
+        if num_prompt_tokens is None:
+            num_prompt_tokens = len(enc.encode(f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}"))
         f.write(f"\n==================={model} response ({max_tokens_to_sample})=====================\n")
         f.write(completion)
-        num_sample_tokens = len(enc.encode(completion))
+        if num_sample_tokens is None:
+            num_sample_tokens = len(enc.encode(completion))
         f.write("\n===================tokens=====================\n")
         f.write(f"Number of prompt tokens: {num_prompt_tokens}\n")
         f.write(f"Number of sampled tokens: {num_sample_tokens}\n")
@@ -289,24 +291,31 @@ def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314"
     return completion
 
 
-def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo", max_tokens_to_sample=4000, temperature=0.5, log_file=None, **kwargs):
+def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tokens_to_sample=4000, temperature=0.5, log_file=None, **kwargs):
     """ Call the OpenAI API to complete a prompt."""
-    raw_request = {
-          "engine": model,
-          "temperature": temperature,
-          "max_tokens": max_tokens_to_sample,
-          "stop": stop_sequences or None,  # API doesn't like empty list
-          **kwargs
-    }
-    if model.startswith("gpt-3.5") or model.startswith("gpt-4"):
-        messages = [{"role": "user", "content": prompt}]
-        response = openai.ChatCompletion.create(**{"messages": messages,**raw_request})
-        completion = response["choices"][0]["message"]["content"]
+    if "o1" in model.lower():
+        raw_request = {
+              "model": model,
+              "temperature": 1,
+              "max_completion_tokens": 32000,
+              **kwargs
+        }
     else:
-        response = openai.Completion.create(**{"prompt": prompt,**raw_request})
-        completion = response["choices"][0]["text"]
+        raw_request = {
+              "model": model,
+              "temperature": temperature,
+              "max_tokens": 4000,
+              "stop": stop_sequences or None,  # API doesn't like empty list
+              **kwargs
+        }
+
+    messages = [{"role": "user", "content": prompt}]
+    response = openai_client.chat.completions.create(**{"messages": messages,**raw_request})
+    completion = response.choices[0].message.content
+    usage = response.usage
+
     if log_file is not None:
-        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
+        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
     return completion
 
 def complete_text(prompt, log_file, model, **kwargs):
