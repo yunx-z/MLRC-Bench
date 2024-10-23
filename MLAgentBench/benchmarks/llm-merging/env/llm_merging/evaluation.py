@@ -106,6 +106,6 @@ def evaluate_model(
         dp_df = pd.DataFrame(dataset_predictions)
         dp_df["dummy_field"] = 0
         # avoid error "Submission contains null values"
-        df['prediction'] = df['prediction'].replace('', 'unknown').fillna('unknown')
+        dp_df['prediction'] = dp_df['prediction'].replace('', 'unknown').fillna('unknown')
         fn = os.path.basename(dataset_filepath)
         dp_df.to_csv(f"{output_folder}/{fn}", columns=["id", "prediction", "dummy_field"], index=False)
