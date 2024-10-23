@@ -4,10 +4,9 @@ import os
 import datetime
 import shutil
 import difflib
-from .low_level_actions import read_file, write_file, append_file
+from .low_level_actions import read_file, write_file, append_file, safe_path_join, safe_copy_file 
 from .schema import ActionInfo, EnvException
 from .LLM import complete_text_fast, complete_text
-
 
 def reflection( things_to_reflect_on, work_dir = ".", research_problem = "", **kwargs):
 
@@ -73,7 +72,7 @@ def understand_file( file_name, things_to_look_for, work_dir = ".", **kwargs):
 
         return completion
 
-EDIT_SCRIPT_MODEL = "claude-v1"
+EDIT_SCRIPT_MODEL = "gpt-4o-mini"
 EDIT_SCRIPT_MAX_TOKENS = 4000
 def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwargs):
     #TODO: handle long file editing
@@ -98,8 +97,8 @@ def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwar
     new_content = completion.split("```python")[1].split("```")[0].strip()
 
     # backup all old file with prefix script_name
-    backup_name = os.path.join(work_dir,"backup", f"{script_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
-    shutil.copyfile(os.path.join(work_dir,script_name), backup_name)
+    backup_name = safe_path_join(work_dir,"backup", f"{script_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
+    safe_copy_file(safe_path_join(work_dir,script_name), backup_name)
 
     write_file(save_name, new_content, work_dir = work_dir, **kwargs)
 
@@ -144,8 +143,8 @@ def edit_script_lines( script_name, start_line_number, end_line_number,edit_inst
     new_content = "\n".join(lines[:int(start_line_number)-1]) + "\n" + completion.split("```python")[1].split("```")[0].strip() + "\n" + "\n".join(lines[int(end_line_number):])
 
     # backup all old file with prefix script_name
-    backup_name = os.path.join(work_dir,"backup", f"{script_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
-    shutil.copyfile(os.path.join(work_dir,script_name), backup_name)
+    backup_name = safe_path_join(work_dir,"backup", f"{script_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
+    safe_copy_file(safe_path_join(work_dir,script_name), backup_name)
 
     write_file(save_name, new_content, work_dir = work_dir, **kwargs)
 
@@ -165,7 +164,7 @@ def inspect_script_lines( script_name, start_line_number, end_line_number, work_
         raise EnvException("the number of lines to display is limited to 100 lines")
     try:
         
-        # lines = open(os.path.join(work_dir,script_name)).readlines()
+        # lines = open(safe_path_join(work_dir,script_name)).readlines()
         lines = read_file(script_name, work_dir = work_dir, **kwargs).split("\n")
     except:
         raise EnvException(f"cannot find script {script_name}")

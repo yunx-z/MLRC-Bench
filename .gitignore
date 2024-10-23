@@ -1,0 +1,8 @@
+openai_api_key.txt
+MLAgentBench.egg-info/
+logs/
+workspace/
+bak/
+*.sh
+__pycache__
+MLAgentBench/benchmarks/cifar10

@@ -13,6 +13,15 @@ from io import StringIO
 from .schema import Step, ActionInfo, Action, EnvException
 import readline # This is needed to make sure that the input() function works properly
 
+def safe_path_join(*paths):
+    cleaned_paths = [p.replace('\\', '') for p in paths]
+    return os.path.join(*cleaned_paths)
+
+def safe_copy_file(src, dst):
+    # make dir for dst
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    shutil.copyfile(src, dst)
+
 
 def normalize_args_kwargs(f, *args, **kwargs):
     """ This function takes a function and its arguments and returns a dictionary of the arguments, with the keys being the argument names."""
@@ -77,7 +86,7 @@ def check_file_in_work_dir(arg_names, **kwargs):
             work_dir = new_kwargs["work_dir"]
             for arg_name in arg_names:
                 file_name = new_kwargs[arg_name]
-                if not os.path.abspath(os.path.join(work_dir, file_name)).startswith(os.path.abspath(work_dir)):
+                if not os.path.abspath(safe_path_join(work_dir, file_name)).startswith(os.path.abspath(work_dir)):
                     raise EnvException(f"cannot access file {file_name} because it is not in the work directory.")
             return func(*args, **kwargs)
         return wrapper
@@ -88,7 +97,8 @@ def check_file_in_work_dir(arg_names, **kwargs):
 @record_low_level_step
 def list_files( dir_path, work_dir = ".", **kwargs):
     try:
-        observation = subprocess.check_output(["ls", "-F", os.path.join(work_dir,dir_path)]).decode("utf-8")
+        # avoid "\\"
+        observation = subprocess.check_output(["ls", "-F", safe_path_join(work_dir, dir_path)]).decode("utf-8")
         return observation
     except:
         raise EnvException(f"Cannot list file in the {dir_path} directory")
@@ -101,7 +111,7 @@ def list_files( dir_path, work_dir = ".", **kwargs):
 @record_low_level_step
 def read_file(file_name, work_dir = '.', **kwargs):
     try:
-        observation = open(os.path.join(work_dir,file_name)).read()
+        observation = open(safe_path_join(work_dir,file_name)).read()
         return observation
     except:
         raise EnvException(f"cannot read file {file_name}")
@@ -112,7 +122,7 @@ def read_file(file_name, work_dir = '.', **kwargs):
 @record_low_level_step
 def write_file(file_name, content, work_dir = ".", **kwargs):
     try:
-        with open(os.path.join(work_dir,file_name), "w") as f:
+        with open(safe_path_join(work_dir,file_name), "w") as f:
             f.write(content)
         observation = f"File {file_name} written successfully."
         return observation
@@ -125,7 +135,7 @@ def write_file(file_name, content, work_dir = ".", **kwargs):
 @record_low_level_step
 def append_file(file_name, content, work_dir = ".", **kwargs):
     try:
-        with open(os.path.join(work_dir,file_name), "a") as f:
+        with open(safe_path_join(work_dir,file_name), "a") as f:
             f.write(content)
         observation = f"File {file_name} appended successfully."
         return observation
@@ -139,7 +149,7 @@ def append_file(file_name, content, work_dir = ".", **kwargs):
 def copy_file( source, destination, work_dir = ".", **kwargs):
     
     try:
-        shutil.copyfile(os.path.join(work_dir,source), os.path.join(work_dir,destination))
+        safe_copy_file(safe_path_join(work_dir,source), safe_path_join(work_dir,destination))
         observation = f"File {source} copied to {destination}"
         return observation
     except:
@@ -150,17 +160,17 @@ def copy_file( source, destination, work_dir = ".", **kwargs):
 @record_low_level_step
 def undo_edit_script( script_name, work_dir = ".", **kwargs):
     
-    backup_files = glob.glob(os.path.join(work_dir,"backup", f"{script_name}_*"))
+    backup_files = glob.glob(safe_path_join(work_dir,"backup", f"{script_name}_*"))
     if len(backup_files) == 0:
         raise EnvException("There is no change to undo.")
     try:
         backup_files.sort()
         backup_file = backup_files[-1]
-        shutil.copyfile(backup_file, os.path.join(work_dir,script_name))
+        safe_copy_file(backup_file, safe_path_join(work_dir,script_name))
         # delete the backup file
         os.remove(backup_file)
 
-        new_content = open(os.path.join(work_dir,script_name)).read()
+        new_content = open(safe_path_join(work_dir,script_name)).read()
         observation = f"Content of {script_name} after undo the most recent edit:\n" + new_content
         return observation
     except:
@@ -171,7 +181,7 @@ def undo_edit_script( script_name, work_dir = ".", **kwargs):
 @check_file_in_work_dir(["script_name"])
 @record_low_level_step
 def execute_script(script_name, work_dir = ".", **kwargs):
-    if not os.path.exists(os.path.join(work_dir,script_name)):
+    if not os.path.exists(safe_path_join(work_dir,script_name)):
         raise EnvException(f"The file {script_name} does not exist.")
     try:
         script_path = script_name

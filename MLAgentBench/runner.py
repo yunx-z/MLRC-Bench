@@ -8,7 +8,7 @@ from MLAgentBench import LLM
 from MLAgentBench.environment import Environment
 from MLAgentBench.agents.agent import Agent, SimpleActionAgent, ReasoningActionAgent
 from MLAgentBench.agents.agent_research import ResearchAgent
-from MLAgentBench.agents.agent_langchain  import LangChainAgent
+# from MLAgentBench.agents.agent_langchain  import LangChainAgent
 try:
     from MLAgentBench.agents.agent_autogpt  import AutoGPTAgent
 except:

@@ -1,0 +1,38 @@
+Research Problem:
+Develop a new LLM merging method to improve performance on held out test set within the time constraints.
+
+Description:
+Training high-performing large language models (LLMs) from scratch is a notoriously expensive and difficult task, costing hundreds of millions of dollars in compute alone. These pretrained LLMs, however, can cheaply and easily be adapted to new tasks via fine-tuning, leading to a proliferation of models that suit specific use cases. Recent work has shown that specialized fine-tuned models can be rapidly merged to combine capabilities and generalize to new skills.
+
+The competition will provide the participants with a list of expert models that have already been trained on a task-specific dataset. These models can either be fully fine-tuned models or models obtained by parameter-efficient fine-tuning methods such as LoRA. 
+The goal of this competition is to re-use the provided models to create a generalist model that can perform well on a wide variety of skills like reasoning, coding, maths, chat, and tool use. Along with these expert models, we have a set of hidden tasks that will be used to evaluate the submissions from participants.
+
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new model merging methods. The file `llm_merging/merging/MyMerge.py` contains an example implementation of a baseline method, which merges models by averaging parameters across all the given models.
+
+Your task is to design your new merging method and implement it by modifying only this file: `llm_merging/merging/MyMerge.py`. Any changes made to files outside of this specific file may result in your submission being invalidated. Exception: You are allowed to add any additional required libraries to setup.py.
+
+To test the new method that you developed, run the following commands:
+
+```bash
+python setup.py install # this is only required if you add any additional required libraries
+python llm_merging/main.py
+```
+
+Running this process will execute your merging method implemented in `llm_merging/merging/MyMerge.py` and generate outputs for the queries listed in `data/test.csv` using your merged model. The results will be saved in a submission file at `output/test.csv`. This submission file will be evaluated using the Kaggle leaderboard's evaluation script. If your submission is valid, you will receive a score based on the performance of your model on the test set.
+
+Try your best to be creative and propose novel methods for LLM merging that could result in research papers published at top-tier Machine Learning conferences.
+
+Competition Rules: 
+Submissions must be reproducible from initial model through merging and fine-tuning. Winning models, along with all associated code and data, must be open-sourced and made public after the competition.
+
+Submissions must NOT use any copyrighted or proprietary data, code, or closed-source content. The use of data or content that breaks service contracts or trade secrets of any entity is not allowed.
+
+Submissions must take less than 1 hours to merge/fine-tune and evaluate on a single Nvidia A6000 (48 GB) or equivalent resource.
+
+Your proposed method should not assume access to some validation datasets. This means that you are not allowed to evaluate each model's performance on a validation dataset and calculate adaptive weights for merging based on their performance.
+
+This competition will be run under the honor system. Teams that submit very similar results or copy another team’s solution will be disqualified. Violating the spirit of the honor system or taking unfair advantage of the community, even when not against an explicit rule, may result in disqualification and ineligibility for prizes.
+
+Allowed Models:
+We have provided a list of LoRA adapters specified `llm_merging/constants.py`. They are all fine-tuned from the same base model `mistralai/Mistral-7B-v0.1` on a variety of tasks. You can only use all or part of the specified LoRA adapters.  
+
