@@ -129,7 +129,7 @@ def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample):
         json.dump(content, writer, indent=2)
 
 
-def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/CodeLlama-7b-hf", max_tokens_to_sample = 2000, temperature=0.5, log_file=None, **kwargs):
+def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/CodeLlama-7b-hf", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, **kwargs):
     model = model.split("/", 1)[1]
     if model in loaded_hf_models:
         hf_model, tokenizer = loaded_hf_models[model]
@@ -163,7 +163,7 @@ def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/Cod
     return completion
 
 
-def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample = 2000, temperature=0.5, log_file=None, **kwargs):
+def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, **kwargs):
     """ Call the gemini API to complete a prompt."""
     # Load the model
     model = GenerativeModel("gemini-pro")
@@ -186,7 +186,7 @@ def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_toke
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
     return completion
 
-def complete_text_claude(prompt, stop_sequences=[anthropic.HUMAN_PROMPT], model="claude-v1", max_tokens_to_sample = 2000, temperature=0.5, log_file=None, messages=None, **kwargs):
+def complete_text_claude(prompt, stop_sequences=[anthropic.HUMAN_PROMPT], model="claude-v1", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, messages=None, **kwargs):
     """ Call the Claude API to complete a prompt."""
 
     ai_prompt = anthropic.AI_PROMPT
@@ -247,7 +247,7 @@ def get_embedding_crfm(text, model="openai/gpt-4-0314"):
     request_result: RequestResult = service.make_request(auth, request)
     return request_result.embedding 
     
-def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314",  max_tokens_to_sample=2000, temperature = 0.5, log_file=None, messages = None, **kwargs):
+def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314",  max_tokens_to_sample=4000, temperature = 0.5, log_file=None, messages = None, **kwargs):
     
     random = log_file
     if messages:
@@ -289,7 +289,7 @@ def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314"
     return completion
 
 
-def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo", max_tokens_to_sample=500, temperature=0.2, log_file=None, **kwargs):
+def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo", max_tokens_to_sample=4000, temperature=0.5, log_file=None, **kwargs):
     """ Call the OpenAI API to complete a prompt."""
     raw_request = {
           "engine": model,
