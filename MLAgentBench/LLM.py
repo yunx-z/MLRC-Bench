@@ -1,11 +1,41 @@
 """ This file contains the code for calling all LLM APIs. """
 
 import os
+import json
 from functools import partial
 import tiktoken
 from .schema import TooLongPromptError, LLMError
 
 enc = tiktoken.get_encoding("cl100k_base")
+
+# https://openai.com/api/pricing/
+MODEL2PRICE = {
+        "gpt-4-turbo" : {
+            "input" : 10 / 1e6,
+            "output" : 30 / 1e6,
+            },
+        "gpt-4o-gs" : {
+            "input" : 5 / 1e6,
+            "output" : 15 / 1e6,
+            },
+        "gpt-4o" : {
+            "input" : 5 / 1e6,
+            "output" : 15 / 1e6,
+            },
+        "gpt-4o-mini" : {
+            "input" : 0.15 / 1e6,
+            "output" : 0.6 / 1e6,
+            },
+        "o1-mini" : {
+            "input" : 3 / 1e6,
+            "output" : 12 / 1e6,
+            },
+        "o1-preview" : {
+            "input" : 15 / 1e6,
+            "output" : 60 / 1e6,
+            },
+        }
+
 
 try:
     from helm.common.authentication import Authentication
@@ -31,8 +61,12 @@ except Exception as e:
 try:
     import openai
     # setup OpenAI API key
-    openai.organization, openai.api_key  =  open("openai_api_key.txt").read().strip().split(":")    
+    openai.api_base, openai.api_key  =  open("openai_api_key.txt").read().strip().split("\n")    
+    openai.api_type = 'azure'
+    openai.api_version = '2024-02-15-preview' # this may change in the future
+
     os.environ["OPENAI_API_KEY"] = openai.api_key 
+
 except Exception as e:
     print(e)
     print("Could not load OpenAI API key openai_api_key.txt.")
@@ -79,6 +113,21 @@ def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample):
         f.write(f"Number of prompt tokens: {num_prompt_tokens}\n")
         f.write(f"Number of sampled tokens: {num_sample_tokens}\n")
         f.write("\n\n")
+    cost_file = os.path.join(os.path.dirname(log_file), "api_cost.json")
+    if os.path.exists(cost_file):
+        with open(cost_file, 'r') as reader:
+            content = json.load(reader)
+        total_cost = content["total_cost"]
+    else:
+        total_cost = 0
+
+    curr_cost = num_prompt_tokens * MODEL2PRICE[model]["input"] + num_sample_tokens * MODEL2PRICE[model]["output"] 
+    with open(cost_file, 'w') as writer:
+        content = {
+                "total_cost" : total_cost + curr_cost,
+                }
+        json.dump(content, writer, indent=2)
+
 
 def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/CodeLlama-7b-hf", max_tokens_to_sample = 2000, temperature=0.5, log_file=None, **kwargs):
     model = model.split("/", 1)[1]
@@ -243,7 +292,7 @@ def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314"
 def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo", max_tokens_to_sample=500, temperature=0.2, log_file=None, **kwargs):
     """ Call the OpenAI API to complete a prompt."""
     raw_request = {
-          "model": model,
+          "engine": model,
           "temperature": temperature,
           "max_tokens": max_tokens_to_sample,
           "stop": stop_sequences or None,  # API doesn't like empty list
@@ -279,7 +328,7 @@ def complete_text(prompt, log_file, model, **kwargs):
     return completion
 
 # specify fast models for summarization etc
-FAST_MODEL = "claude-v1"
+FAST_MODEL = "gpt-4o-mini"
 def complete_text_fast(prompt, **kwargs):
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 # complete_text_fast = partial(complete_text_openai, temperature= 0.01)
