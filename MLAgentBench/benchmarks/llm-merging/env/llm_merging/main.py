@@ -40,11 +40,24 @@ def get_submission_result(competition, idx=0):
 def get_score():
     submission_path = "output/test.csv"
     competition_name = "llm-merging-competition"
-    print("\nSubmitting to Kaggle leaderbord for evaluation on test set ...")
-    os.system(f"kaggle competitions submit -c {competition_name} -f {submission_path} -m \"llm-merging\"")
-    print("\nWaiting for Kaggle leaderboard to refresh ...")
-    time.sleep(60)
-    return get_submission_result(competition_name)
+    lock_file = "~/submission.lock"
+    score = 0
+    while os.path.exists(lock_file):
+        print("Another submission is in progress. Waiting...")
+        time.sleep(30)  # Wait before checking again
+    # Create a lock file
+    with open(lock_file, 'w') as f:
+        f.write('Locked')
+    try:
+        print("\nSubmitting to Kaggle leaderbord for evaluation on test set ...")
+        os.system(f"kaggle competitions submit -c {competition_name} -f {submission_path} -m \"llm-merging\"")
+        print("\nWaiting for Kaggle leaderboard to refresh ...")
+        time.sleep(60)
+        score = get_submission_result(competition_name)
+    finally:
+        # Remove the lock file
+        os.remove(lock_file)
+    return score
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
