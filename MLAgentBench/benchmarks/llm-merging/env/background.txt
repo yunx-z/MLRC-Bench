@@ -1,0 +1,480 @@
+Model merging has emerged as a cost-effective method for developing improved models. Two common use cases of merging are: (1) combining model checkpoints from different data versions, hyperparameters, or training stages to enhance distributional robustness~\citep{team2024gemma,dubey2024llama}, and (2) combining multiple expert models trained on different datasets to leverage their complementary capabilities. In both scenarios, the expert models generally share a common architecture and a base model from which the expert models are created via fine-tuning.
+
+This work focuses on merging specialized, fine-tuned versions (experts) of a single base model to enhance its capabilities. Each expert model is trained on distinct datasets covering different tasks, domains, and/or capabilities. We refer to the tasks/datasets used for training the expert models as ``$\mathtt{held}$-$\mathtt{in}$'', while those that are new and unseen are called ``held-out''. Our goal is to create a unified model that retains the individual expert models' capabilities on held-in tasks while improving zero-shot generalization on held-out tasks. This merging approach provides a flexible, modular method for post-training large language models, facilitating the addition of new features and capabilities to top-performing models.
+
+
+\subsection{Model Merging Methods}
+\label{sec:merging_methods}
+
+
+We denote the set of $\mathtt{N}$ expert tasks as $\mathtt{t_1}, \hdots, \mathtt{t_N}$ and the base model weights, representing the common ancestor of all expert models as $\theta_\mathtt{base}$.
+The weights of the corresponding specialized expert models, each obtained by fully fine-tuning the base model on a specific expert task, are denoted as $\theta_{\mathtt{1}}$, ..., $\theta_{\mathtt{N}}$, respectively. We focus on ``open vocabulary" models which utilize natural language as input and output for both classification and generation tasks, eliminating the need for task-specific classification heads making the merging process simpler. 
+Given this, model merging methods can be defined as a function $\mathcal{M}(.)$. 
+This function takes as input the base model, the set of N expert models, and potentially additional information, denoted by $\Phi$. 
+This additional information may include activation statistics, Fisher matrices, or other method-specific data. 
+The output of the function is the merged model, represented by its parameters  $\theta_\mathtt{m}$. 
+Formally, $\theta_\mathtt{m} = \mathcal{M}(\{\theta_{\mathtt{i}}\}_{\mathtt{i=1}}^{\mathtt{N}},~ \theta_\mathtt{base}, \Phi), \text{where } \Phi \text{ is method~specific~data.}$
+
+Given our focus on studying model merging with large models, we select four merging methods based on their popularity and simplicity. 
+We only study merging methods that can scale to tens of billions of model weight parameters and do not require any additional information to perform merging, i.e., $\Phi = \{\}$, as these techniques are efficient for even larger models. 
+Other more complex methods that require computing fisher matrices~\citep{matena2022fishermerging}, backward passes~\citep{yang2023adamerging}, or additional information like model activation~\citep{jin2023regmean} are skipped because of their computational complexities for large scale model merging that we focus on in this work.
+Next, we describe the four selected model merging methods in detail.
+
+
+
+
+\subsubsection{Averaging}
+\label{sec:averaging}
+
+Parameter averaging~\citep{choshen2022fusing,wortsman2022model} is a well-established technique in federated learning~\citep{mcmahan2017communication} and recent applications extend its utility to merge models for enhancing model robustness against out-of-distribution data~\citep{wortsman2022robust,rame2022modelrat}, refine pre-trained models~\citep{yu2024dare}, develop multimodal models~\citep{Sung2023AnEmpiricalSO}, and create multitask models by combining capabilities~\citep{yadav2024ties,ilharco2022editing}.
+Parameter averaging is achieved by taking a mean of all the expert model weights together without using the base model which can be formally described as, $
+\mathcal{M}(\{\theta_{\mathtt{i}}\}_{\mathtt{i=1}}^{\mathtt{N}},~ \theta_\mathtt{base}) = \frac{\mathtt{1}}{\mathtt{N}} \sum_{\mathtt{i=1}}^{\mathtt{N}} \theta_\mathtt{i}$.
+
+
+
+\subsubsection{Task Arithmetic}
+\label{sec:task_arithmetic}
+Task Arithmetic~\citep{ilharco2022editing} introduces a novel concept of ``\textit{task vectors}" for model merging. For task $\mathtt{t_i}$, the task vector is denoted as $\tau_\mathtt{i} = \theta_\mathtt{i} - \theta_\mathtt{base}$ which captures task-specific knowledge by quantifying the difference between the fine-tuned expert parameters ($\theta_\mathtt{i}$) and the original base model parameters ($\theta_\mathtt{base}$). A scaling hyperparameter $\lambda$ controls the contribution of the aggregated task-specific knowledge to the final model. The merged model is then constructed by linearly combining the base model parameters with a scaled sum of all task vectors. Formally, task arithmetic can be described as, $\mathcal{M}(\{\theta_{\mathtt{i}}\}_{\mathtt{i=1}}^{\mathtt{N}},~ \theta_\mathtt{base};\lambda) = \theta_\mathtt{base} + \lambda * \sum_{\mathtt{i=1}}^{\mathtt{N}} (\theta_\mathtt{i} - \theta_\mathtt{base})$.
+
+
+\subsubsection{$\mathtt{TIES}$ Merging}
+\label{sec:ties}
+$\mathtt{TIES}$-Merging~\citep{yadav2024ties} identifies two main challenges with model merging: \ding{182} during finetuning expert models accumulate a lot of noise in the parameters, and \ding{183} different experts might want to change the same parameter in different directions leading to interference/conflict between the expert models. 
+They demonstrate that both of these factors hurt model merging and propose a three steps process to remove redundant parameters, followed by resolving sign conflicts, and finally aggregating only the parameters that are not conflicting. 
+Specifically, in $\mathtt{TIES}$ Merging they first zero out the values in each task vector that have low magnitudes to obtain the trimmed task vector $\hat{\tau}_\mathtt{i}$ for each task. 
+Next, they chose the aggregate sign ($\gamma_\mathtt{m}$) for each parameter based on whether the parameter has a higher total magnitude in the positive or the negative direction across all trimmed task vector, formally, $\gamma_\mathtt{m} = \textrm{sgn}(\sum_{\mathtt{i=1}}^{\mathtt{N}} \hat{\tau}_\mathtt{i})$. Finally, for each parameters $p$ the models whose sign matches the aggregate sign are averaged to obtain the merged task vector. Finally, the merged model is obtained by scaling the merged task vector using a hyperparameter $\lambda$ and then added back to the base model as, $\theta_\mathtt{m}^\mathtt{p} = \theta_\mathtt{base} + \lambda * \frac{\mathtt{1}}{|\mathcal{A}^\mathtt{p}|}\sum_{\mathtt{i} \in \mathcal{A}^\mathtt{p}} \hat{\tau}_\mathtt{i}^\mathtt{p} \text{,~where } \mathcal{A}^\mathtt{p} = {\{\mathtt{i} \in [\mathtt{N}] ~|~ \hat{\gamma}^\mathtt{p}_\mathtt{i} = \gamma_\mathtt{m}^\mathtt{p}\}}$.
+
+
+\subsubsection{Dare Merging}
+\label{sec:dare-ties}
+Dare~\citep{yu2024dare} extends the idea of $\mathtt{TIES}$ merging by proposing to use a dropout-like pruning stage to remove noise before merging. Specifically, a Bernoulli mask $\mathtt{M_i}$ with drop probability $\mathtt{p}$ is applied to each task vector to obtain the pruned task vector $\hat{\tau}_\mathtt{i} = (\mathtt{1-M_i}) \odot \tau_\mathtt{i} / (\mathtt{1-p})$. This stochastic process randomly zeroes out elements within the task vector while preserving its expected value. These pruned task vectors are then used along with either $\mathtt{TIES}$ Merging or Task Arithmetic. Due to the popularity of the Dare variant that uses $\mathtt{TIES}$ Merging, we use that to represent the Dare method and call it \textit{Dare-TIES}.
+
+
+Here are huggingface library's implementations of some other typical model merging methods, including concatenation, TIES and DARE-TIES.
+```
+# Copyright 2024-present the HuggingFace Inc. team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import warnings
+from typing import List, Literal
+
+import torch
+
+
+def reshape_weight_task_tensors(task_tensors, weights):
+    """
+    Reshapes `weights` to match the shape of `task_tensors` by unsqeezing in the remaining dimenions.
+
+    Args:
+        task_tensors (`torch.Tensor`): The tensors that will be used to reshape `weights`.
+        weights (`torch.Tensor`): The tensor to be reshaped.
+
+    Returns:
+        `torch.Tensor`: The reshaped tensor.
+    """
+    new_shape = weights.shape + (1,) * (task_tensors.dim() - weights.dim())
+    weights = weights.view(new_shape)
+    return weights
+
+
+def magnitude_based_pruning(tensor: torch.Tensor, density: float) -> torch.Tensor:
+    """
+    Prune the smallest values of the task tensors and retain the top-k values based on the specified fraction
+    `density`.
+
+    Args:
+        tensor (`torch.Tensor`):The tensor to prune.
+        density (`float`):The fraction of values to preserve. Should be in [0,1].
+
+    Returns:
+        `torch.Tensor`: The tensor with the pruned weights.
+    """
+    mask = torch.zeros_like(tensor).reshape(-1)
+    k = int(density * tensor.numel())
+    top_k = torch.topk(tensor.abs().reshape(-1), k=k, largest=True)
+    mask[top_k[1]] = 1
+    return tensor * mask.reshape(tensor.shape)
+
+
+def random_pruning(tensor: torch.Tensor, density: float, rescale: bool) -> torch.Tensor:
+    """
+    Prune random values based on the specified fraction `density`.
+
+    Args:
+        tensor (`torch.Tensor`):The tensor to prune.
+        density (`float`):The fraction of values to preserve. Should be in [0,1].
+        rescale (`bool`):Whether to rescale the result to preserve the expected value of the original tensor.
+
+    Returns:
+        `torch.Tensor`: The pruned tensor.
+    """
+    mask = torch.bernoulli(torch.full_like(input=tensor, fill_value=density))
+    pruned_tensor = tensor * mask
+    if rescale:
+        torch.div(input=pruned_tensor, other=density)
+    return pruned_tensor
+
+
+def prune(
+    tensor: torch.Tensor, density: float, method: Literal["magnitude", "random"], rescale: bool = False
+) -> torch.Tensor:
+    """
+    Prune the values of task tensors based on the `method`.
+
+    Args:
+        tensor (`torch.Tensor`):The tensor to prune.
+        density (`float`):The fraction of values to preserve. Should be in [0,1].
+        method (`str`):The method to use to prune. Should be one of ["magnitude", "random"].
+        rescale (`bool`):Whether to rescale the result to preserve the expected value of the original tensor.
+
+    Returns:
+        `torch.Tensor`: The pruned tensor.
+    """
+    if density >= 1:
+        warnings.warn(f"The density {density} is greater than or equal to 1, no pruning will be performed.")
+        return tensor
+    elif density < 0:
+        raise ValueError(f"Density should be >= 0, got {density}")
+    if method == "magnitude":
+        return magnitude_based_pruning(tensor, density)
+    elif method == "random":
+        return random_pruning(tensor, density, rescale=rescale)
+    else:
+        raise ValueError(f"Unknown method {method}")
+
+
+def calculate_majority_sign_mask(
+    tensor: torch.Tensor, method: Literal["total", "frequency"] = "total"
+) -> torch.Tensor:
+    """
+    Get the mask of the majority sign across the task tensors. Task tensors are stacked on dimension 0.
+
+    Args:
+        tensor (`torch.Tensor`):The tensor to get the mask from.
+        method (`str`):The method to use to get the mask. Should be one of ["total", "frequency"].
+
+    Returns:
+        `torch.Tensor`: The majority sign mask.
+    """
+
+    sign = tensor.sign()
+    if method == "total":
+        sign_magnitude = tensor.sum(dim=0)
+    elif method == "frequency":
+        sign_magnitude = sign.sum(dim=0)
+    else:
+        raise RuntimeError(f'Unimplemented mask method "{method}"')
+    majority_sign = torch.where(sign_magnitude >= 0, 1, -1)
+    return sign == majority_sign
+
+
+def disjoint_merge(task_tensors: torch.Tensor, majority_sign_mask: torch.Tensor) -> torch.Tensor:
+    """
+    Merge the task tensors using disjoint merge.
+
+    Args:
+        task_tensors (`torch.Tensor`):The task tensors to merge.
+        majority_sign_mask (`torch.Tensor`):The mask of the majority sign across the task tensors.
+
+    Returns:
+        `torch.Tensor`: The merged tensor.
+    """
+    mixed_task_tensors = (task_tensors * majority_sign_mask).sum(dim=0)
+    num_params_preserved = majority_sign_mask.sum(dim=0)
+    return mixed_task_tensors / torch.clamp(num_params_preserved, min=1.0)
+
+
+def task_arithmetic(task_tensors: List[torch.Tensor], weights: torch.Tensor) -> torch.Tensor:
+    """
+    Merge the task tensors using `task arithmetic`.
+
+    Args:
+        task_tensors(`List[torch.Tensor]`):The task tensors to merge.
+        weights (`torch.Tensor`):The weights of the task tensors.
+
+    Returns:
+        `torch.Tensor`: The merged tensor.
+    """
+    task_tensors = torch.stack(task_tensors, dim=0)
+    # weighted task tensors
+    weights = reshape_weight_task_tensors(task_tensors, weights)
+    weighted_task_tensors = task_tensors * weights
+    mixed_task_tensors = weighted_task_tensors.sum(dim=0)
+    return mixed_task_tensors
+
+
+def magnitude_prune(task_tensors: List[torch.Tensor], weights: torch.Tensor, density: float) -> torch.Tensor:
+    """
+    Merge the task tensors using `task arithmetic`.
+
+    Args:
+        task_tensors(`List[torch.Tensor]`):The task tensors to merge.
+        weights (`torch.Tensor`):The weights of the task tensors.
+        density (`float`): The fraction of values to preserve. Should be in [0,1].
+
+    Returns:
+        `torch.Tensor`: The merged tensor.
+    """
+    # sparsify
+    task_tensors = [prune(tensor, density, method="magnitude") for tensor in task_tensors]
+    task_tensors = torch.stack(task_tensors, dim=0)
+    # weighted task tensors
+    weights = reshape_weight_task_tensors(task_tensors, weights)
+    weighted_task_tensors = task_tensors * weights
+    mixed_task_tensors = weighted_task_tensors.sum(dim=0)
+    return mixed_task_tensors
+
+
+def ties(
+    task_tensors: List[torch.Tensor],
+    weights: torch.Tensor,
+    density: float,
+    majority_sign_method: Literal["total", "frequency"] = "total",
+) -> torch.Tensor:
+    """
+    Merge the task tensors using `ties`.
+
+    Args:
+        task_tensors(`List[torch.Tensor]`):The task tensors to merge.
+        weights (`torch.Tensor`):The weights of the task tensors.
+        density (`float`):The fraction of values to preserve. Should be in [0,1].
+        majority_sign_method (`str`):
+            The method to use to get the majority sign mask. Should be one of ["total", "frequency"].
+
+    Returns:
+        `torch.Tensor`: The merged tensor.
+    """
+    # sparsify
+    task_tensors = [prune(tensor, density, method="magnitude") for tensor in task_tensors]
+    task_tensors = torch.stack(task_tensors, dim=0)
+    # Elect Sign
+    majority_sign_mask = calculate_majority_sign_mask(task_tensors, method=majority_sign_method)
+    # weighted task tensors
+    weights = reshape_weight_task_tensors(task_tensors, weights)
+    weighted_task_tensors = task_tensors * weights
+    # Disjoint Merge
+    mixed_task_tensors = disjoint_merge(weighted_task_tensors, majority_sign_mask)
+    return mixed_task_tensors
+
+
+def dare_linear(task_tensors: List[torch.Tensor], weights: torch.Tensor, density: float) -> torch.Tensor:
+    """
+    Merge the task tensors using `dare linear`.
+
+    Args:
+        task_tensors(`List[torch.Tensor]`):The task tensors to merge.
+        weights (`torch.Tensor`):The weights of the task tensors.
+        density (`float`):The fraction of values to preserve. Should be in [0,1].
+
+    Returns:
+        `torch.Tensor`: The merged tensor.
+    """
+    # sparsify
+    task_tensors = [prune(tensor, density, method="random", rescale=True) for tensor in task_tensors]
+    task_tensors = torch.stack(task_tensors, dim=0)
+    # weighted task tensors
+    weights = reshape_weight_task_tensors(task_tensors, weights)
+    weighted_task_tensors = task_tensors * weights
+    mixed_task_tensors = weighted_task_tensors.sum(dim=0)
+    return mixed_task_tensors
+
+
+def dare_ties(
+    task_tensors: List[torch.Tensor],
+    weights: torch.Tensor,
+    density: float,
+    majority_sign_method: Literal["total", "frequency"] = "total",
+) -> torch.Tensor:
+    """
+    Merge the task tensors using `dare ties`.
+
+    Args:
+        task_tensors(`List[torch.Tensor]`):The task tensors to merge.
+        weights (`torch.Tensor`):The weights of the task tensors.
+        density (`float`):The fraction of values to preserve. Should be in [0,1].
+        majority_sign_method (`str`):
+            The method to use to get the majority sign mask. Should be one of ["total", "frequency"].
+
+    Returns:
+        `torch.Tensor`: The merged tensor.
+    """
+    # sparsify
+    task_tensors = [prune(tensor, density, method="random", rescale=True) for tensor in task_tensors]
+    task_tensors = torch.stack(task_tensors, dim=0)
+    # Elect Sign
+    majority_sign_mask = calculate_majority_sign_mask(task_tensors, method=majority_sign_method)
+    # weighted task tensors
+    weights = reshape_weight_task_tensors(task_tensors, weights)
+    weighted_task_tensors = task_tensors * weights
+    # Disjoint Merge
+    mixed_task_tensors = disjoint_merge(weighted_task_tensors, majority_sign_mask)
+    return mixed_task_tensors
+
+def add_weighted_adapter(
+    self,
+    adapters: list[str],
+    weights: list[float],
+    adapter_name: str,
+    combination_type: str = "svd",
+    svd_rank: int | None = None,
+    svd_clamp: int | None = None,
+    svd_full_matrices: bool = True,
+    svd_driver: str | None = None,
+    density: float | None = None,
+    majority_sign_method: Literal["total", "frequency"] = "total",
+) -> None:
+    """
+    This method adds a new adapter by merging the given adapters with the given weights.
+
+    When using the `cat` combination_type you should be aware that rank of the resulting adapter will be equal to
+    the sum of all adapters ranks. So it's possible that the mixed adapter may become too big and result in OOM
+    errors.
+
+    Args:
+        adapters (`list`):
+            List of adapter names to be merged.
+        weights (`list`):
+            List of weights for each adapter.
+        adapter_name (`str`):
+            Name of the new adapter.
+        combination_type (`str`):
+            The merging type can be one of [`svd`, `linear`, `cat`, `ties`, `ties_svd`, `dare_ties`, `dare_linear`,
+            `dare_ties_svd`, `dare_linear_svd`, `magnitude_prune`, `magnitude_prune_svd`]. When using the `cat`
+            combination_type, the rank of the resulting adapter is equal to the sum of all adapters ranks (the
+            mixed adapter may be too big and result in OOM errors).
+        svd_rank (`int`, *optional*):
+            Rank of output adapter for svd. If None provided, will use max rank of merging adapters.
+        svd_clamp (`float`, *optional*):
+            A quantile threshold for clamping SVD decomposition output. If None is provided, do not perform
+            clamping. Defaults to None.
+        svd_full_matrices (`bool`, *optional*):
+            Controls whether to compute the full or reduced SVD, and consequently, the shape of the returned
+            tensors U and Vh. Defaults to True.
+        svd_driver (`str`, *optional*):
+            Name of the cuSOLVER method to be used. This keyword argument only works when merging on CUDA. Can be
+            one of [None, `gesvd`, `gesvdj`, `gesvda`]. For more info please refer to `torch.linalg.svd`
+            documentation. Defaults to None.
+        density (`float`, *optional*):
+            Value between 0 and 1. 0 means all values are pruned and 1 means no values are pruned. Should be used
+            with [`ties`, `ties_svd`, `dare_ties`, `dare_linear`, `dare_ties_svd`, `dare_linear_svd`,
+            `magnintude_prune`, `magnitude_prune_svd`]
+        majority_sign_method (`str`):
+            The method, should be one of ["total", "frequency"], to use to get the magnitude of the sign values.
+            Should be used with [`ties`, `ties_svd`, `dare_ties`, `dare_ties_svd`]
+    """
+
+    if adapter_name in list(self.peft_config.keys()):
+        return
+
+    combination_type, new_rank, new_target_modules = self._check_add_weighted_adapter(
+        adapters=adapters,
+        combination_type=combination_type,
+        svd_rank=svd_rank,
+    )
+
+    self.peft_config[adapter_name] = replace(
+        self.peft_config[adapters[0]],
+        r=new_rank,
+        lora_alpha=new_rank,
+        target_modules=new_target_modules,
+    )
+    self.inject_adapter(self.model, adapter_name)
+
+    # Do we really need that?
+    _freeze_adapter(self.model, adapter_name)
+
+    key_list = [key for key, _ in self.model.named_modules() if self.prefix not in key]
+    for key in key_list:
+        _, target, _ = _get_submodules(self.model, key)
+        if isinstance(target, LoraLayer):
+            if adapter_name in target.lora_A:
+                target_lora_A = target.lora_A[adapter_name].weight
+                target_lora_B = target.lora_B[adapter_name].weight
+            elif adapter_name in target.lora_embedding_A:
+                target_lora_A = target.lora_embedding_A[adapter_name]
+                target_lora_B = target.lora_embedding_B[adapter_name]
+            else:
+                continue
+
+            target_lora_A.data = target_lora_A.data * 0.0
+            target_lora_B.data = target_lora_B.data * 0.0
+            if combination_type == "cat":
+                loras_A, loras_B = [], []
+                for adapter, weight in zip(adapters, weights):
+                    if adapter in target.lora_A:
+                        current_adapter_lora_A = target.lora_A[adapter].weight
+                        current_adapter_lora_B = target.lora_B[adapter].weight
+                    elif adapter in target.lora_embedding_A:
+                        current_adapter_lora_A = target.lora_embedding_A[adapter]
+                        current_adapter_lora_B = target.lora_embedding_B[adapter]
+                    else:
+                        continue
+                    loras_A.append(current_adapter_lora_A.data * weight * target.scaling[adapter])
+                    loras_B.append(current_adapter_lora_B.data)
+
+                if len(loras_A) == 0:
+                    raise ValueError("No matching LoRAs found. Please raise an issue on GitHub.")
+                loras_A = torch.cat(loras_A, dim=0)
+                loras_B = torch.cat(loras_B, dim=1)
+                target_lora_A.data[: loras_A.shape[0], :] = loras_A
+                target_lora_B.data[:, : loras_B.shape[1]] = loras_B
+            elif combination_type in ["linear", "ties", "dare_linear", "dare_ties", "magnitude_prune"]:
+                target_lora_A.data, target_lora_B.data = self._generalized_task_arithmetic_weighted_adapter(
+                    combination_type, adapters, weights, target, density, majority_sign_method
+                )
+
+def _generalized_task_arithmetic_weighted_adapter(
+    self,
+    combination_type,
+    adapters,
+    weights,
+    target,
+    density,
+    majority_sign_method,
+):
+    # account weights for LoRA A and B layers.
+    valid_weights = []
+    lora_A_deltas = []
+    lora_B_deltas = []
+    for adapter, weight in zip(adapters, weights):
+        if adapter in target.lora_A:
+            current_adapter_lora_A = target.lora_A[adapter].weight
+            current_adapter_lora_B = target.lora_B[adapter].weight
+        elif adapter in target.lora_embedding_A:
+            current_adapter_lora_A = target.lora_embedding_A[adapter]
+            current_adapter_lora_B = target.lora_embedding_B[adapter]
+        else:
+            continue
+        valid_weights.append(math.sqrt(weight * target.scaling[adapter]))
+        lora_A_deltas.append(current_adapter_lora_A.data)
+        lora_B_deltas.append(current_adapter_lora_B.data)
+    valid_weights = torch.tensor(valid_weights).to(lora_A_deltas[0].device)
+    lora_deltas = [lora_A_deltas, lora_B_deltas]
+    dtype = lora_A_deltas[0].dtype
+    for i, task_tensors in enumerate(lora_deltas):
+        if combination_type == "linear":
+            lora_deltas[i] = task_arithmetic(task_tensors, valid_weights)
+        elif combination_type == "ties":
+            lora_deltas[i] = ties(task_tensors, valid_weights, density, majority_sign_method)
+        elif combination_type == "dare_linear":
+            lora_deltas[i] = dare_linear(task_tensors, valid_weights, density)
+        elif combination_type == "dare_ties":
+            lora_deltas[i] = dare_ties(task_tensors, valid_weights, density, majority_sign_method)
+        elif combination_type == "magnitude_prune":
+            lora_deltas[i] = magnitude_prune(task_tensors, valid_weights, density)
+        else:
+            raise ValueError("Invalid combination type")
+    lora_deltas = [delta.to(dtype) for delta in lora_deltas]
+    return lora_deltas
+```

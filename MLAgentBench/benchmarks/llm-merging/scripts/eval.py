@@ -23,9 +23,9 @@ def get_submission_result(competition, idx=0):
 def get_score():
     submission_path = "output/test.csv"
     competition_name = "llm-merging-competition"
-    print("Submitting to Kaggle leaderbord for evaluation on test set ...")
+    print("\nSubmitting to Kaggle leaderbord for evaluation on test set ...")
     os.system(f"kaggle competitions submit -c {competition_name} -f {submission_path} -m \"llm-merging\"")
-    print("Waiting for Kaggle leaderboard to refresh ...")
+    print("\nWaiting for Kaggle leaderboard to refresh ...")
     time.sleep(60)
     return get_submission_result(competition_name)
 
