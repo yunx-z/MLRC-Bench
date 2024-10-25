@@ -22,7 +22,8 @@ Follow these instructions and do not forget them:
 - Follow the plan and try to achieve the goal as straightforwardly as possible.
 - Highlight the supporting experiment results and reasoning before drawing any conclusions. 
 - Do not try installing any new packages or libraries.
-- If you believe you have solved the problem, you can use the Final Answer action to submit your answer. You can only submit once, so double check that you have achieved the goal before submitting.
+- Aim to be creative and develop innovative methods for this research problem that have the potential to be published in top-tier Machine Learning conferences.
+- Continuously refine your approach based on feedback from evaluation scores and model outputs. Keep iterating and don't give up.
 
 Always respond in this format exactly:
 {format_prompt}

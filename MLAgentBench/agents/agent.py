@@ -44,7 +44,8 @@ class Agent:
         self.action_infos = env.action_infos
         tool_names = list(env.action_infos.keys())
         self.all_tool_names = copy.deepcopy(tool_names)
-        actions_remove_from_prompt = ["Read File", "Write File", "Append File", "Retrieval from Research Log", "Append Summary to Research Log", "Python REPL", "Edit Script Segment (AI)"]
+        # actions_remove_from_prompt = ["Read File", "Write File", "Append File", "Retrieval from Research Log", "Append Summary to Research Log", "Python REPL", "Edit Script Segment (AI)"]
+        actions_remove_from_prompt = []
         actions_remove_from_prompt.extend(args.actions_remove_from_prompt)
         for t in actions_remove_from_prompt:
             # remove tool name but in case of missing tool name, don't crash
@@ -157,7 +158,7 @@ class Agent:
         """ Try to sanitize a string to be a valid JSON string."""
         s = s.strip("```json").strip("```").strip()
         s = s.replace('\\', '\\\\')  # Escape backslashes first
-        s = s.replace('/', '\\/')  # Escape forward slashes
+        # s = s.replace('/', '\\/')  # Escape forward slashes
         s = s.replace('\b', '\\b')  # Escape backspaces
         s = s.replace('\f', '\\f')  # Escape form feeds
         s = s.replace('\r', '\\r')  # Escape carriage returns

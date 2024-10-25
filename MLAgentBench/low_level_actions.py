@@ -187,7 +187,8 @@ def execute_script(script_name, work_dir = ".", **kwargs):
         script_path = script_name
         device = kwargs["device"]
         python = kwargs["python"]
-        cmd = f"CUDA_VISIBLE_DEVICES={device} {python} -u {script_path}"
+
+        cmd = f"PYTHONPATH=`pwd` CUDA_VISIBLE_DEVICES={device} {python} -u {script_path}"
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True, cwd=work_dir)
 
         stdout_lines = []
