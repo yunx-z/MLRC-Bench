@@ -44,4 +44,5 @@ This competition will be run under the honor system. Teams that submit very simi
 
 We have provided a list of LoRA adapters specified `llm_merging/constants.py`. They are all fine-tuned from the same base model `mistralai/Mistral-7B-v0.1` on a variety of tasks. You can only use all or part of the specified LoRA adapters.  
 
-
+## Hints
+Please refer to `background.txt` for brief descriptions and code implementations of existing model merging methods. You’re encouraged to draw inspiration from these methods when designing your own approach. However, your method must be original and distinct from the provided examples; direct replication of existing methods is not permitted.
