@@ -156,35 +156,36 @@ def copy_file( source, destination, work_dir = ".", **kwargs):
         raise EnvException(f"File {source} copy to {destination} failed. Check whether the source and destinations are valid.")
 
 
-@check_file_in_work_dir(["script_name"])
+@check_file_in_work_dir(["script_name_and_args"])
 @record_low_level_step
-def undo_edit_script( script_name, work_dir = ".", **kwargs):
+def undo_edit_script( script_name_and_args, work_dir = ".", **kwargs):
     
-    backup_files = glob.glob(safe_path_join(work_dir,"backup", f"{script_name}_*"))
+    backup_files = glob.glob(safe_path_join(work_dir,"backup", f"{script_name_and_args}_*"))
     if len(backup_files) == 0:
         raise EnvException("There is no change to undo.")
     try:
         backup_files.sort()
         backup_file = backup_files[-1]
-        safe_copy_file(backup_file, safe_path_join(work_dir,script_name))
+        safe_copy_file(backup_file, safe_path_join(work_dir,script_name_and_args))
         # delete the backup file
         os.remove(backup_file)
 
-        new_content = open(safe_path_join(work_dir,script_name)).read()
-        observation = f"Content of {script_name} after undo the most recent edit:\n" + new_content
+        new_content = open(safe_path_join(work_dir,script_name_and_args)).read()
+        observation = f"Content of {script_name_and_args} after undo the most recent edit:\n" + new_content
         return observation
     except:
-        raise EnvException(f"Cannot undo the edit of file name {script_name}. Check the file name again."
+        raise EnvException(f"Cannot undo the edit of file name {script_name_and_args}. Check the file name again."
         )
 
 
-@check_file_in_work_dir(["script_name"])
+# @check_file_in_work_dir(["script_name_and_args"])
 @record_low_level_step
-def execute_script(script_name, work_dir = ".", **kwargs):
+def execute_script(script_name_and_args, work_dir = ".", **kwargs):
+    script_name = script_name_and_args.split(' ')[0]
     if not os.path.exists(safe_path_join(work_dir,script_name)):
-        raise EnvException(f"The file {script_name} does not exist.")
+        raise EnvException(f"The file {script_name_and_args} does not exist.")
     try:
-        script_path = script_name
+        script_path = script_name_and_args
         device = kwargs["device"]
         python = kwargs["python"]
 
@@ -230,7 +231,7 @@ def execute_script(script_name, work_dir = ".", **kwargs):
             observation = "".join(stderr_lines)
         return "The script has been executed. Here is the output:\n" + observation
     except Exception as e:
-        raise EnvException(f"Something went wrong in executing {script_name}: {e}. Please check if it is ready to be executed.")
+        raise EnvException(f"Something went wrong in executing {script_name_and_args}: {e}. Please check if it is ready to be executed.")
 
 
 @record_low_level_step
@@ -321,7 +322,7 @@ LOW_LEVEL_ACTIONS = [
         name="Undo Edit Script",
         description="Use this to undo the last edit of the python script.",
         usage={
-            "script_name": "a valid python script name with relative path to current directory if needed"
+            "script_name_and_args": "a valid python script name with relative path to current directory if needed"
         },
         return_value="The observation will be the content of the script before the last edit. If the script does not exist, the observation will be an error message.",
         function=undo_edit_script,
@@ -331,7 +332,7 @@ LOW_LEVEL_ACTIONS = [
         name="Execute Script",
         description="Use this to execute the python script. The script must already exist.",
         usage={
-            "script_name": "a valid python script name with relative path to current directory if needed"
+            "script_name_and_args": "a valid python script name with relative path to current directory if needed, followed by any arguments if necessary, such as \"run.py --model gpt-4o\" or \"setup.py install\""
         },
         return_value="The observation will be output of the script or errors.",
         function=execute_script,
@@ -355,7 +356,7 @@ LOW_LEVEL_ACTIONS = [
         },
         return_value="The observation will be the response from human.",
         function=request_help,
-        is_primitive=True
+        is_primitive=False
     ),
     ActionInfo(
         name="Final Answer",
@@ -365,6 +366,6 @@ LOW_LEVEL_ACTIONS = [
         },
         return_value="The observation will be empty.",
         function=(lambda **kwargs: ""),
-        is_primitive=True
+        is_primitive=False
     ),
 ]
