@@ -181,9 +181,10 @@ def undo_edit_script( script_name_and_args, work_dir = ".", **kwargs):
 # @check_file_in_work_dir(["script_name_and_args"])
 @record_low_level_step
 def execute_script(script_name_and_args, work_dir = ".", **kwargs):
+    script_name_and_args = script_name_and_args.replace("python ", "")
     script_name = script_name_and_args.split(' ')[0]
     if not os.path.exists(safe_path_join(work_dir,script_name)):
-        raise EnvException(f"The file {script_name_and_args} does not exist.")
+        raise EnvException(f"The file {script_name} does not exist.")
     try:
         script_path = script_name_and_args
         device = kwargs["device"]
@@ -231,7 +232,7 @@ def execute_script(script_name_and_args, work_dir = ".", **kwargs):
             observation = "".join(stderr_lines)
         return "The script has been executed. Here is the output:\n" + observation
     except Exception as e:
-        raise EnvException(f"Something went wrong in executing {script_name_and_args}: {e}. Please check if it is ready to be executed.")
+        raise EnvException(f"Something went wrong in executing `python {script_name_and_args}`: {e}. Please check if it is ready to be executed.")
 
 
 @record_low_level_step
@@ -332,7 +333,7 @@ LOW_LEVEL_ACTIONS = [
         name="Execute Script",
         description="Use this to execute the python script. The script must already exist.",
         usage={
-            "script_name_and_args": "a valid python script name with relative path to current directory if needed, followed by any arguments if necessary, such as \"run.py --model gpt-4o\" or \"setup.py install\""
+            "script_name_and_args": "a valid python script name with relative path to current directory if needed, followed by any arguments if necessary, such as \"python run.py --model gpt-4o\" or \"python setup.py install\""
         },
         return_value="The observation will be output of the script or errors.",
         function=execute_script,
@@ -356,7 +357,7 @@ LOW_LEVEL_ACTIONS = [
         },
         return_value="The observation will be the response from human.",
         function=request_help,
-        is_primitive=False
+        is_primitive=True
     ),
     ActionInfo(
         name="Final Answer",
@@ -366,6 +367,6 @@ LOW_LEVEL_ACTIONS = [
         },
         return_value="The observation will be empty.",
         function=(lambda **kwargs: ""),
-        is_primitive=False
+        is_primitive=True
     ),
 ]

@@ -7,29 +7,6 @@ class MyMerge(Merges):
     def __init__(self, name):
         super().__init__(name)
 
-        '''
-        These values are meant to be modified by the user.
-        '''
-        self.is_peft = True
-
-        self.max_seq_len = None
-        self.max_gen_len = 64
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        # Architecture must match base model. 
-        self.architecture = "decoder"
-        '''
-        These are variables used later in the code and not intended to be set, but feel free to adapt to your use case.  
-        '''
-        # Loaded models and configs 
-        self.loaded_models = {}
-        self.loaded_configs = {}
-
-        # Merged model parameters
-        self.merged_model = {}
-
-
-
     # Implement merge function 
     def merge(self):
 
