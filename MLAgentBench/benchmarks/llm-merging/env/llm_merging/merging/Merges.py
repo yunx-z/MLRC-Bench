@@ -53,11 +53,11 @@ class Merges(object):
         # Architecture must match base model. 
         self.architecture = "decoder"
 
-        self.loaded_models = {}
-        self.loaded_configs = {}
+        self.loaded_models = None
+        self.loaded_configs = None
 
         # Merged model parameters
-        self.merged_model = {}
+        self.merged_model = None
 
 
     def get_name(self):
