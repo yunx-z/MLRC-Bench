@@ -39,22 +39,26 @@ class Merges(object):
         # We recommend specifying a revision id to ensure the model was not modified after May 31 
         self.base_model_revision_id = BASE_MODEL_REVISION_ID 
          
-        self.loaded_models = None
-        self.loaded_configs = None
         self.base_model = None
         self.tokenizer = None
         self.input_tokenizer = None
         self.target_tokenizer = None
 
-        self.is_peft = False
+        self.is_peft = True
 
         self.max_seq_len = None
-        self.max_gen_len = None
+        self.max_gen_len = 64
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.device = None
-        self.architecture = None
+        # Architecture must match base model. 
+        self.architecture = "decoder"
 
-        self.merged_model = None
+        self.loaded_models = {}
+        self.loaded_configs = {}
+
+        # Merged model parameters
+        self.merged_model = {}
+
 
     def get_name(self):
         return self.name
