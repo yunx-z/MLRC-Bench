@@ -1,6 +1,7 @@
 """ This file contains the code for calling all LLM APIs. """
 
 import os
+import re
 import json
 from functools import partial
 import tiktoken
@@ -313,6 +314,10 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     response = openai_client.chat.completions.create(**{"messages": messages,**raw_request})
     completion = response.choices[0].message.content
     usage = response.usage
+
+    # Since o1-series model does not support stop_sequences, we need to truncate observation by ourselves
+    if "o1" in model.lower():
+        completion = re.sub(r"^Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
 
     if log_file is not None:
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
