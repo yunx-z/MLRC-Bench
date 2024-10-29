@@ -1,5 +1,6 @@
 import copy
 import os
+import torch
 
 from peft import load_peft_weights, PeftConfig
 from safetensors.torch import save_file
