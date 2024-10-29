@@ -62,7 +62,7 @@ def get_score():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--merging_method", type=str, default="MyMerge")
+    parser.add_argument("-m", "--merging_method", type=str, default="my_merge")
     parser.add_argument(
         "--dataset_filepaths", 
         type=str, 
