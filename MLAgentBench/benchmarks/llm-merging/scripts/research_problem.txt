@@ -38,4 +38,4 @@ This competition will be run under the honor system. Teams that submit very simi
 
 We have provided a list of LoRA adapters specified `llm_merging/constants.py`. They are all fine-tuned from the same base model `mistralai/Mistral-7B-v0.1` on a variety of tasks. You can only use all or part of the specified LoRA adapters.  
 
-Focus on developing innovative methods and algorithms that provide deep insights, rather than performing trivial hyperparameter searches, such as adjusting model weights in average merging.
+Prioritize the development of novel methods and algorithms that offer meaningful insights, instead of relying on weighted merging with manually assigned, fixed weights.

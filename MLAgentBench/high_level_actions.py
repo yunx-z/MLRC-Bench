@@ -79,8 +79,10 @@ def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwar
     try:
         content = read_file(script_name, work_dir = work_dir, **kwargs)
     except:
-        write_file(script_name, "", work_dir = work_dir, **kwargs)
-        content = ""
+        raise EnvException(f"You cannot edit the script {script_name} because it does not exist.")
+        # do not allow creating a new file when the script_name does not exist
+        # write_file(script_name, "", work_dir = work_dir, **kwargs)
+        # content = ""
         
     prompt = f"""Given this python script:
     ```python 
@@ -229,7 +231,7 @@ HIGH_LEVEL_ACTIONS =[
         name="Edit Script (AI)",
         description="Use this to do a relatively large but cohesive edit over a python script. Instead of editing the script directly, you should describe the edit instruction so that another AI can help you do this.",
         usage={
-            "script_name": "a valid python script name with relative path to current directory if needed. An empty sctipt will be created if it does not exist.",
+            "script_name": "a valid python script name with relative path to current directory if needed. The script must already exist.",
             "edit_instruction": "a detailed step by step description on how to edit it.",
             "save_name": "a valid file name with relative path to current directory if needed"
         },
