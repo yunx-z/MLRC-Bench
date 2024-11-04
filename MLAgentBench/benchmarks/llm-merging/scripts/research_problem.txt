@@ -42,6 +42,3 @@ Focus on the development of novel methods and algorithms that offer meaningful i
 
 Your proposed method should NOT assume access to some validation datasets. This means that you are NOT allowed to evaluate each model's performance on a validation dataset and calculate adaptive weights for merging based on their performance.
 
-## Hints
-Please refer to `background.txt` for brief descriptions and code implementations of existing methods. You’re encouraged to draw inspiration from these methods when designing your own approach. However, your method must be original and distinct from the provided examples; direct replication of existing methods is not permitted.
-

@@ -4,7 +4,7 @@ import os
 import datetime
 import shutil
 import difflib
-from .low_level_actions import read_file, write_file, append_file, safe_path_join, safe_copy_file 
+from .low_level_actions import read_file, write_file, append_file, safe_path_join, safe_copy_file, check_file_read_only
 from .schema import ActionInfo, EnvException
 from .LLM import complete_text_fast, complete_text
 
@@ -74,6 +74,8 @@ def understand_file( file_name, things_to_look_for, work_dir = ".", **kwargs):
 
 EDIT_SCRIPT_MODEL = "gpt-4o-mini"
 EDIT_SCRIPT_MAX_TOKENS = 4000
+
+@check_file_read_only(["script_name"])
 def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwargs):
     #TODO: handle long file editing
     try:
