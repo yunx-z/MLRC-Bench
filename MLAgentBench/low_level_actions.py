@@ -71,7 +71,7 @@ def check_file_read_only(arg_names, **kwargs):
             new_kwargs = normalize_args_kwargs(func, *args, **kwargs)
             for arg_name in arg_names:
                 if new_kwargs[arg_name] in new_kwargs["kwargs"]["read_only_files"]:
-                    raise EnvException(f"cannot write file {new_kwargs[arg_name]} because it is a read-only file.")
+                    raise EnvException(f"cannot write / copy / modify the file {new_kwargs[arg_name]} because it is a read-only file.")
             return func(*args, **kwargs)
         return wrapper
     return inner
@@ -145,6 +145,7 @@ def append_file(file_name, content, work_dir = ".", **kwargs):
 
 @check_file_in_work_dir(["source", "destination"])
 @check_file_read_only(["destination"])
+@check_file_read_only(["source"])
 @record_low_level_step
 def copy_file( source, destination, work_dir = ".", **kwargs):
     

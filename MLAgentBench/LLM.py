@@ -315,6 +315,8 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     completion = response.choices[0].message.content
     usage = response.usage
 
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
+
     # Since o1-series model does not support stop_sequences, we need to truncate observation by ourselves
     if "o1" in model.lower():
         completion = re.sub(r"^Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
