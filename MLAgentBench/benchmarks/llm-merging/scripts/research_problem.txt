@@ -1,4 +1,4 @@
-Develop a new LLM merging method to improve performance on held out test set within the time constraints.
+Develop an advanced, tuning-free LLM merging method to improve performance on held out test set within the time constraints.
 
 ## Description
 Training high-performing large language models (LLMs) from scratch is a notoriously expensive and difficult task, costing hundreds of millions of dollars in compute alone. These pretrained LLMs, however, can cheaply and easily be adapted to new tasks via fine-tuning, leading to a proliferation of models that suit specific use cases. Recent work has shown that specialized fine-tuned models can be rapidly merged to combine capabilities and generalize to new skills.
@@ -41,4 +41,6 @@ We have provided a list of LoRA adapters specified `llm_merging/constants.py`. T
 Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something like weighted merging with manually assigned, fixed weights.
 
 Your proposed method should NOT assume access to some validation datasets. This means that you are NOT allowed to evaluate each model's performance on a validation dataset and calculate adaptive weights for merging based on their performance.
+
+Your proposed method should demonstrate impressive performance without requiring tuning by additional data or training.
 

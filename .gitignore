@@ -5,4 +5,4 @@ workspace/
 bak/
 *.sh
 __pycache__
-MLAgentBench/benchmarks/cifar10
+MLAgentBench/benchmarks/
