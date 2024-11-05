@@ -22,8 +22,8 @@ Follow these instructions and do not forget them:
 - Follow the plan and try to achieve the goal as straightforwardly as possible.
 - Highlight the supporting experiment results and reasoning before drawing any conclusions. 
 - Do not try installing any new packages or libraries.
-- Aim to be creative and develop innovative methods for this research problem that have the potential to be published in top-tier Machine Learning conferences.
-- Continuously refine your approach based on feedback from evaluation scores and model outputs. Keep iterating and don't give up.
+- If you believe you have solved the problem, you can use the Final Answer action to submit your answer. You can only submit once, so double check that you have achieved the goal before submitting.
+
 
 Always respond in this format exactly:
 {format_prompt}
@@ -166,7 +166,7 @@ class ResearchAgent(Agent):
                 usage = f"""{{
             {usage}
 }}"""
-                invalid_action_error = f"The action input for {action} needs to be a valid json with proper entries. You may have missed the comma between entries or used triple quotes (json does not recognizes triple quotes). Please use the correct format and try again:\n{usage}"
+                invalid_action_error = f"The action input for {action} needs to be a valid json with proper entries. You may have missed the comma between entries or used triple quotes (json does not recognizes triple quotes). Also pay attention to the newline characters. JSON recognizes newlines within strings, but they need to be properly escaped like \\n instead of a literal newline. Please use the correct format and try again:\n{usage}"
 
                 observation = "ActionInputParsingError: "+ parsing_error + "\n" + invalid_action_error
 
