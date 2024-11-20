@@ -1,4 +1,5 @@
 import json
+import re
 import difflib
 
 from MLAgentBench.LLM import complete_text
@@ -42,7 +43,11 @@ def sanitize_json_string(s):
     s = s.replace('\\', '\\\\')  # Escape backslashes first
     # s = s.replace('/', '\\/')  # Escape forward slashes
     s = s.replace('\b', '\\b')  # Escape backspaces
-    return s
+    s = s.replace('\f', '\\f')  # Escape form feeds
+    s = s.replace('\r', '\\r')  # Escape carriage returns
+    s = s.replace('\t', '\\t')  # Escape horizontal tabs
+    # triple quotes are a problem
+    return re.sub(r'"([^"]*)"', lambda m: '"' + m.group(1).replace('\n', '\\n').replace('\"', '\\"') + '"', s)
 
 FEEDBACK_MODEL = "gpt-4o-mini"
 FEEDBACK_MAX_TOKENS = 4000

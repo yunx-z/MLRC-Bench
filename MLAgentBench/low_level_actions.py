@@ -15,7 +15,7 @@ from .schema import Step, ActionInfo, Action, EnvException
 import readline # This is needed to make sure that the input() function works properly
 
 def safe_path_join(*paths):
-    cleaned_paths = [p.replace('\\', '') for p in paths]
+    cleaned_paths = [p.replace('\\/', '/') for p in paths]
     return os.path.join(*cleaned_paths)
 
 def safe_copy_file(src, dst):
