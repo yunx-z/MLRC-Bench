@@ -266,7 +266,7 @@ def request_help(request, work_dir = ".", **kwargs):
     return input(f"Research Assistant is requesting help: {request}\n")
 
 @record_low_level_step
-def final_answer(final_answer, best_score, work_dir = ".", **kwargs):
+def final_answer(final_solution, best_score, work_dir = ".", **kwargs):
     try:
         score_float = float(best_score)
     except Exception as e:
