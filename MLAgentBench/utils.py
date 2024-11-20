@@ -110,6 +110,8 @@ def get_llm_feedback(idea, code):
             if feedback:
                 feedback_prefix = "\nHere is the feedback for how some parts of your code may not faithfully reflect the proposed method from another AI. Please improve your code based on the feedback.\n\n"
                 feedback = feedback_prefix + feedback
+            else:
+                feedback = "Your code looks good. It reflects the proposed method from another AI."
             if total_units:
                 relevance_score = relevance_score / total_units
             else:
