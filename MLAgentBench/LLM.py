@@ -48,16 +48,18 @@ try:
     service = RemoteService("https://crfm-models.stanford.edu")
     account: Account = service.get_account(auth)
 except Exception as e:
-    print(e)
-    print("Could not load CRFM API key crfm_api_key.txt.")
+    pass
+    # print(e)
+    # print("Could not load CRFM API key crfm_api_key.txt.")
 
 try:   
     import anthropic
     # setup anthropic API key
     anthropic_client = anthropic.Anthropic(api_key=open("claude_api_key.txt").read().strip())
 except Exception as e:
-    print(e)
-    print("Could not load anthropic API key claude_api_key.txt.")
+    pass
+    # print(e)
+    # print("Could not load anthropic API key claude_api_key.txt.")
     
 try:
     import openai
@@ -79,8 +81,9 @@ try:
     from google.cloud.aiplatform_v1beta1.types import SafetySetting, HarmCategory
     vertexai.init(project=PROJECT_ID, location="us-central1")
 except Exception as e:
-    print(e)
-    print("Could not load VertexAI API.")
+    pass
+    # print(e)
+    # print("Could not load VertexAI API.")
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers import StoppingCriteria, StoppingCriteriaList
