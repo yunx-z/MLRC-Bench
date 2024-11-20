@@ -81,6 +81,7 @@ class Environment:
         }
         self._trace = self._initialize_trace()
         self._start_time = time.time()
+        self._submit_valid_answer = False
 
     ############################## getters ########################################
 
@@ -277,9 +278,7 @@ class Environment:
         """Check if the task has reached a final state, either by reaching the maximum steps or time, or because the agent has submitted a final answer. """
         
         curr_step = len(self.trace.steps)
-        # check if any step is final answer
-        any_final_answer = any([s.action.name == "Final Answer" for s in self.trace.steps])
-        return curr_step >= self.args.max_steps or any_final_answer or time.time() - self.start_time > self.args.max_time
+        return self._submit_valid_answer or curr_step >= self.args.max_steps or time.time() - self.start_time > self.args.max_time
 
     def execute(self, action):
         """Execute an action and return the observation."""
@@ -290,10 +289,7 @@ class Environment:
         action_name = action.name
         action_input = action.args
 
-        if action_name == "Final Answer":
-            observation = "end"
-
-        elif self.is_final():
+        if self.is_final():
             observation = "The environment has shut down because the maximum number of steps or time has been reached. Please submit your final answer."
 
         elif action_name not in list(self.action_infos.keys()):
@@ -332,6 +328,10 @@ class Environment:
                     if "Connection aborted." in str(e):
                         raise Exception("Connection aborted for crfm")
                     observation = f"EnvError: Error executing {action_name}."
+                else:
+                    if action_name == "Final Answer":
+                        self._submit_valid_answer = True
+                        observation = "end"
             else:
                 observation = invalid_action_error
 

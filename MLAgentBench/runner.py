@@ -4,7 +4,7 @@ This file is the entry point for MLAgentBench.
 
 import argparse
 import sys
-from MLAgentBench import LLM
+from MLAgentBench import LLM, utils
 from MLAgentBench.environment import Environment
 from MLAgentBench.agents.agent import Agent, SimpleActionAgent, ReasoningActionAgent
 from MLAgentBench.agents.agent_research import ResearchAgent
@@ -53,6 +53,8 @@ if __name__ == "__main__":
     parser.add_argument("--agent-type", type=str, default="ResearchAgent", help="agent type")
     parser.add_argument("--llm-name", type=str, default="claude-v1", help="llm name")
     parser.add_argument("--fast-llm-name", type=str, default="claude-v1", help="llm name")
+    parser.add_argument("--feedback-llm-name", type=str, default="claude-v1", help="llm name")
+    parser.add_argument("--feedback-llm-max-tokens", type=int, default=4000, help="llm max tokens")
     parser.add_argument("--edit-script-llm-name", type=str, default="claude-v1", help="llm name")
     parser.add_argument("--edit-script-llm-max-tokens", type=int, default=4000, help="llm max tokens")
     parser.add_argument("--agent-max-steps", type=int, default=50, help="max iterations for agent")
@@ -76,5 +78,7 @@ if __name__ == "__main__":
         # should not use these actions when there is no retrieval
         args.actions_remove_from_prompt.extend(["Retrieval from Research Log", "Append Summary to Research Log", "Reflection"])
     LLM.FAST_MODEL = args.fast_llm_name
+    utils.FEEDBACK_MODEL = args.feedback_llm_name
+    utils.FEEDBACK_MAX_TOKENS = args.feedback_llm_max_tokens
     run(getattr(sys.modules[__name__], args.agent_type), args)
     

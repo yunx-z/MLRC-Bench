@@ -1,6 +1,7 @@
 """ This file contains the low level actions that are provided by the environment, mostly file system operations and code execution. """
 
 import os
+import json
 import subprocess
 import selectors
 import shutil
@@ -264,6 +265,20 @@ def python_repl(command, work_dir = ".", **kwargs):
 def request_help(request, work_dir = ".", **kwargs):
     return input(f"Research Assistant is requesting help: {request}\n")
 
+@record_low_level_step
+def final_answer(final_answer, best_score, work_dir = ".", **kwargs):
+    try:
+        score_float = float(best_score)
+    except Exception as e:
+        raise EnvException(f"Failed to convert best_score ({best_score}) into a number. Please only include the number.")
+    eval_file = safe_path_join(work_dir, "output/idea_evals.json")
+    if not os.path.exists(eval_file):
+        raise EnvException(f"You haven't made any valid submission to the leaderboard yet")
+    with open(eval_file, 'r') as reader:
+        all_scores = [eval_result['performance'] for eval_result in json.load(eval_file)["implementations"]]
+    if score_float not in all_scores:
+        raise EnvException(f"Your submission didn't achieve a score of {best_score} according to the leaderboard records. Please double check and resubmit a valid final answer.")
+    return ""
 
 ### describe the low level actions
 LOW_LEVEL_ACTIONS = [
@@ -362,12 +377,13 @@ LOW_LEVEL_ACTIONS = [
     ),
     ActionInfo(
         name="Final Answer",
-        description="Use this to provide the final answer to the current task.",
+        description="Use this to provide the best solution and the corresponding evaluation score for the current task.",
         usage={
-            "final_answer": "a detailed description on the final answer"
+            "final_solution": "a detailed description on the best solution you developed",
+            "best_score": "the evaluation score for the best solution, number only"
         },
         return_value="The observation will be empty.",
-        function=(lambda **kwargs: ""),
+        function=final_answer,
         is_primitive=True
     ),
 ]

@@ -29,6 +29,5 @@ def get_score():
     time.sleep(60)
     return get_submission_result(competition_name)
 
-
 if __name__ == "__main__":
     print(get_score())

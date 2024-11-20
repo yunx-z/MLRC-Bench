@@ -62,7 +62,8 @@ except Exception as e:
 try:
     import openai
     # setup OpenAI API key
-    openai_api_base, openai_api_key  =  open("openai_api_key.txt").read().strip().split("\n")    
+    openai_api_key = os.getenv('MY_OPENAI_API_KEY')
+    openai_api_base = os.getenv('MY_AZURE_OPENAI_ENDPOINT')
     openai_client = openai.AzureOpenAI(
             azure_endpoint=openai_api_base,
             api_key=openai_api_key,
@@ -305,7 +306,7 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
         raw_request = {
               "model": model,
               "temperature": temperature,
-              "max_tokens": 4000,
+              "max_tokens": max_tokens_to_sample,
               "stop": stop_sequences or None,  # API doesn't like empty list
               **kwargs
         }
