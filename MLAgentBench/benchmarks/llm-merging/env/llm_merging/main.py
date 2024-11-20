@@ -4,7 +4,6 @@ import sys
 import time
 
 from importlib.metadata import entry_points
-from kaggle.api.kaggle_api_extended import KaggleApi
 
 from llm_merging.evaluation import * 
 from llm_merging.data import * 
@@ -20,49 +19,10 @@ def all_merge_handlers():
     return loaded_merges
 
 
-def get_submission_result(competition, idx=0):
-    api = KaggleApi()
-    api.authenticate()
-    
-    # Fetch submissions
-    submissions = api.competitions_submissions_list(competition)
-    
-    # Iterate through submissions and print error messages
-    latest_submission = submissions[idx]
-    if latest_submission["hasPublicScore"]:
-        score = float(latest_submission["publicScore"])
-        print(f"\nYour merged model scores {score} on the test set!")
-    else:
-        error_msg = latest_submission["errorDescription"] 
-        print(f"\nYour merged model may generate something invalid so the submission does not have a score. Here is the error message from the Kaggle leaderboard:\n\n{error_msg}")
-        score = 0
-    return score
-
-def get_score():
-    submission_path = "output/test.csv"
-    competition_name = "llm-merging-competition"
-    lock_file = os.path.expanduser("~/submission.lock")
-    score = 0
-    while os.path.exists(lock_file):
-        print("Another submission is in progress. Waiting...")
-        time.sleep(30)  # Wait before checking again
-    # Create a lock file
-    with open(lock_file, 'w') as f:
-        f.write('Locked')
-    try:
-        print("\nSubmitting to Kaggle leaderbord for evaluation on test set ...")
-        os.system(f"kaggle competitions submit -c {competition_name} -f {submission_path} -m \"llm-merging\"")
-        print("\nWaiting for Kaggle leaderboard to refresh ...")
-        time.sleep(60)
-        score = get_submission_result(competition_name)
-    finally:
-        # Remove the lock file
-        os.remove(lock_file)
-    return score
-
 if __name__ == "__main__":
+    DEFAULT_METHOD_NAME = "my_merge"
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--merging_method", type=str, default="my_merge")
+    parser.add_argument("-m", "--merging_method", type=str, default=DEFAULT_METHOD_NAME)
     parser.add_argument(
         "--dataset_filepaths", 
         type=str, 
@@ -77,6 +37,7 @@ if __name__ == "__main__":
     loaded_merges = all_merge_handlers()
     merge_method = loaded_merges[args.merging_method](args.merging_method)
 
+    start_time = time.time()
     # Call the merge function. The merged model is stored under merging_method object 
     merge_method.merge()
     
@@ -86,5 +47,11 @@ if __name__ == "__main__":
         args.dataset_filepaths,
         args.output_folder,
     )
+    end_time = time.time()
+    runtime = end_time - start_time
 
-    get_score()
+    score = get_score()
+
+    base_class = loaded_merges[DEFAULT_METHOD_NAME]
+    merge_method_class = loaded_merges[args.merging_method]
+    save_evals(args.merging_method, merge_method_class, base_class, score, runtime)

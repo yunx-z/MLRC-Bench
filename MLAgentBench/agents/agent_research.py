@@ -22,7 +22,7 @@ Follow these instructions and do not forget them:
 - Follow the plan and try to achieve the goal as straightforwardly as possible.
 - Highlight the supporting experiment results and reasoning before drawing any conclusions. 
 - Do not try installing any new packages or libraries.
-- If you believe you have solved the problem, you can use the Final Answer action to submit your answer. You can only submit once, so double check that you have achieved the goal before submitting.
+- If you believe you have solved the problem, you can use the Final Answer action to submit your solution with a valid evaluation score. You can only submit once, so make sure you've double-checked your answer and achieved the best possible performance before finalizing. 
 
 
 Always respond in this format exactly:
