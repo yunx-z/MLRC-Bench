@@ -157,7 +157,7 @@ class Agent:
         """ Try to sanitize a string to be a valid JSON string."""
         s = s.strip("```json").strip("```").strip()
         s = s.replace('\\', '\\\\')  # Escape backslashes first
-        s = s.replace('/', '\\/')  # Escape forward slashes
+        # s = s.replace('/', '\\/')  # Escape forward slashes
         s = s.replace('\b', '\\b')  # Escape backspaces
         s = s.replace('\f', '\\f')  # Escape form feeds
         s = s.replace('\r', '\\r')  # Escape carriage returns

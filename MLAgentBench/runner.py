@@ -43,6 +43,7 @@ if __name__ == "__main__":
     parser.add_argument("--work-dir", type=str, default="./workspace", help="work dir")
     parser.add_argument("--max-steps", type=int, default=50, help="number of steps")
     parser.add_argument("--max-time", type=int, default=5* 60 * 60, help="max time")
+    parser.add_argument("--max-api-cost", type=int, default=10, help="max api cost in dollars")
     parser.add_argument("--device", type=int, default=0, help="device id")
     parser.add_argument("--python", type=str, default="python", help="python command")
     parser.add_argument("--interactive", action="store_true", help="interactive mode")
@@ -78,6 +79,7 @@ if __name__ == "__main__":
         # should not use these actions when there is no retrieval
         args.actions_remove_from_prompt.extend(["Retrieval from Research Log", "Append Summary to Research Log", "Reflection"])
     LLM.FAST_MODEL = args.fast_llm_name
+    LLM.LOG_DIR = args.log_dir
     utils.FEEDBACK_MODEL = args.feedback_llm_name
     utils.FEEDBACK_MAX_TOKENS = args.feedback_llm_max_tokens
     run(getattr(sys.modules[__name__], args.agent_type), args)
