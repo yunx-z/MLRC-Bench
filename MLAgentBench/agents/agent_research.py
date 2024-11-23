@@ -214,7 +214,7 @@ class ResearchAgent(Agent):
             self.save(os.path.join(self.log_dir , f"agent_{step_idx}_{curr_step}.json"))
 
         if env.is_final():
-            return "Finished due to env.is_final() == True"
+            return f"Finished due to {env.finish_reason}"
         else:
             return "Finished due to agent max steps reached"
 

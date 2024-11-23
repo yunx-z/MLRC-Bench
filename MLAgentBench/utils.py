@@ -2,7 +2,7 @@ import json
 import re
 import difflib
 
-from MLAgentBench.LLM import complete_text
+from MLAgentBench.LLM import complete_text, LOG_DIR
 
 def count_different_lines(code1: str, code2: str) -> int:
     """
@@ -82,7 +82,7 @@ def get_llm_feedback(idea, code):
     items = None
     while i < MAX_RETRYS: 
         i += 1
-        completion = complete_text(prompt, log_file=None, model=FEEDBACK_MODEL, max_tokens_to_sample=FEEDBACK_MAX_TOKENS) 
+        completion = complete_text(prompt, log_file=os.path.join(LOG_DIR, "env_log", "relevance_feedback.txt"), model=FEEDBACK_MODEL, max_tokens_to_sample=FEEDBACK_MAX_TOKENS) 
         completion = sanitize_json_string(completion)
 
         try:

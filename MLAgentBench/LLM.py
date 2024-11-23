@@ -104,8 +104,8 @@ class StopAtSpecificTokenCriteria(StoppingCriteria):
         current_sequence = input_ids[:, -len(self.stop_sequence) :]
         return bool(torch.all(current_sequence == stop_sequence_tensor).item())
 
-    
-def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=None, num_sample_tokens=None):
+LOG_DIR = "logs/"  
+def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens):
     """ Log the prompt and completion to a file."""
     with open(log_file, "a") as f:
         f.write("\n===================prompt=====================\n")
@@ -120,7 +120,8 @@ def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_p
         f.write(f"Number of prompt tokens: {num_prompt_tokens}\n")
         f.write(f"Number of sampled tokens: {num_sample_tokens}\n")
         f.write("\n\n")
-    cost_file = os.path.join(os.path.dirname(log_file), "api_cost.json")
+
+    cost_file = os.path.join(LOG_DIR, "env_log/", "api_cost.json")
     if os.path.exists(cost_file):
         with open(cost_file, 'r') as reader:
             content = json.load(reader)
@@ -331,6 +332,7 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
 
 def complete_text(prompt, log_file, model, **kwargs):
     """ Complete text using the specified model with appropriate API. """
+    assert log_file is not None, "log_file is None"
     
     if model.startswith("claude"):
         # use anthropic API

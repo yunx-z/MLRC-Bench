@@ -82,6 +82,7 @@ class Environment:
         self._trace = self._initialize_trace()
         self._start_time = time.time()
         self._submit_valid_answer = False
+        self.finish_reason = ""
 
     ############################## getters ########################################
 
@@ -278,7 +279,27 @@ class Environment:
         """Check if the task has reached a final state, either by reaching the maximum steps or time, or because the agent has submitted a final answer. """
         
         curr_step = len(self.trace.steps)
-        return self._submit_valid_answer or curr_step >= self.args.max_steps or time.time() - self.start_time > self.args.max_time
+        api_cost_file = os.path.join(self.log_dir, "api_cost.json")
+        if os.path.exists(api_cost_file):
+            with open(api_cost_file, 'r') as reader:
+                curr_api_cost = json.load(reader)["total_cost"] 
+        else:
+            curr_api_cost = 0
+
+        if self._submit_valid_answer:
+            self.finish_reason = "agent has submitted a final answer"
+            return True
+        elif curr_step >= self.args.max_steps:
+            self.finish_reason = "max_steps are reached"
+            return True
+        elif time.time() - self.start_time > self.args.max_time:
+            self.finish_reason = "max_time is reached"
+            return True
+        elif curr_api_cost > self.args.max_api_cost:
+            self.finish_reason = "max_api_cost is reached"
+            return True
+        else:
+            return False
 
     def execute(self, action):
         """Execute an action and return the observation."""
@@ -290,7 +311,7 @@ class Environment:
         action_input = action.args
 
         if self.is_final():
-            observation = "The environment has shut down because the maximum number of steps or time has been reached. Please submit your final answer."
+            observation = f"The environment has shut down because {self.finish_reason}. Please submit your final answer."
 
         elif action_name not in list(self.action_infos.keys()):
             actions = ", ".join(self.action_infos.keys())
