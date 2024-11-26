@@ -22,7 +22,7 @@ def all_merge_handlers():
 if __name__ == "__main__":
     DEFAULT_METHOD_NAME = "my_merge"
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--merging_method", type=str, default=DEFAULT_METHOD_NAME)
+    parser.add_argument("-m", "--merging_method", type=str)
     parser.add_argument(
         "--dataset_filepaths", 
         type=str, 
