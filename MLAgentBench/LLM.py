@@ -4,10 +4,8 @@ import os
 import re
 import json
 from functools import partial
-import tiktoken
 from .schema import TooLongPromptError, LLMError
 
-enc = tiktoken.get_encoding("cl100k_base")
 
 # https://openai.com/api/pricing/
 MODEL2PRICE = {
@@ -72,8 +70,9 @@ try:
             api_version="2024-10-01-preview",
             )
 except Exception as e:
-    print(e)
-    print("Could not load OpenAI API key openai_api_key.txt.")
+    pass
+    # print(e)
+    # print("Could not load OpenAI API key openai_api_key.txt.")
 
 try:
     import vertexai
@@ -110,12 +109,8 @@ def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_p
     with open(log_file, "a") as f:
         f.write("\n===================prompt=====================\n")
         f.write(f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}")
-        if num_prompt_tokens is None:
-            num_prompt_tokens = len(enc.encode(f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}"))
         f.write(f"\n==================={model} response ({max_tokens_to_sample})=====================\n")
         f.write(completion)
-        if num_sample_tokens is None:
-            num_sample_tokens = len(enc.encode(completion))
         f.write("\n===================tokens=====================\n")
         f.write(f"Number of prompt tokens: {num_prompt_tokens}\n")
         f.write(f"Number of sampled tokens: {num_sample_tokens}\n")
@@ -194,8 +189,10 @@ def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_toke
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
     return completion
 
-def complete_text_claude(prompt, stop_sequences=[anthropic.HUMAN_PROMPT], model="claude-v1", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, messages=None, **kwargs):
+def complete_text_claude(prompt, stop_sequences=None, model="claude-v1", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, messages=None, **kwargs):
     """ Call the Claude API to complete a prompt."""
+    if stop_sequences is None:
+        stop_sequences = [anthropic.HUMAN_PROMPT]
 
     ai_prompt = anthropic.AI_PROMPT
     if "ai_prompt" in kwargs is not None:
