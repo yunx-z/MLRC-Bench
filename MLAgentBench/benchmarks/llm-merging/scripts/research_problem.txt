@@ -11,20 +11,12 @@ You have been provided with a starter kit that includes an end-to-end submission
 
 1. To add a new merging method, modify the `__init__()` and `merge()` functions in `llm_merging/merging/MyMerge.py` and save it as a new file in `llm_merging/merging`.
 
-2. Add the new merging method to the dictionary returned by `all_merge_handlers()` in `llm_merging/main.py`
+2. In `llm_merging/merging/__init__.py`, add the new merging method to the dictionary returned by `all_merge_handlers()` and import the new module. 
 
-3. Add the new module to `llm_merging/merging/__init__.py`
-
-4. Add any additional required libraries to `setup.py`.
 
 ## Test Method
 
-```bash
-python setup.py install
-python llm_merging/main.py -m {merging_method}
-```
-
-For example, to test the baseline method, execute `python llm_merging/main.py -m my_merge`. It will generate outputs for the queries listed in `data/test.csv` using your merged model. The results will be saved in a submission file at `output/test.csv`. This submission file will be evaluated using the Kaggle leaderboard's evaluation script. If your submission is valid, you will receive a score based on the performance of your model on the test set.
+Simply run `python llm_merging/main.py -m {merging_method}`. For example, to test the baseline method, execute `python llm_merging/main.py -m my_merge`. It will generate outputs for the queries listed in `data/test.csv` using your merged model. The results will be saved in a submission file at `output/test.csv`. This submission file will be evaluated using the Kaggle leaderboard's evaluation script. If your submission is valid, you will receive a score based on the performance of your model on the test set.
 
 
 ## Competition Rules 

@@ -13,9 +13,6 @@ from torch.utils import data
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 from llm_merging.data import *
-from MLAgentBench.utils import *
-
-BASE_RUNTIME = 606.0022532939911 # avg over 3 runs on Quadro RTX 8000 GPU 
 
 def convert_dict_of_lists_to_list_of_dicts(dict_of_lists: Dict[Any, List]) -> List[Dict]:
     """
@@ -156,45 +153,5 @@ def get_score():
         os.remove(lock_file)
 
     return score
-
-def save_evals(merge_method_name, merge_method_class, base_class, score, runtime):
-    # save idea, merge_method_name, merge_method_code, feedback, score into a file
-    merge_method_code = inspect.getsource(merge_method_class)
-    base_method_code = inspect.getsource(base_class)
-    idea_file = "idea.txt"
-    if os.path.exists(idea_file):
-        with open(idea_file, 'r') as reader:
-            idea = reader.read()
-        feedback, relevance_score = get_llm_feedback(idea, merge_method_code) 
-        print(feedback)
-    else:
-        idea, feedback, relevance_score = None, None, None
-
-    eval_file = "output/idea_evals.json"
-    if os.path.exists(eval_file):
-        with open(eval_file, 'r') as reader:
-            all_evals = json.load(reader)
-    else:
-        all_evals = {"idea" : idea, "implementations" : []}
-
-    method_total_lines = count_code_lines(merge_method_code)
-    base_total_lines = count_code_lines(base_method_code)
-    num_diff_line = count_different_lines(base_method_code, merge_method_code)
-    eval_result = {
-            "merge_method_name" : merge_method_name,
-            "performance" : score,
-            "relevance_score" : relevance_score, 
-            "relative_runtime" : runtime / BASE_RUNTIME,
-            "relative_complexity" :  num_diff_line / (2 * base_total_lines),
-            "runtime" : runtime,
-            "method_total_lines" : method_total_lines,
-            "base_total_lines" : base_total_lines,
-            "num_diff_line" : num_diff_line,
-            "code" : merge_method_code,
-            "feedback" : feedback,
-            }
-    all_evals["implementations"].append(eval_result)
-    with open(eval_file, 'w') as writer:
-        json.dump(all_evals, writer, indent=2)
 
 

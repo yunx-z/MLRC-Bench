@@ -20,7 +20,7 @@ for IDEA_PROPOSAL_MODEL in ["o1-mini", "o1-preview"]:
             best_perf_imp, best_perf = None, 0
             for imp in items["implementations"]:
                 # ignore agent running baseline method
-                if imp["merge_method_name"] == DEFAULT_METHOD_NAME:
+                if imp["method_name"] == DEFAULT_METHOD_NAME:
                     continue
                 if imp['performance'] > best_perf:
                     best_perf = imp['performance']
@@ -30,7 +30,7 @@ for IDEA_PROPOSAL_MODEL in ["o1-mini", "o1-preview"]:
 
         if best_perf_imp is None:
             row = {
-                    "merge_method_name" : "invalid implementation",
+                    "method_name" : "invalid implementation",
                     "anchor_paper" : paper,
                     "proposal_model" : IDEA_PROPOSAL_MODEL,
                     "implementation_model" : IMPLEMENTATION_MODEL,
@@ -42,7 +42,7 @@ for IDEA_PROPOSAL_MODEL in ["o1-mini", "o1-preview"]:
                     }
         else:
             row = {
-                    "merge_method_name" : best_perf_imp["merge_method_name"],
+                    "method_name" : best_perf_imp["method_name"],
                     "anchor_paper" : paper,
                     "proposal_model" : IDEA_PROPOSAL_MODEL,
                     "implementation_model" : IMPLEMENTATION_MODEL,

@@ -9,18 +9,13 @@ from llm_merging.evaluation import *
 from llm_merging.data import * 
 from llm_merging.merging import *
 
-def all_merge_handlers():
-    """Enumerate and Load (import) all merge methods."""
-    loaded_merges = {
-        "my_merge" : MyMerge,
-        ## TODO Add more merge methods here
-    }
-    
-    return loaded_merges
+from MLAgentBench.utils import save_evals 
+
+DEFAULT_METHOD_NAME = "my_merge"
+BASE_RUNTIME = 606.0022532939911 # avg over 3 runs on Quadro RTX 8000 GPU 
 
 
 if __name__ == "__main__":
-    DEFAULT_METHOD_NAME = "my_merge"
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--merging_method", type=str)
     parser.add_argument(
@@ -54,4 +49,11 @@ if __name__ == "__main__":
 
     base_class = loaded_merges[DEFAULT_METHOD_NAME]
     merge_method_class = loaded_merges[args.merging_method]
-    save_evals(args.merging_method, merge_method_class, base_class, score, runtime)
+    save_evals(
+            method_name=args.merging_method,
+            method_class=merge_method_class,
+            base_class=base_class,
+            score=score,
+            runtime=runtime,
+            BASE_RUNTIME=BASE_RUNTIME,
+            )

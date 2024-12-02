@@ -1,41 +1,16 @@
 import json
+import os
 import re
 import difflib
+import inspect
+import ast
 
 from MLAgentBench.LLM import complete_text, LOG_DIR
 
-def count_different_lines(code1: str, code2: str) -> int:
-    """
-    Compute the number of different non-empty lines between two code snippets.
-
-    Parameters:
-        code1 (str): The first code snippet.
-        code2 (str): The second code snippet.
-
-    Returns:
-        int: The number of different non-empty lines.
-    """
-    # Split the code into lines
-    code1_lines = code1.splitlines()
-    code2_lines = code2.splitlines()
-
-    # Generate the diff
-    diff = difflib.unified_diff(code1_lines, code2_lines, lineterm='')
-
-    # Count the lines starting with '+' or '-' (excluding headers and empty lines)
-    diff_count = sum(
-        1
-        for line in diff
-        if line.startswith(('+', '-')) 
-        and not line.startswith(('+++', '---')) 
-        and line[1:].strip()  # Exclude lines that are empty after the prefix
-    )
-
-    return diff_count
-
-def count_code_lines(code: str) -> int:
-    lines = code.splitlines()
-    return sum(1 for line in lines if line.strip())  # Exclude empty lines
+def calculate_complexity(code):
+    tree = ast.parse(code)
+    LLOC = sum(isinstance(node, ast.stmt) for node in ast.walk(tree))
+    return LLOC
 
 def sanitize_json_string(s):
     """ Try to sanitize a string to be a valid JSON string."""
@@ -122,3 +97,43 @@ def get_llm_feedback(idea, code):
             continue
 
     return "", None
+
+def save_evals(method_name, method_class, base_class, score, runtime, BASE_RUNTIME):
+    # save idea, method_name, method_code, feedback, score into a file
+    method_code = inspect.getsource(method_class)
+    base_method_code = inspect.getsource(base_class)
+    idea_file = "idea.txt"
+    if os.path.exists(idea_file):
+        with open(idea_file, 'r') as reader:
+            idea = reader.read()
+        feedback, relevance_score = get_llm_feedback(idea, method_code) 
+        print(feedback)
+    else:
+        idea, feedback, relevance_score = None, None, None
+
+    eval_file = "output/idea_evals.json"
+    if os.path.exists(eval_file):
+        with open(eval_file, 'r') as reader:
+            all_evals = json.load(reader)
+    else:
+        all_evals = {"idea" : idea, "implementations" : []}
+
+    method_complexity = calculate_complexity(method_code)
+    base_complexity = calculate_complexity(base_method_code)
+    eval_result = {
+            "method_name" : method_name,
+            "performance" : score,
+            "relevance_score" : relevance_score, 
+            "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
+            "relative_complexity" :  100 * (method_complexity - base_complexity) / base_complexity,
+            "runtime" : runtime,
+            "method_complexity" : method_complexity,
+            "base_complexity" : base_complexity,
+            "code" : method_code,
+            "feedback" : feedback,
+            }
+    all_evals["implementations"].append(eval_result)
+    with open(eval_file, 'w') as writer:
+        json.dump(all_evals, writer, indent=2)
+
+
