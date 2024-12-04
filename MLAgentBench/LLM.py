@@ -108,7 +108,7 @@ def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_p
     """ Log the prompt and completion to a file."""
     with open(log_file, "a") as f:
         f.write("\n===================prompt=====================\n")
-        f.write(f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}")
+        f.write(f"{prompt}")
         f.write(f"\n==================={model} response ({max_tokens_to_sample})=====================\n")
         f.write(completion)
         f.write("\n===================tokens=====================\n")
