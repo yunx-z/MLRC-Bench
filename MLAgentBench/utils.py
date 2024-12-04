@@ -4,8 +4,11 @@ import re
 import difflib
 import inspect
 import ast
+from pprint import pprint
 
 from MLAgentBench.LLM import complete_text, LOG_DIR
+from MLAgentBench.llm_test_cases import test_cases_evaluation 
+from MLAgentBench.schema import EnvException
 
 def calculate_complexity(code):
     tree = ast.parse(code)
@@ -75,7 +78,7 @@ def get_llm_feedback(idea, code):
                     relevance_score += 0
                     total_units += 1
 
-                if item['relevance'] in ["medium", "low"]:
+                if item['relevance'] in ["low"]:
                     # check if all pairs are relevant, then feedback is empty string
                     method = item['text'] if item['text'] else "None"
                     code_snippet = f"```python\n{item['code']}\n```" if item['code'] else "None"
@@ -86,17 +89,29 @@ def get_llm_feedback(idea, code):
                 feedback_prefix = "\nHere is the feedback for how some parts of your code may not faithfully reflect the proposed method from another AI. Please improve your code based on the feedback.\n\n"
                 feedback = feedback_prefix + feedback
             else:
-                feedback = "Your code looks good. It reflects the proposed method from another AI."
+                feedback = "Your code looks relevant to the proposed method from another AI."
             if total_units:
                 relevance_score = relevance_score / total_units
             else:
                 relevance_score = None
-            return feedback, relevance_score  
+
+            try:
+                test_cases_eval_result = test_cases_evaluation(idea, code)
+            except Exception as e:
+                raise EnvException("test_cases_evaluation failed:\n" + e)
+            feedback_result = {
+                    "relevance_feedback" : feedback,
+                    "relevance_score" : relevance_score,
+                    }
+            if test_cases_eval_result:
+                feedback_result["test_case_pass_rate"] = test_cases_eval_result["test_case_pass_rate"]
+                feedback_result["test_case_message"] = test_cases_eval_result["test_case_message"]
+            return feedback_result
         except Exception as e:
             # print(f"DEBUG: error parsing -- {e}\n", completion)
             continue
 
-    return "", None
+    return None
 
 def save_evals(method_name, method_class, base_class, score, runtime, BASE_RUNTIME):
     # save idea, method_name, method_code, feedback, score into a file
@@ -106,10 +121,14 @@ def save_evals(method_name, method_class, base_class, score, runtime, BASE_RUNTI
     if os.path.exists(idea_file):
         with open(idea_file, 'r') as reader:
             idea = reader.read()
-        feedback, relevance_score = get_llm_feedback(idea, method_code) 
+        feedback_result = get_llm_feedback(idea, method_code)
+        feedback, relevance_score = feedback_result.get("relevance_feedback"), feedback_result.get("relevance_score")
+        test_case_message, test_case_pass_rate = feedback_result.get("test_case_message"), feedback_result.get("test_case_pass_rate")
         print(feedback)
+        print("\n\n\n")
+        print(test_case_message)
     else:
-        idea, feedback, relevance_score = None, None, None
+        idea, feedback, relevance_score, test_case_message, test_case_pass_rate = None, None, None, None, None
 
     eval_file = "output/idea_evals.json"
     if os.path.exists(eval_file):
@@ -124,16 +143,31 @@ def save_evals(method_name, method_class, base_class, score, runtime, BASE_RUNTI
             "method_name" : method_name,
             "performance" : score,
             "relevance_score" : relevance_score, 
+            "test_case_pass_rate" : test_case_pass_rate,
             "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
             "relative_complexity" :  100 * (method_complexity - base_complexity) / base_complexity,
             "runtime" : runtime,
             "method_complexity" : method_complexity,
             "base_complexity" : base_complexity,
             "code" : method_code,
-            "feedback" : feedback,
+            "relevance_feedback" : feedback,
+            "test_case_message" : test_case_message,
             }
     all_evals["implementations"].append(eval_result)
     with open(eval_file, 'w') as writer:
         json.dump(all_evals, writer, indent=2)
 
+
+# Example Usage
+if __name__ == "__main__":
+    anchor = "dare"
+    idea_proposal_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/idea.txt"
+    full_code_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/llm_merging/merging/IntelligentMerge.py"
+    idea_proposal = open(idea_proposal_file, 'r').read()
+    full_code = open(full_code_file, 'r').read()
+    fres = get_llm_feedback(idea_proposal, full_code)
+    print("Finished!")
+    for k in fres:
+        print(k)
+        print(fres[k])
 

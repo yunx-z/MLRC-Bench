@@ -4,7 +4,7 @@ This file is the entry point for MLAgentBench.
 
 import argparse
 import sys
-from MLAgentBench import LLM, utils
+from MLAgentBench import LLM, utils, llm_test_cases
 from MLAgentBench.environment import Environment
 from MLAgentBench.agents.agent import Agent, SimpleActionAgent, ReasoningActionAgent
 from MLAgentBench.agents.agent_research import ResearchAgent
@@ -81,6 +81,8 @@ if __name__ == "__main__":
     LLM.FAST_MODEL = args.fast_llm_name
     LLM.LOG_DIR = args.log_dir
     utils.FEEDBACK_MODEL = args.feedback_llm_name
+    llm_test_cases.FEEDBACK_MODEL = args.feedback_llm_name
     utils.FEEDBACK_MAX_TOKENS = args.feedback_llm_max_tokens
+    llm_test_cases.FEEDBACK_MAX_TOKENS = args.feedback_llm_max_tokens
     run(getattr(sys.modules[__name__], args.agent_type), args)
     
