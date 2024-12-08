@@ -7,9 +7,9 @@ from typing import List, Dict, Any, Optional
 
 from MLAgentBench.LLM import complete_text, complete_text_fast, LOG_DIR
 
-FEEDBACK_MODEL = "gpt-4o-mini"
+FEEDBACK_MODEL = "o1-mini"
 FEEDBACK_MAX_TOKENS = 4000
-MAX_ITERATIONS = 5
+MAX_ITERATIONS = 3
 def call_llm(prompt):
     completion = complete_text(prompt, log_file=os.path.join(LOG_DIR, "env_log", "test_cases.txt"), model=FEEDBACK_MODEL, max_tokens_to_sample=FEEDBACK_MAX_TOKENS)
     return completion
@@ -18,7 +18,7 @@ def identify_method(proposal: str) -> str:
     """Extract the methodology from the proposal using LLM."""
     prompt = (
         "Extract only the methodology section from the following research proposal. "
-        "Ignore abstract, motivation, impact, etc.\n\nProposal:\n" + proposal
+        "Ignore abstract, motivation, impact, etc.\n\nMethod:\n" + proposal
     )
     return call_llm(prompt)
 
@@ -49,11 +49,12 @@ def extract_json(response):
 def generate_test_cases(method: str, core_code: str) -> List[Dict[str, Any]]:
     """Generate test cases as a JSON array using LLM."""
     prompt = (
-        "Given the following partial methodology and partial core implementation extracted from an idea proposal and full imlementation, generate a JSON array where each item "
-        "contains the fields 'test_case' (a descriptive name for the test case) and 'code' (the Python test code). "
-        "Each test function must adhere to pytest conventions and be properly formatted for execution.\n\n"
-        f"Methodology:\n{method}\n\nCore Code:\n```python\n{core_code}\n```\n\n\n"
-        f"Each individual test case should be a self-contained file, including necessary package imports and class definitions."
+        "Given the propsoed method and its code implementation, generate a JSON array where each item "
+        "contains the fields 'test_case' (a descriptive file name for the test case) and 'code' (the Python test code).\n\n"
+        f"Method:\n{method}\n\nCode:\n```python\n{core_code}\n```\n\n\n"
+        f"Each individual test case should be a self-contained file without any placeholders, including necessary package imports and class definitions. "
+        "Each test function must adhere to pytest conventions and be properly formatted for execution. "
+        "Write test functions that include assertions with error messages. Each error message should describe the condition being checked. Provide at least 10 test cases.\n"
     )
     for i in range(MAX_ITERATIONS):
         response = call_llm(prompt)
@@ -100,7 +101,7 @@ def debug_test_case(test_case: Dict[str, Any], error_message: str, method: str, 
             "The following test case failed with a runtime error. Modify the code to fix the issue and "
             "ensure it executes without errors. Do not fix assertion errors.\n\n"
             f"Test Case Code:\n```python\n{test_case['code']}\n```\n\nError Message:\n{error_message}\n\n"
-            f"Just to give you some context, the test code is for checking the faithfulness of core implementation to the below method.\nMethodology:\n{method}\n\nCore Code:\n{core_code}"
+            f"To provide some context, the test case is designed to verify the functionality of the following code:\n```python\n{core_code}\n```"
         )
 
         response = call_llm(prompt)
