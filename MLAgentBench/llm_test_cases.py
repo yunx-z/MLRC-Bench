@@ -50,7 +50,7 @@ def generate_test_cases(method: str, core_code: str) -> List[Dict[str, Any]]:
     """Generate test cases as a JSON array using LLM."""
     prompt = (
         "Given the propsoed method and its code implementation, generate a JSON array where each item "
-        "contains the fields 'test_case' (a descriptive file name for the test case) and 'code' (the Python test code).\n\n"
+        "contains the fields 'test_case' (a descriptive name for the test case, the name should not contain whitespace) and 'code' (the Python test code).\n\n"
         f"Method:\n{method}\n\nCode:\n```python\n{core_code}\n```\n\n\n"
         f"Each individual test case should be a self-contained file without any placeholders, including necessary package imports and class definitions. "
         "Each test function must adhere to pytest conventions and be properly formatted for execution. "
