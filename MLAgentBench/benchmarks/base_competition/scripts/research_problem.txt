@@ -1,0 +1,23 @@
+[one-sentence summary of the competition]
+
+## Description
+[goal, data, evaluation of the competition, often can be found on competition's website]
+
+## Developing New Methods
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. [Describe the baseline method here]
+
+1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
+
+2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+
+3. Add the new module to `methods/__init__.py`.
+
+## Test Method
+
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. [Describe what will happen for the evaluation pipeline]
+
+## Competition Rules
+
+Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
+
+[Describe any computation constraints, disallowed behaviours here.]
