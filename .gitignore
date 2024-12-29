@@ -5,5 +5,5 @@ logs/
 workspace/
 bak/
 *.sh
-__pycache__
+**/__pycache__
 MLAgentBench/benchmarks/
