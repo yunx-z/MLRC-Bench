@@ -14,7 +14,7 @@ You have been provided with a starter kit that includes an end-to-end submission
 
 ## Test Method
 
-Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. [Describe what will happen for the evaluation pipeline]
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. [Describe what will happen for the evaluation pipeline in the **development** phase, not **test** phase.]
 
 ## Competition Rules
 

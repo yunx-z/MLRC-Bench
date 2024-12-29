@@ -59,20 +59,15 @@ except Exception as e:
     # print(e)
     # print("Could not load anthropic API key claude_api_key.txt.")
     
-try:
-    import openai
-    # setup OpenAI API key
-    openai_api_key = os.getenv('MY_OPENAI_API_KEY')
-    openai_api_base = os.getenv('MY_AZURE_OPENAI_ENDPOINT')
-    openai_client = openai.AzureOpenAI(
-            azure_endpoint=openai_api_base,
-            api_key=openai_api_key,
-            api_version="2024-10-01-preview",
-            )
-except Exception as e:
-    pass
-    # print(e)
-    # print("Could not load OpenAI API key openai_api_key.txt.")
+import openai
+# setup OpenAI API key
+openai_api_key = os.getenv('MY_OPENAI_API_KEY')
+openai_api_base = os.getenv('MY_AZURE_OPENAI_ENDPOINT')
+openai_client = openai.AzureOpenAI(
+        azure_endpoint=openai_api_base,
+        api_key=openai_api_key,
+        api_version="2024-10-01-preview",
+        )
 
 try:
     import vertexai
@@ -300,7 +295,7 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
         raw_request = {
               "model": model,
               "temperature": 1,
-              "max_completion_tokens": 32000,
+              "max_completion_tokens": 64000 if model.lower() == "o1-mini" else 32000,
               **kwargs
         }
     else:
