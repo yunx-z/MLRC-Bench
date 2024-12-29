@@ -1,0 +1,2 @@
+from model.decoder_functions import predict_multiple_choice, generate
+from model.encoder_decoder_functions import predict_multiple_choice, generate
