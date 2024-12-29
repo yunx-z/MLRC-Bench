@@ -1,38 +1,33 @@
-Develop an advanced, tuning-free LLM merging method to improve performance on held out test set within the time constraints.
+Develop a novel and effective LLM merging method to improve performance on held out test set within the time constraints.
 
 ## Description
 Training high-performing large language models (LLMs) from scratch is a notoriously expensive and difficult task, costing hundreds of millions of dollars in compute alone. These pretrained LLMs, however, can cheaply and easily be adapted to new tasks via fine-tuning, leading to a proliferation of models that suit specific use cases. Recent work has shown that specialized fine-tuned models can be rapidly merged to combine capabilities and generalize to new skills.
 
-The competition will provide the participants with a list of expert models that have already been trained on a task-specific dataset. These models can either be fully fine-tuned models or models obtained by parameter-efficient fine-tuning methods such as LoRA. 
-The goal of this competition is to re-use the provided models to create a generalist model that can perform well on a wide variety of skills like reasoning, coding, maths, chat, and tool use. Along with these expert models, we have a set of hidden tasks that will be used to evaluate the submissions from participants.
+The competition will provide the participants with a list of expert models that have already been trained on a task-specific dataset. The goal of this competition is to re-use the provided models to create a generalist model that can perform well on a wide variety of skills like reasoning, coding, maths, chat, and tool use. Along with these expert models, we have a set of hidden tasks that will be used to evaluate the submissions from participants.
 
 ## Developing New Merging Methods
-You have been provided with a starter kit that includes an end-to-end submission flow for developing new model merging methods. See `llm_merging/merging/MyMerge.py` for an example implementation of a baseline method, which merges models by averaging parameters across all the given models.
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new model merging methods. See `methods/MyMethod.py` for an example implementation of a baseline method, which merges models by averaging parameters across all the given models.
 
-1. To add a new merging method, modify the `__init__()` and `merge()` functions in `llm_merging/merging/MyMerge.py` and save it as a new file in `llm_merging/merging`.
+1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
 
-2. In `llm_merging/merging/__init__.py`, add the new merging method to the dictionary returned by `all_merge_handlers()` and import the new module. 
+2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
 
+3. Add the new module to `methods/__init__.py`.
 
 ## Test Method
 
-Simply run `python llm_merging/main.py -m {merging_method}`. For example, to test the baseline method, execute `python llm_merging/main.py -m my_merge`. It will generate outputs for the queries listed in `data/test.csv` using your merged model. The results will be saved in a submission file at `output/test.csv`. This submission file will be evaluated using the Kaggle leaderboard's evaluation script. If your submission is valid, you will receive a score based on the performance of your model on the test set.
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. It will evaluate the merged model performance on tinyBenchmarks with lm-evaluation-harness framework, which consists of six tasks. 
 
 
 ## Competition Rules 
-Submissions must be reproducible from initial model through merging and fine-tuning. Winning models, along with all associated code and data, must be open-sourced and made public after the competition.
+- Submissions must be reproducible from initial model through merging and fine-tuning. Winning models, along with all associated code and data, must be open-sourced and made public after the competition.
 
-Submissions must NOT use any copyrighted or proprietary data, code, or closed-source content. The use of data or content that breaks service contracts or trade secrets of any entity is not allowed.
+- Submissions must NOT use any copyrighted or proprietary data, code, or closed-source content. The use of data or content that breaks service contracts or trade secrets of any entity is not allowed.
 
-Submissions must take less than 1 hours to merge/fine-tune and evaluate on a single Nvidia A6000 (48 GB) or equivalent resource.
+- Submissions must take less than 1 hours to merge/fine-tune and evaluate on a single Nvidia A6000 (48 GB) or equivalent resource.
 
-This competition will be run under the honor system. Teams that submit very similar results or copy another team’s solution will be disqualified. Violating the spirit of the honor system or taking unfair advantage of the community, even when not against an explicit rule, may result in disqualification and ineligibility for prizes.
+- This competition will be run under the honor system. Teams that submit very similar results or copy another team’s solution will be disqualified. Violating the spirit of the honor system or taking unfair advantage of the community, even when not against an explicit rule, may result in disqualification and ineligibility for prizes.
 
-We have provided a list of LoRA adapters specified `llm_merging/constants.py`. They are all fine-tuned from the same base model `mistralai/Mistral-7B-v0.1` on a variety of tasks. You can only use all or part of the specified LoRA adapters.  
+- The models to be merged are `meta-llama/Meta-Llama-3-8B-Instruct` and `MaziyarPanahi/Llama-3-8B-Instruct-v0.8`. You cannot change the list of model to be merged.
 
-Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something like weighted merging with manually assigned, fixed weights.
-
-Your proposed method should NOT assume access to some validation datasets. This means that you are NOT allowed to evaluate each model's performance on a validation dataset and calculate adaptive weights for merging based on their performance.
-
-Your proposed method should demonstrate impressive performance without requiring tuning by additional data or training.
-
+- Focus on the development of novel methods and algorithms that offer meaningful insights.

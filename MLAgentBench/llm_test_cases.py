@@ -3,16 +3,35 @@ import os
 import re
 import json
 import tempfile
+from tqdm import tqdm
 from typing import List, Dict, Any, Optional
 
 from MLAgentBench.LLM import complete_text, complete_text_fast, LOG_DIR
 
 FEEDBACK_MODEL = "o1-mini"
 FEEDBACK_MAX_TOKENS = 4000
-MAX_ITERATIONS = 3
+MAX_ITERATIONS = 1
+
+os.makedirs(os.path.join(LOG_DIR, "env_log"), exist_ok=True)
+
 def call_llm(prompt):
-    completion = complete_text(prompt, log_file=os.path.join(LOG_DIR, "env_log", "test_cases.txt"), model=FEEDBACK_MODEL, max_tokens_to_sample=FEEDBACK_MAX_TOKENS)
-    return completion
+    for i in range(MAX_ITERATIONS):
+        try:
+            completion = complete_text(prompt, log_file=os.path.join(LOG_DIR, "env_log", "test_cases.txt"), model=FEEDBACK_MODEL, max_tokens_to_sample=FEEDBACK_MAX_TOKENS)
+            return completion
+        except Exception as e:
+            continue
+    return ""
+
+def call_llm_fast(prompt):
+    for i in range(MAX_ITERATIONS):
+        try:
+            completion = complete_text_fast(prompt, log_file=os.path.join(LOG_DIR, "env_log", "test_cases.txt"), max_tokens_to_sample=FEEDBACK_MAX_TOKENS)
+            return completion
+        except Exception as e:
+            continue
+    return ""
+
 
 def identify_method(proposal: str) -> str:
     """Extract the methodology from the proposal using LLM."""
@@ -20,16 +39,21 @@ def identify_method(proposal: str) -> str:
         "Extract only the methodology section from the following research proposal. "
         "Ignore abstract, motivation, impact, etc.\n\nMethod:\n" + proposal
     )
-    return call_llm(prompt)
+    return call_llm_fast(prompt)
 
 
 def identify_code(code: str) -> str:
     """Extract the core implementation from the provided code."""
     prompt = (
         "Extract the core implementation from the following code, ignoring class initialization, "
-        "dataset/model/tokenizer loading, and other non-essential parts.\n\nCode:\n" + code
+        "dataset/model/tokenizer loading, and other non-essential parts. Only include the code in response and nothing else.\n\n\n" + code
     )
-    return call_llm(prompt)
+
+    for i in range(MAX_ITERATIONS):
+        res = extract_python(call_llm_fast(prompt))
+        if res:
+            return res
+    return None
 
 
 def extract_python(response):
@@ -42,30 +66,68 @@ def extract_python(response):
 def extract_json(response):
     match = re.search(r'```json(.*?)```', response, re.DOTALL)
     if match:
-        code_content = match.group(1).strip()  # Extract Python code
+        code_content = match.group(1).strip()
         return code_content
     return None
 
-def generate_test_cases(method: str, core_code: str) -> List[Dict[str, Any]]:
-    """Generate test cases as a JSON array using LLM."""
-    prompt = (
-        "Given the propsoed method and its code implementation, generate a JSON array where each item "
-        "contains the fields 'test_case' (a descriptive name for the test case, the name should not contain whitespace) and 'code' (the Python test code).\n\n"
-        f"Method:\n{method}\n\nCode:\n```python\n{core_code}\n```\n\n\n"
-        f"Each individual test case should be a self-contained file without any placeholders, including necessary package imports and class definitions. "
-        "Each test function must adhere to pytest conventions and be properly formatted for execution. "
-        "Write test functions that include assertions with error messages. Each error message should describe the condition being checked. Provide at least 10 test cases.\n"
-    )
-    for i in range(MAX_ITERATIONS):
+
+def generate_test_cases_iterative(method: str, core_code: str, iterations: int = 3, test_cases_per_iteration: int = 10) -> List[Dict[str, Any]]:
+    """
+    Iteratively generate test cases in multiple rounds. Each round conditions the LLM on
+    previously generated test cases to produce new, more diverse ones.
+
+    Parameters:
+        method: The extracted methodology text.
+        core_code: The extracted core code implementation.
+        iterations: How many rounds of generation to perform.
+        test_cases_per_iteration: How many test cases to generate per iteration.
+
+    Returns:
+        A list of test case dictionaries.
+    """
+
+    all_test_cases = []
+
+    for i in tqdm(range(iterations), desc="Iteration"):
+        # Include previously generated test cases in the prompt to ensure diversity
+        if all_test_cases:
+            # We'll show just the test case names and code from previous iterations
+            previously_generated_str = json.dumps(all_test_cases, indent=2)
+            prev_context = f"Previously generated test cases:\n```json\n{previously_generated_str}\n```\n"
+        else:
+            prev_context = "No previous test cases generated yet.\n"
+
+        prompt = (
+            f"Given the proposed method and its code implementation, generate a JSON array of {test_cases_per_iteration} new test cases. "
+            "Avoid repeating previous test cases, ensuring new names and scenarios. "
+            "Each item should contain the fields 'test_case' (a descriptive name without whitespace) and 'code' (the Python test code). "
+            f"Method:\n{method}\n\nCode:\n```python\n{core_code}\n```\n\n"
+            f"{prev_context}\n"
+            "Each individual test case should be self-contained, with necessary imports and definitions included. Do not put any placeholders as the test cases will be directly executed without modifications by users. "
+            "Use pytest conventions with assert statements that include error messages. "
+            f"Output the test cases in strictly valid JSON format. No additional text outside of the JSON.\n"
+        )
+
         response = call_llm(prompt)
+        json_str = extract_json(response)
+        if not json_str:
+            # If we fail to extract JSON, continue to the next iteration
+            continue
+
         try:
-            test_cases = json.loads(extract_json(response))
+            test_cases = json.loads(json_str)
             # Validate the format of test cases
             if all("test_case" in case and "code" in case for case in test_cases):
-                return test_cases
-        except Exception as e:
+                # Merge them with previously generated ones
+                all_test_cases.extend(test_cases)
+            else:
+                # If format isn't correct, continue to next iteration
+                continue
+        except:
+            # JSON parsing error, continue
             continue
-    return None
+
+    return all_test_cases if all_test_cases else None
 
 
 def write_test_case_to_file(test_case: Dict[str, Any], output_dir: str = "test_cases/") -> str:
@@ -81,16 +143,16 @@ def execute_test_case(test_case: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a test case using pytest and return the result."""
     file_path = write_test_case_to_file(test_case)
     try:
-        result = subprocess.run(["pytest", file_path], capture_output=True, text=True, timeout=60)
+        result = subprocess.run(["pytest", file_path], capture_output=True, text=True, timeout=600)
     except subprocess.TimeoutExpired as e:
-        return {"status": "ERROR", "message": f"Timeout!\nSTDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"} # RuntimeError
+        return {"status": "ERROR", "message": f"Timeout!\nSTDOUT:\n{e.stdout}\n\nSTDERR:\n{e.stderr}"}
     is_assertion_error = "AssertionError" in result.stdout or "AssertionError" in result.stderr
     if result.returncode == 0:
         return {"status": "PASSED", "message": f"STDOUT:\n{result.stdout}"}
     elif is_assertion_error:
-        return {"status": "FAILED", "message": f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"} # AssertionError
+        return {"status": "FAILED", "message": f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"}
     else:
-        return {"status": "ERROR", "message": f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"} # RuntimeError
+        return {"status": "ERROR", "message": f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"}
 
 
 def debug_test_case(test_case: Dict[str, Any], error_message: str, method: str, core_code: str) -> Optional[str]:
@@ -101,22 +163,18 @@ def debug_test_case(test_case: Dict[str, Any], error_message: str, method: str, 
             "The following test case failed with a runtime error. Modify the code to fix the issue and "
             "ensure it executes without errors. Do not fix assertion errors.\n\n"
             f"Test Case Code:\n```python\n{test_case['code']}\n```\n\nError Message:\n{error_message}\n\n"
-            f"To provide some context, the test case is designed to verify the functionality of the following code:\n```python\n{core_code}\n```"
+            f"Context code:\n```python\n{core_code}\n```"
         )
 
         response = call_llm(prompt)
-        try:
-            # Extract and rewrite the test case code
-            debugged_code = extract_python(response) # .split("```")[1]  # Extract code within triple backticks
+        debugged_code = extract_python(response)
+        if debugged_code:
             test_case["code"] = debugged_code
             debug_result = execute_test_case(test_case)
             if debug_result["status"] != "ERROR":
                 return debug_result, test_case
             else:
                 error_message = debug_result["message"]
-            # return debug_result["output"] if debug_result["status"] == "PASSED" else debug_result["message"]
-        except Exception as e:
-            continue  # Could not extract valid code
     return debug_result, test_case
 
 
@@ -124,7 +182,7 @@ def process_test_cases(test_cases: List[Dict[str, Any]], core_code: str, method:
     """Process test cases: run, debug, and collect results."""
     results = []
 
-    for test_case in test_cases:
+    for test_case in tqdm(test_cases, desc='Execution'):
         result = execute_test_case(test_case)
         if result["status"] == "ERROR":  # Runtime error, attempt debugging
             debug_result, test_case = debug_test_case(test_case, result["message"], method, core_code)
@@ -136,7 +194,7 @@ def process_test_cases(test_cases: List[Dict[str, Any]], core_code: str, method:
     return results
 
 
-def summarize_results(results: List[Dict[str, Any]], core_code: str, method: str) -> None:
+def summarize_results(results: List[Dict[str, Any]], core_code: str, method: str) -> Dict[str, Any]:
     """Summarize and display test results."""
     all_case_without_error, passed_case = 0, 0
     message = ""
@@ -149,29 +207,32 @@ def summarize_results(results: List[Dict[str, Any]], core_code: str, method: str
             all_case_without_error += 1
         if result["status"] == "PASSED":
             passed_case += 1
-    if all_case_without_error == 0:
-        pass_rate = None
-    else:
-        pass_rate = round(100 * passed_case / all_case_without_error, 2)
+    pass_rate = None if all_case_without_error == 0 else round(100 * passed_case / all_case_without_error, 2)
+
     if message:
         message = "===== Test Summary =====" + message
     pass_rate_stats = {
-            "pass_rate" : pass_rate,
-            "total_cases" : len(results), 
-            "all_cases_without_error" : all_case_without_error,
-            "passed_cases" : passed_case,
-            }
-    return {"test_case_pass_rate" : pass_rate_stats, "test_case_message" : message}
+        "pass_rate": pass_rate,
+        "total_cases": len(results),
+        "all_cases_without_error": all_case_without_error,
+        "passed_cases": passed_case,
+    }
+    return {"test_case_pass_rate": pass_rate_stats, "test_case_message": message}
 
 
-def test_cases_evaluation(full_method: str, full_code: str):
-    """Main function to orchestrate the testing pipeline."""
-    # method_code_pairs is deprecated
+def test_cases_evaluation(full_method: str, full_code: str, num_iterations: int = 5, test_cases_per_iteration: int = 10):
+    """Main function to orchestrate the testing pipeline with iterative generation."""
     method = identify_method(full_method)
-    core_code = identify_code(full_code) 
-    test_cases = generate_test_cases(method, core_code)
+    core_code = identify_code(full_code)
+    if core_code is None:
+        return None
+
+    # Use the iterative generation approach
+    test_cases = generate_test_cases_iterative(method, core_code, iterations=num_iterations, test_cases_per_iteration=test_cases_per_iteration)
     if test_cases is None:
         return None
+
     results = process_test_cases(test_cases, core_code, method)
     test_cases_evaluation_result = summarize_results(results, core_code, method)
     return test_cases_evaluation_result
+

@@ -14,6 +14,8 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dataset_filepath", type=str, default="data/dev_data.jsonl")
     args = parser.parse_args()
 
+    os.makedirs("output", exist_ok=True) # `save_evals` assume that `output/` folder exists
+
     loaded_methods = all_method_handlers()
     curr_method = loaded_methods[args.method](args.method)
     start_time = time.time()
