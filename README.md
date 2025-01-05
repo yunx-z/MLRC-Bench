@@ -11,6 +11,9 @@ cd ../env
 python main.py -m my_method -p dev
 python main.py -m my_method -p test
 
+add labels of dev/test set to ref/${TASK_NAME}
+set `export MLR_BENCH_DIR="/path/to/MLAgentBench"` in ~/.bashrc and `source ~/.bashrc`
+
 add the runtime of the new tasks in `MLAgentBench/constants.py` (Yunxiang will do it)
 
 
