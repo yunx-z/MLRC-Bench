@@ -110,6 +110,7 @@ class BaseMethod(object):
             raise NotImplementedError(f"Architecture not implemented {self.architecture}")
 
     def predict_multiple_choice(self, batch):
+        self._load_tokenizer()
         assert self.base_model is not None
         if self.architecture == "encoder_decoder":
             assert self.tokenizer is not None
@@ -120,6 +121,7 @@ class BaseMethod(object):
             raise NotImplementedError(f"Architecture not implemented {self.architecture}")
     
     def generate(self, batch):
+        self._load_tokenizer()
         assert self.base_model is not None
         if self.architecture == "encoder_decoder":
             assert self.tokenizer is not None
@@ -168,6 +170,7 @@ class BaseMethod(object):
 
                 self.loaded_models[model_name] = model_parameters 
                 self.loaded_configs[model_name] = AutoConfig.from_pretrained(model_name)
+
 
     # Merge function
     def run(self):

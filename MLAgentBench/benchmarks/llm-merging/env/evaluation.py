@@ -10,6 +10,8 @@ from typing import List, Dict, Any
 import torch
 from tqdm import tqdm
 from torch.utils import data
+from lm_eval import evaluator
+from lm_eval.models.huggingface import HFLM
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 class Dataset(object):
@@ -105,30 +107,58 @@ def evaluate_dataset(
 
     return all_batches
 
+def evaluate_tinybench(
+    model,
+    tokenizer,
+    tasks_list: List[str] = ["tinyBenchmarks"],
+    batch_size: int = 1,
+    device: str = "cuda" if torch.cuda.is_available() else "cpu",
+) -> Dict[str, Any]:
+    
+    my_model = HFLM(pretrained=model, tokenizer=tokenizer) 
+    del model
+    torch.cuda.empty_cache()
+    # Run evaluation
+    # Set apply_chat_template=True based on https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct/discussions/81
+    results = evaluator.simple_evaluate(
+        model=my_model,
+        tasks=tasks_list,
+        batch_size=batch_size,
+        device=device,
+        apply_chat_template=True,
+        fewshot_as_multiturn=True,
+        verbosity='ERROR',
+    )
+    
+    return results['results']
+    
 
 def evaluate_model(merge_method, phase):
     # Call the merge function. The merged model is stored under merging_method object 
     merge_method.run()
 
-    os.makedirs("output", exist_ok=True)
     output_dir = os.path.join("output", merge_method.get_name())
-    prediction_dir = os.path.join(output_dir, "predictions")
-    os.makedirs(prediction_dir, exist_ok=True)
-    # Save merged model 
-    merge_method.save_model(output_dir)
-
-    all_scores = {}
+    os.makedirs(output_dir, exist_ok=True)
 
     if phase == 'test':
         dataset_filepath = "data/test.csv"
+        dataset_predictions = evaluate_dataset(merge_method, dataset_filepath)
+        dp_df = pd.DataFrame(dataset_predictions)
+        dp_df["dummy_field"] = 0
+        # avoid error "Submission contains null values"
+        dp_df['prediction'] = dp_df['prediction'].replace('', 'unknown').fillna('unknown')
+        output_file = os.path.join(output_dir, "test.csv")
+        dp_df.to_csv(output_file, columns=["id", "prediction", "dummy_field"], index=False)
+        print(f"predictions saved to {output_file}")
+    elif phase == 'dev':
+        result = evaluate_tinybench(merge_method.base_model, merge_method.input_tokenizer)
+        output_file = os.path.join(output_dir, "dev.json")
+        with open(output_file, 'w') as writer:
+            json.dump(result, writer, indent=2)
+        print(f"evaluation results on tineBenchmark saved to {output_file}")
     else:
         raise ValueError(f"Invalid phase: {phase}")
-    dataset_predictions = evaluate_dataset(merge_method, dataset_filepath)
-    dp_df = pd.DataFrame(dataset_predictions)
-    dp_df["dummy_field"] = 0
-    # avoid error "Submission contains null values"
-    dp_df['prediction'] = dp_df['prediction'].replace('', 'unknown').fillna('unknown')
-    dp_df.to_csv(f"output/test.csv", columns=["id", "prediction", "dummy_field"], index=False)
+
 
 def get_submission_result(competition, idx=0):
     api = KaggleApi()
@@ -141,33 +171,52 @@ def get_submission_result(competition, idx=0):
     latest_submission = submissions[idx]
     if latest_submission["hasPublicScore"]:
         score = float(latest_submission["publicScore"])
-        print(f"\nYour merged model scores {score} on the test set!")
+        print(f"\nYour merged model scores {score} out of 1.00 on the test set!")
     else:
         error_msg = latest_submission["errorDescription"] 
         print(f"\nYour merged model may generate something invalid so the submission does not have a score. Here is the error message from the Kaggle leaderboard:\n\n{error_msg}")
         score = 0
     return score
 
-def get_score():
-    submission_path = "output/test.csv"
-    competition_name = "llm-merging-competition"
-    lock_file = os.path.expanduser("~/submission.lock")
-    score = 0
-    while os.path.exists(lock_file):
-        print("Another submission is in progress. Waiting...")
-        time.sleep(30)  # Wait before checking again
-    # Create a lock file
-    with open(lock_file, 'w') as f:
-        f.write('Locked')
-    try:
-        print("\nSubmitting to Kaggle leaderbord for evaluation on test set ...")
-        os.system(f"kaggle competitions submit -c {competition_name} -f {submission_path} -m \"llm-merging\"")
-        print("\nWaiting for Kaggle leaderboard to refresh ...")
-        time.sleep(60)
-        score = get_submission_result(competition_name)
-    finally:
-        # Remove the lock file
-        os.remove(lock_file)
+def get_score(merge_method, phase):
+    output_dir = os.path.join("output", merge_method.get_name())
+
+    if phase == 'test':
+        submission_path = os.path.join(output_dir, "test.csv")
+        competition_name = "llm-merging-competition"
+        lock_file = os.path.expanduser("~/submission.lock")
+        score = 0
+        while os.path.exists(lock_file):
+            print("Another submission is in progress. Waiting...")
+            time.sleep(30)  # Wait before checking again
+        # Create a lock file
+        with open(lock_file, 'w') as f:
+            f.write('Locked')
+        try:
+            print("\nSubmitting to Kaggle leaderbord for evaluation on test set ...")
+            os.system(f"kaggle competitions submit -c {competition_name} -f {submission_path} -m \"llm-merging\"")
+            print("\nWaiting for Kaggle leaderboard to refresh ...")
+            time.sleep(60)
+            score = get_submission_result(competition_name)
+        finally:
+            # Remove the lock file
+            os.remove(lock_file)
+    elif phase == 'dev':
+        output_file = os.path.join(output_dir, "dev.json")
+        with open(output_file, 'r') as reader:
+            result = json.load(reader)
+        scores = []
+        for bench in result:
+            bench_result = result[bench]
+            if 'acc_norm,none' in bench_result:
+                scores.append(bench_result['acc_norm,none'])
+            elif 'exact_match,flexible-extract' in bench_result:
+                scores.append(bench_result['exact_match,flexible-extract'])
+        score = sum(scores) / len(scores)
+        score = round(score, 2)
+        print(f"\nYour merged model scores {score} out of 1.00 on the dev set!")
+    else:
+        raise ValueError(f"Invalid phase: {phase}")
 
     return score
 

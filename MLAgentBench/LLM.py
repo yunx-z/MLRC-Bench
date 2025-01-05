@@ -58,16 +58,19 @@ except Exception as e:
     pass
     # print(e)
     # print("Could not load anthropic API key claude_api_key.txt.")
-    
-import openai
-# setup OpenAI API key
-openai_api_key = os.getenv('MY_OPENAI_API_KEY')
-openai_api_base = os.getenv('MY_AZURE_OPENAI_ENDPOINT')
-openai_client = openai.AzureOpenAI(
-        azure_endpoint=openai_api_base,
-        api_key=openai_api_key,
-        api_version="2024-10-01-preview",
-        )
+
+try:
+    import openai
+    # setup OpenAI API key
+    openai_api_key = os.getenv('MY_OPENAI_API_KEY')
+    openai_api_base = os.getenv('MY_AZURE_OPENAI_ENDPOINT')
+    openai_client = openai.AzureOpenAI(
+            azure_endpoint=openai_api_base,
+            api_key=openai_api_key,
+            api_version="2024-10-01-preview",
+            )
+except Exception as e:
+    print("WARNING: cannot load openai endpoint")
 
 try:
     import vertexai

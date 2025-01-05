@@ -1,6 +1,23 @@
 import torch
 import torch.nn.functional as F
 
+from transformers import StoppingCriteria, StoppingCriteriaList
+
+class StopOnSequence(StoppingCriteria):
+    def __init__(self, target_sequence, tokenizer):
+        self.target_sequence = target_sequence
+        self.target_ids = tokenizer.encode(target_sequence, add_special_tokens=False)
+        self.tokenizer = tokenizer
+
+    def __call__(self, input_ids, scores, **kwargs):
+        # Check if the generated tokens end with the target sequence
+        if len(input_ids[0]) < len(self.target_ids):
+            return False
+        if input_ids[0][-len(self.target_ids):].tolist() == self.target_ids:
+            return True
+        return False
+
+
 def predict_multiple_choice(
     transformer, input_tokenizer, target_tokenizer, batch
 ): 
@@ -124,9 +141,12 @@ def generate(
     max_gen_len
 ):
     tokenized_batch = tokenize_batch(input_tokenizer, target_tokenizer, batch, transformer.device)
+    stop_sequence = "Input:"
+    stopping_criteria = StoppingCriteriaList([StopOnSequence(stop_sequence, input_tokenizer)]) # prevent model from repetitive generation
 
     generation_output = transformer.generate(
         input_ids=tokenized_batch["input_ids"],
+        stopping_criteria=stopping_criteria,
         attention_mask=tokenized_batch["input_mask"],
         max_new_tokens=max_gen_len,
         eos_token_id=input_tokenizer.eos_token_id,
@@ -138,16 +158,21 @@ def generate(
 
     # Remove the original input ids from the generated ids to get just the generated ids 
     input_len = tokenized_batch[f"input_ids"].shape[-1]
-
     generated_ids = generation_output["sequences"][:, input_len:]
+
+    # Truncate target sequence if present at the end
+    target_ids = target_tokenizer.encode(stop_sequence, add_special_tokens=False)
+    truncated_ids = []
+    for i in range(generated_ids.shape[0]):
+        if len(generated_ids[i]) >= len(target_ids) and generated_ids[i][-len(target_ids):].tolist() == target_ids:
+            truncated_ids.append(generated_ids[i][:-len(target_ids)])
+        else:
+            truncated_ids.append(generated_ids[i])
+    generated_ids = truncated_ids
 
     generated_txt = input_tokenizer.batch_decode(
         generated_ids, skip_special_tokens=True
     )
-    # print("Input:", input_tokenizer.batch_decode(tokenized_batch["input_ids"]))
-    # print("input_ids", tokenized_batch["input_ids"])
-    # print("Raw Output:", input_tokenizer.batch_decode(generation_output["sequences"]))
-    # print("generated_txt:", generated_txt)
 
     return generation_output["sequences"].cpu().numpy().tolist(), generated_txt
 
