@@ -4,17 +4,24 @@ Students: create a new folder under `MLAgentBench/benchmarks/`
 
 Commands to test your newly added tasks:
 
+```
 conda activate ${TASK_NAME}
 cd MLAgentBench/benchmarks/${TASK_NAME}/scripts/
 python prepare.py
 cd ../env
 python main.py -m my_method -p dev
+source config.sh
+cp ../scripts/${TEST_FILE_NAME} data/
+cp ../scripts/test_constants.py constants.py
 python main.py -m my_method -p test
+```
 
 add labels of dev/test set to ref/${TASK_NAME}
 set `export MLR_BENCH_DIR="/path/to/MLAgentBench"` in ~/.bashrc and `source ~/.bashrc`
 
 specify `TEST_FILE_NAME="test_data_file_name_here"` in scripts/config.sh and put test_data_file under scripts/
+
+[Template](https://github.com/yunx-z/MLAgentBench/commit/b1223cc67eced7d1da590df506b097f8f65d521d) for adding a new competiton
 
 add the runtime of the new tasks in `MLAgentBench/constants.py` (Yunxiang will do it)
 
