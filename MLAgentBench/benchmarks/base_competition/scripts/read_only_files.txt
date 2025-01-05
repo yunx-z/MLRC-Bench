@@ -1,5 +1,0 @@
-data/*
-methods/BaseMethod.py
-./evaluation.py
-./main.py
-./constants.py

@@ -9,6 +9,7 @@ from pprint import pprint
 from MLAgentBench.LLM import complete_text, LOG_DIR
 from MLAgentBench.llm_test_cases import test_cases_evaluation 
 from MLAgentBench.schema import EnvException
+from MLAgentBench.constants import *
 
 def calculate_complexity(code):
     tree = ast.parse(code)
@@ -124,7 +125,7 @@ def get_llm_feedback_deprecated(idea, code):
 
     return None
 
-def save_evals(method_name, method_class, base_class, score, runtime, BASE_RUNTIME):
+def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime):
     # save idea, method_name, method_code, feedback, score into a file
     method_code = inspect.getsource(method_class)
     base_method_code = inspect.getsource(base_class)
@@ -151,8 +152,11 @@ def save_evals(method_name, method_class, base_class, score, runtime, BASE_RUNTI
 
     method_complexity = calculate_complexity(method_code)
     base_complexity = calculate_complexity(base_method_code)
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task_name][phase] 
     eval_result = {
+            "task_name" : task_name,
             "method_name" : method_name,
+            "phase" : phase,
             "performance" : score,
             "relevance_score" : relevance_score, 
             "test_case_pass_rate" : test_case_pass_rate,

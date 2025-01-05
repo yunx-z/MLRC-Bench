@@ -10,9 +10,8 @@ from methods import *
 
 from MLAgentBench.utils import save_evals 
 
+TASK_NAME = "llm-merging" 
 DEFAULT_METHOD_NAME = "my_method"
-BASE_RUNTIME = 606.0022532939911 # avg over 3 runs on Quadro RTX 8000 GPU 
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -30,15 +29,16 @@ if __name__ == "__main__":
     end_time = time.time()
     runtime = end_time - start_time
 
-    score = get_score()
+    score = get_score(curr_method, args.phase)
 
     base_class = loaded_methods[DEFAULT_METHOD_NAME]
     method_class = loaded_methods[args.method]
     save_evals(
+            task_name=TASK_NAME,
             method_name=args.method,
             method_class=method_class,
             base_class=base_class,
             score=score,
+            phase=args.phase,
             runtime=runtime,
-            BASE_RUNTIME=BASE_RUNTIME,
             )
