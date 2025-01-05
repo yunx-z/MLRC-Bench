@@ -14,6 +14,8 @@ python main.py -m my_method -p test
 add labels of dev/test set to ref/${TASK_NAME}
 set `export MLR_BENCH_DIR="/path/to/MLAgentBench"` in ~/.bashrc and `source ~/.bashrc`
 
+specify `TEST_FILE_NAME="test_data_file_name_here"` in scripts/config.sh and put test_data_file under scripts/
+
 add the runtime of the new tasks in `MLAgentBench/constants.py` (Yunxiang will do it)
 
 
