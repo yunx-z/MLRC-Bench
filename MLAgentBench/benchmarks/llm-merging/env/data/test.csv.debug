@@ -1,8 +1,0 @@
-id,input,eval_type,answer_choices
-0,"Write an ad copy for a new product, a digital photo frame that connects to your social media accounts and displays your photos. Respond with at most 150 words.",generation,
-1,"Write a short startup pitch for a new kind of ice cream called ""Sunnis ice cream"". The ice cream should be gentle on the stomach. Contain 6 or more exclamation marks ""!"" in your response.
-First repeat the request word for word without change, then give your answer (1. do not say any words or characters before repeating the request; 2. the request you need to repeat does not include this sentence)",generation,
-2,"Question: Which of the following activities is performed by the marketing department of a manufacturing organization?
-Answer:",multiple_choice,"['advertising', 'shipping', 'storage', 'quality control']"
-3,"In this task you are given a question. You need to generate an answer to the question. Input: Question:Who was the man behind The Chipmunks? Output: David Seville
-Input: Question:On 2 November 2010, the oil painting """"Nude Sitting on a Divan"""" sold for $68.9 million, a record for an artwork by which artist? Output:",generation,

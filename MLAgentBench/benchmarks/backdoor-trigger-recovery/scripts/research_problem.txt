@@ -1,0 +1,24 @@
+**Backdoor Trigger Recovery for Code Generation Models**
+
+## Description
+Participants in this competition are tasked with developing algorithms to recover backdoor triggers embedded within large language models (LLMs) used for code generation. Each provided backdoored LLM contains multiple (trigger, target) pairs, where triggers are universal prompt injections designed to induce the generation of malicious code specified by the targets. In the development phase, participants receive a model finetuned with five known (trigger, target) pairs, while in the testing phase, the models include tens of secret (trigger, target) pairs related to various categories of harmful code generation. The objective is to predict the triggers corresponding to each provided target, adhering to a maximum token constraint of 10 tokens per trigger. Submissions will be evaluated using two metrics: recall, which measures the similarity between predicted and ground truth triggers, and the Reverse-Engineering Attack Success Rate (REASR), which assesses the effectiveness of the recovered triggers in eliciting the malicious code. Participants are provided with a starter dataset of 100 code generation queries and their correct outputs for method development and local evaluation, with additional data encouraged for enhancing method robustness. However, any attempts to access or guess the secret online evaluation dataset will be considered a rule violation.
+
+## Developing New Methods
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. The baseline method implements a Greedy Coordinate Gradient (GCG)-based search algorithm inspired by the universal attack technique described in the baseline paper. This method optimizes an adversarial suffix appended to user prompts to induce the LLM to generate specified malicious code. The GCG algorithm iteratively identifies promising token substitutions by leveraging gradient information and evaluates potential replacements to minimize the adversarial loss, thereby recovering the triggers responsible for the backdoor behavior.
+
+1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
+2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`.
+3. Add the new module to `methods/__init__.py`.
+
+## Test Method
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. Upon execution, the evaluation pipeline will process the specified method by applying it to the provided targets using the development phase model. The pipeline will generate predicted triggers, which are then compared against the ground truth using the recall and REASR metrics. The results will be displayed locally for immediate feedback, allowing participants to iterate on their methods before final submission to the online leaderboard.
+
+## Competition Rules
+Focus on the development of novel methods and algorithms that offer meaningful insights into backdoor trigger recovery. Do NOT propose trivial solutions such as simple prompt engineering or brute-force search without innovative strategy.
+
+- **Computation Constraints**: Ensure that your method operates efficiently within the provided computational resources. Excessive computational overhead may lead to disqualification.
+- **Trigger Constraints**: Each predicted trigger must be a universal prompt injection consisting of no more than 10 tokens.
+- **Submission Format**: Submit a zipped dictionary where each key is a provided target string and each value is a list of two predicted triggers corresponding to that target.
+- **Data Usage**: You may use the provided development dataset and generate additional data for method development. However, accessing or attempting to infer the secret online evaluation dataset is strictly prohibited and will be treated as a rule violation.
+- **Method Integrity**: All submissions must strictly adhere to the objective of recovering triggers without altering the target strings or embedding external information unrelated to trigger recovery.
+
