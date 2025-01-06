@@ -23,6 +23,8 @@ specify `TEST_FILE_NAME="test_data_file_name_here"` in scripts/config.sh and put
 
 [Template](https://github.com/yunx-z/MLAgentBench/commit/b1223cc67eced7d1da590df506b097f8f65d521d) for adding a new competiton
 
+An example for submmiting a pull request of your newly added task ([Backdoor Trigger Recovery task](https://github.com/yunx-z/MLAgentBench/commit/0cca9894e875a34b0198f6a0d21a261de091c5a3#diff-a18dc95402bb68ced881913d4416f1ad5a3a408e5448dab3c27619a729f6d7ebR4))
+
 add the runtime of the new tasks in `MLAgentBench/constants.py` (Yunxiang will do it)
 
 
