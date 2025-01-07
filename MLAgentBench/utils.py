@@ -28,9 +28,28 @@ def sanitize_json_string(s):
     # triple quotes are a problem
     return re.sub(r'"([^"]*)"', lambda m: '"' + m.group(1).replace('\n', '\\n').replace('\"', '\\"') + '"', s)
 
-FEEDBACK_MODEL = "o1-mini"
+FEEDBACK_MODEL = "gpt-4o"
 FEEDBACK_MAX_TOKENS = 4000
 MAX_RETRYS = 3
+
+def summarize_code(code):
+    prompt = f"""
+    Analyze the following Python code with comments and generate a high-level idea proposal summarizing:
+    1. The main goal or purpose of the method or algorithm implemented.
+    2. The general approach or methodology used to achieve the goal.
+    3. Any core assumptions or requirements underlying the implementation.
+
+    Focus on providing a conceptual overview rather than implementation details.
+
+    Code:
+    ```python
+    {code}
+    ```
+    Provide the summary as an idea proposal, avoiding references to the code itself. Focus on describing the approach and methodology as a standalone concept.
+    """ 
+    completion = complete_text(prompt, log_file=os.path.join(LOG_DIR, "env_log", "summarize_code.txt"), model=FEEDBACK_MODEL, max_tokens_to_sample=FEEDBACK_MAX_TOKENS) 
+    return completion
+
 def get_llm_feedback(idea, code):
     try:
         test_cases_eval_result = test_cases_evaluation(idea, code)
@@ -133,15 +152,18 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     if os.path.exists(idea_file):
         with open(idea_file, 'r') as reader:
             idea = reader.read()
-        feedback_result = get_llm_feedback(idea, method_code)
-        feedback, relevance_score = feedback_result.get("relevance_feedback"), feedback_result.get("relevance_score")
-        test_case_message, test_case_pass_rate = feedback_result.get("test_case_message"), feedback_result.get("test_case_pass_rate")
+        explanation = summarize_code(method_code)
+        # feedback_result = get_llm_feedback(idea, method_code)
+        # feedback, relevance_score = feedback_result.get("relevance_feedback"), feedback_result.get("relevance_score")
+        # test_case_message, test_case_pass_rate = feedback_result.get("test_case_message"), feedback_result.get("test_case_pass_rate")
         # we only do post-hoc evaluation of faithfulness and do not send this feedback to implementation agents
         # print(feedback)
         # print("\n\n\n")
         # print(test_case_message)
     else:
-        idea, feedback, relevance_score, test_case_message, test_case_pass_rate = None, None, None, None, None
+        idea, explanation = None, None
+        # idea, feedback, relevance_score, test_case_message, test_case_pass_rate = None, None, None, None, None
+
 
     eval_file = "output/idea_evals.json"
     if os.path.exists(eval_file):
@@ -158,16 +180,17 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "method_name" : method_name,
             "phase" : phase,
             "performance" : score,
-            "relevance_score" : relevance_score, 
-            "test_case_pass_rate" : test_case_pass_rate,
+            # "relevance_score" : relevance_score, 
+            # "test_case_pass_rate" : test_case_pass_rate,
             "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
             "relative_complexity" :  100 * (method_complexity - base_complexity) / base_complexity,
             "runtime" : runtime,
             "method_complexity" : method_complexity,
             "base_complexity" : base_complexity,
             "code" : method_code,
-            "relevance_feedback" : feedback,
-            "test_case_message" : test_case_message,
+            "explanation" : explanation,
+            # "relevance_feedback" : feedback,
+            # "test_case_message" : test_case_message,
             }
     all_evals["implementations"].append(eval_result)
     with open(eval_file, 'w') as writer:
@@ -176,14 +199,17 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
 
 # Example Usage
 if __name__ == "__main__":
-    anchor = "dare"
-    idea_proposal_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/idea.txt"
-    full_code_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/llm_merging/merging/IntelligentMerge.py"
-    idea_proposal = open(idea_proposal_file, 'r').read()
+    # anchor = "dare"
+    # idea_proposal_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/idea.txt"
+    # full_code_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/llm_merging/merging/IntelligentMerge.py"
+    full_code_file = "MLAgentBench/benchmarks/llm-merging/env/methods/MyMethod.py"
+    # idea_proposal = open(idea_proposal_file, 'r').read()
     full_code = open(full_code_file, 'r').read()
-    fres = get_llm_feedback(idea_proposal, full_code)
+    # fres = get_llm_feedback(idea_proposal, full_code)
+    explanation = summarize_code(full_code)
     print("Finished!")
-    for k in fres:
-        print(k)
-        print(fres[k])
+    print(explanation)
+    # for k in fres:
+    #     print(k)
+    #     print(fres[k])
 

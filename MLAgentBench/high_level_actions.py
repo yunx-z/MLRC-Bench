@@ -93,6 +93,7 @@ def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwar
     Edit the script by following the instruction:
     {edit_instruction}
     Provide the full code after the edit, making no other changes. Start the python code with "```python". 
+    Begin with a high-level comment summarizing the purpose, methodology, and key steps of the algorithm. Add detailed comments for each function, explaining its purpose, parameters, and return values. Include inline comments to clarify important computations, loops, and conditions. Ensure the code is easy to follow for someone unfamiliar with the algorithm.
 
     """
 
