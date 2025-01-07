@@ -5,8 +5,10 @@ Students: create a new folder under `MLAgentBench/benchmarks/`
 Commands to test your newly added tasks:
 
 ```
-conda activate ${TASK_NAME}
+
 cd MLAgentBench/benchmarks/${TASK_NAME}/scripts/
+conda env create -f environment.yml
+conda activate ${TASK_NAME}
 python prepare.py
 cd ../env
 python main.py -m my_method -p dev
