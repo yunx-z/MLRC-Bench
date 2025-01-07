@@ -8,8 +8,8 @@ ALL_BASE_RUNTIME = {
             "test" : 1811.927922,
             },
         "backdoor-trigger-recovery" : {
-            "dev" : 100,
-            "test" : 100,
+            "dev" : 481.1659276,
+            "test" : 429.746381,
             },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
     }
