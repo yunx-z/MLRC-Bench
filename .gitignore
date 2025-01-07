@@ -4,6 +4,7 @@ MLAgentBench.egg-info/
 logs/
 workspace/
 bak/
-*.sh
-**/__pycache__
+__pycache__/
 MLAgentBench/benchmarks/
+/*.sh
+!*/**/*.sh
