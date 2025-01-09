@@ -4,6 +4,7 @@ This file is the entry point for MLAgentBench.
 
 import argparse
 import sys
+import os
 from MLAgentBench import LLM, utils, llm_test_cases
 from MLAgentBench.environment import Environment
 from MLAgentBench.agents.agent import Agent, SimpleActionAgent, ReasoningActionAgent
@@ -13,6 +14,9 @@ try:
     from MLAgentBench.agents.agent_autogpt  import AutoGPTAgent
 except:
     print("Failed to import AutoGPTAgent; Make sure you have installed the autogpt dependencies if you want to use it.")
+
+os.environ["MLR_BENCH_DIR"] = "/data/yunxiang/MLAgentBench"
+assert os.path.isdir(os.environ["MLR_BENCH_DIR"])
 
 
 def run(agent_cls, args):
