@@ -379,7 +379,7 @@ class Environment:
             shutil.rmtree(save_folder)
         os.makedirs(save_folder)
 
-        # save files in the folder that are not read only
+        # save ALL files in the folder
         for path, subdirs, files in os.walk(os.path.join(self.work_dir)):
 
             relpath = os.path.relpath(path, self.work_dir)
@@ -387,13 +387,12 @@ class Environment:
 
             for file_name in files:
                 file_path = os.path.join(relpath, file_name)
-                if file_path not in self.read_only_files:
-                    # check wether the file to copy is part of self.log_dir
-                    if  os.path.abspath(os.path.join(self.work_dir, file_path)).startswith(os.path.abspath(self.log_dir.split("/env_log")[0])):
-                        continue                    
-                    if not os.path.exists(dest):
-                        os.makedirs(dest)            
-                    shutil.copyfile(os.path.join(self.work_dir, file_path), os.path.join(save_folder, file_path))
+                # check wether the file to copy is part of self.log_dir
+                if  os.path.abspath(os.path.join(self.work_dir, file_path)).startswith(os.path.abspath(self.log_dir.split("/env_log")[0])):
+                    continue                    
+                if not os.path.exists(dest):
+                    os.makedirs(dest)            
+                shutil.copyfile(os.path.join(self.work_dir, file_path), os.path.join(save_folder, file_path))
 
     ############## for logging convenience ##############
 
