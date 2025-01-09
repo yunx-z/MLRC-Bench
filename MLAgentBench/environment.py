@@ -2,19 +2,22 @@
 This file contains the Environment class, which prepares the environment for the research agent to run in.
 """
 
-import json
-import os
-import sys
-import subprocess
-import shutil
-import copy
-import time
-import fnmatch
-import signal
-from traceback import format_exception
-from multiprocessing import active_children
-import readline # to make sure input() works properly
-from dacite import from_dict
+try:
+    import json
+    import os
+    import sys
+    import subprocess
+    import shutil
+    import copy
+    import time
+    import fnmatch
+    import signal
+    from traceback import format_exception
+    from multiprocessing import active_children
+    import readline # to make sure input() works properly
+    from dacite import from_dict
+except Exception as e:
+    pass
 
 from .low_level_actions import LOW_LEVEL_ACTIONS
 from .high_level_actions import HIGH_LEVEL_ACTIONS
@@ -307,6 +310,7 @@ class Environment:
         trace = self._trace
 
         curr_step = len(trace.steps)
+        os.environ["CURR_STEP"] = str(curr_step)
         action_name = action.name
         action_input = action.args
 

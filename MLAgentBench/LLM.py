@@ -3,7 +3,6 @@
 import os
 import re
 import json
-from functools import partial
 from .schema import TooLongPromptError, LLMError
 
 
@@ -82,9 +81,12 @@ except Exception as e:
     # print(e)
     # print("Could not load VertexAI API.")
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import StoppingCriteria, StoppingCriteriaList
-import torch
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import StoppingCriteria, StoppingCriteriaList
+    import torch
+except Exception as e:
+    pass
 
 loaded_hf_models = {}
 
@@ -348,5 +350,4 @@ def complete_text(prompt, log_file, model, **kwargs):
 FAST_MODEL = "gpt-4o-mini"
 def complete_text_fast(prompt, **kwargs):
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
-# complete_text_fast = partial(complete_text_openai, temperature= 0.01)
 

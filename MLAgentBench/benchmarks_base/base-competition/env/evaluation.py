@@ -13,6 +13,6 @@ def get_score(Method, phase):
     # 2. calculate evaluation metric (either locally or use Kaggle API to submit to the leaderboard)
     # 3. (optional) save sample-level evaluation scores to a file (this may not be possible with Kaggle API evaluation)
     # 4. use `print()` function to print a message informing the evaluation score, which will be visible to LLM agents.
-    # 5. return the final score (a single number)
+    # 5. return the final score (a single number, the higher the better)
     pass
 

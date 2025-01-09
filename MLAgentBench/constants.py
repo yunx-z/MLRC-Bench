@@ -13,3 +13,22 @@ ALL_BASE_RUNTIME = {
             },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
     }
+
+ALL_BASE_PERFORMANCE = {
+        "base-competition" : {
+            "dev" : 0.5,
+            "test" : 0.5,
+            },
+        "llm-merging" : {
+            # range 0-1
+            "dev" : 0.73,
+            "test" : 0.49,
+            },
+        "backdoor-trigger-recovery" : {
+            # range 0-100
+            "dev" : 8.331147359458377,
+            "test" : 12.972998823683664,
+            },
+        # TODO: add the baseline performance of your new tasks here.
+    }
+

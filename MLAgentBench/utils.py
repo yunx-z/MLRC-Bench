@@ -7,7 +7,7 @@ import ast
 from pprint import pprint
 
 from MLAgentBench.LLM import complete_text, LOG_DIR
-from MLAgentBench.llm_test_cases import test_cases_evaluation 
+# from MLAgentBench.llm_test_cases import test_cases_evaluation 
 from MLAgentBench.schema import EnvException
 from MLAgentBench.constants import *
 
@@ -152,18 +152,10 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     if os.path.exists(idea_file):
         with open(idea_file, 'r') as reader:
             idea = reader.read()
-        explanation = summarize_code(method_code)
-        # feedback_result = get_llm_feedback(idea, method_code)
-        # feedback, relevance_score = feedback_result.get("relevance_feedback"), feedback_result.get("relevance_score")
-        # test_case_message, test_case_pass_rate = feedback_result.get("test_case_message"), feedback_result.get("test_case_pass_rate")
-        # we only do post-hoc evaluation of faithfulness and do not send this feedback to implementation agents
-        # print(feedback)
-        # print("\n\n\n")
-        # print(test_case_message)
     else:
-        idea, explanation = None, None
-        # idea, feedback, relevance_score, test_case_message, test_case_pass_rate = None, None, None, None, None
+        idea = None
 
+    explanation = summarize_code(method_code)
 
     eval_file = "output/idea_evals.json"
     if os.path.exists(eval_file):
@@ -175,11 +167,14 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     method_complexity = calculate_complexity(method_code)
     base_complexity = calculate_complexity(base_method_code)
     BASE_RUNTIME = ALL_BASE_RUNTIME[task_name][phase] 
+    BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task_name][phase]
     eval_result = {
             "task_name" : task_name,
             "method_name" : method_name,
             "phase" : phase,
             "performance" : score,
+            "improvement_perc" : 100 * (score - BASE_PERFORMANCE) / BASE_PERFORMANCE,
+            "step" : int(os.getenv("CURR_STEP")),
             # "relevance_score" : relevance_score, 
             # "test_case_pass_rate" : test_case_pass_rate,
             "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
