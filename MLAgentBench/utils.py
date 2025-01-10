@@ -29,7 +29,7 @@ def sanitize_json_string(s):
     return re.sub(r'"([^"]*)"', lambda m: '"' + m.group(1).replace('\n', '\\n').replace('\"', '\\"') + '"', s)
 
 def summarize_code(code):
-    FEEDBACK_MODEL = os.getenv("FEEDBACK_MODEL", "o1-preview")
+    FEEDBACK_MODEL = os.getenv("FEEDBACK_MODEL", "gpt-4o")
     FEEDBACK_MAX_TOKENS = int(os.getenv("FEEDBACK_MAX_TOKENS", "4000"))
     MAX_RETRYS = 3
 
@@ -146,8 +146,11 @@ def summarize_code(code):
 
 def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime):
     # save idea, method_name, method_code, feedback, score into a file
-    method_code = inspect.getsource(method_class)
-    base_method_code = inspect.getsource(base_class)
+    method_code_file = inspect.getfile(method_class)
+    base_method_code_file = inspect.getfile(base_class)
+    method_code = open(method_code_file, 'r').read()
+    base_method_code = open(base_method_code_file, 'r').read()
+
     idea_file = "idea.txt"
     if os.path.exists(idea_file):
         with open(idea_file, 'r') as reader:
@@ -182,6 +185,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "runtime" : runtime,
             "method_complexity" : method_complexity,
             "base_complexity" : base_complexity,
+            "method_code_file" : method_code_file,
             "code" : method_code,
             "explanation" : explanation,
             # "relevance_feedback" : feedback,

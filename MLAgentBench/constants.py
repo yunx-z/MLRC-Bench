@@ -10,6 +10,7 @@ ALL_BASE_RUNTIME = {
         "backdoor-trigger-recovery" : {
             "dev" : 481.1659276,
             "test" : 429.746381,
+            "debug" : 400,
             },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
     }
@@ -28,7 +29,10 @@ ALL_BASE_PERFORMANCE = {
             # range 0-100
             "dev" : 8.331147359458377,
             "test" : 12.972998823683664,
+            "debug" : 2,
             },
         # TODO: add the baseline performance of your new tasks here.
     }
 
+
+MLR_BENCH_DIR = "/data/yunxiang/MLAgentBench" # absolute path

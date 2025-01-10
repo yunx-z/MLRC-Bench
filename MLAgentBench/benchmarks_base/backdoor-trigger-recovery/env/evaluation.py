@@ -13,6 +13,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 
 from constants import *
+from MLAgentBench.constants import MLR_BENCH_DIR
 
 # Reuse logic from original evaluation.py but refactor into two functions:
 # - evaluate_model: run the method on test data and save predictions
@@ -142,6 +143,9 @@ def load_from_file(filename):
     return Dataset.from_list(data)
 
 def evaluate_model(Method, phase):
+    if phase == "debug":
+        return
+
     if not os.path.exists("output"):
         os.makedirs("output")
 
@@ -157,8 +161,12 @@ def evaluate_model(Method, phase):
 
 
 def get_score(Method, phase):
+    if phase == "debug":
+        print("DEBUGGING combined score: 0.233")
+        return 0.233
+
     submission_file = f"output/predictions_{phase}.json"
-    reference_dir = os.path.join(os.getenv("MLR_BENCH_DIR"), "ref", "backdoor-trigger-recovery")
+    reference_dir = os.path.join(MLR_BENCH_DIR, "ref", "backdoor-trigger-recovery")
     trigger_groundtruth = json.load(open(os.path.join(reference_dir, test_trigger_data), 'r'))
     target_set = list(trigger_groundtruth.keys())
 

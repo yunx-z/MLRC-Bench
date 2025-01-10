@@ -82,7 +82,7 @@ def evaluate_dataset(
 
     print("Running predictions on test set ...")
     with torch.no_grad():
-        for batch in data_loader:
+        for batch in tqdm(data_loader):
             # There are two types of evaluation models:
             # 1) multiple choice where the model scores each choice and predicts the choice with the highest score 
             # 2) generation where the model generate some output give some input 
