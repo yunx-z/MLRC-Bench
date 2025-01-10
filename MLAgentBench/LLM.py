@@ -7,18 +7,11 @@ from .schema import TooLongPromptError, LLMError
 
 
 # https://openai.com/api/pricing/
+# As of 01/10/2025
 MODEL2PRICE = {
-        "gpt-4-turbo" : {
-            "input" : 10 / 1e6,
-            "output" : 30 / 1e6,
-            },
-        "gpt-4o-gs" : {
-            "input" : 5 / 1e6,
-            "output" : 15 / 1e6,
-            },
         "gpt-4o" : {
-            "input" : 5 / 1e6,
-            "output" : 15 / 1e6,
+            "input" : 2.5 / 1e6,
+            "output" : 10 / 1e6,
             },
         "gpt-4o-mini" : {
             "input" : 0.15 / 1e6,
@@ -352,3 +345,7 @@ def complete_text_fast(prompt, **kwargs):
     FAST_MODEL = os.getenv("FAST_MODEL", "gpt-4o-mini")
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 
+if __name__ == "__main__":
+    model = "o1-mini"
+    completion = complete_text("Hello!", "logs/tmp.log", model)
+    print(completion)
