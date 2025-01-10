@@ -1,5 +1,5 @@
 data/*
 methods/BaseMethod.py
-./evaluation.py
+evaluation.py
 model/*
-./main.py
+main.py
