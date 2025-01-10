@@ -26,7 +26,7 @@ Each task is a folder in `MLAgentBench/benchmarks_base/`, under which the `env/`
 Steps:
 - Fork this github repo to your own github space.
 - Complete steps in Setup Section for the MLAgentBench packages.
-- Create a new task folder under `MLAgentBench/benchmarks/benchmarks_base`, following the [template](https://github.com/yunx-z/MLAgentBench/tree/main/MLAgentBench/benchmarks_base/base-competition).
+- Create a new task folder under `MLAgentBench/benchmarks_base`, following the [template](https://github.com/yunx-z/MLAgentBench/tree/main/MLAgentBench/benchmarks_base/base-competition).
 - add runtime and performance of your baseline method in `MLAgentBench/constants.py`
 - Submit a pull request.
 
