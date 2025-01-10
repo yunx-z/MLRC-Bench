@@ -174,7 +174,8 @@ class Environment:
 
                 relpath = os.path.relpath(path, work_dir)
                 # filter out the files that are read only
-                filenames = [os.path.join(relpath, filename) for filename in files]
+                # "we want 'main.py' as filename not './main.py', as we specify 'main.py' in read_only_files.txt"
+                filenames = [os.path.join(relpath, filename) for filename in files if relpath != "." else filename]
                 for ignore in ignore_files:
                     ignore_filenames = [n for n in filenames if fnmatch.fnmatch(n, ignore)]
                     self.read_only_files.extend(ignore_filenames)
