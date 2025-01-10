@@ -103,9 +103,9 @@ class StopAtSpecificTokenCriteria(StoppingCriteria):
         current_sequence = input_ids[:, -len(self.stop_sequence) :]
         return bool(torch.all(current_sequence == stop_sequence_tensor).item())
 
-LOG_DIR = "logs/"  
 def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens):
     """ Log the prompt and completion to a file."""
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
     with open(log_file, "a") as f:
         f.write("\n===================prompt=====================\n")
         f.write(f"{prompt}")
@@ -116,20 +116,21 @@ def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_p
         f.write(f"Number of sampled tokens: {num_sample_tokens}\n")
         f.write("\n\n")
 
+    LOG_DIR = os.getenv("LOG_DIR", "logs/")
     cost_file = os.path.join(LOG_DIR, "env_log/", "api_cost.json")
+    content = dict()
     if os.path.exists(cost_file):
         with open(cost_file, 'r') as reader:
             content = json.load(reader)
-        total_cost = content["total_cost"]
-    else:
-        total_cost = 0
 
     curr_cost = num_prompt_tokens * MODEL2PRICE[model]["input"] + num_sample_tokens * MODEL2PRICE[model]["output"] 
     with open(cost_file, 'w') as writer:
-        content = {
-                "total_cost" : total_cost + curr_cost,
+        updated_content = {
+                "total_cost" : content.get("total_cost", 0) + curr_cost,
+                "total_num_prompt_tokens" : content.get("total_num_prompt_tokens", 0) + num_prompt_tokens,
+                "total_num_sample_tokens" : content.get("total_num_sample_tokens", 0) + num_sample_tokens,
                 }
-        json.dump(content, writer, indent=2)
+        json.dump(updated_content, writer, indent=2)
 
 
 def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/CodeLlama-7b-hf", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, **kwargs):
@@ -347,7 +348,7 @@ def complete_text(prompt, log_file, model, **kwargs):
     return completion
 
 # specify fast models for summarization etc
-FAST_MODEL = "gpt-4o-mini"
 def complete_text_fast(prompt, **kwargs):
+    FAST_MODEL = os.getenv("FAST_MODEL", "gpt-4o-mini")
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 

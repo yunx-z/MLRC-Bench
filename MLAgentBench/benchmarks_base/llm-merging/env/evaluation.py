@@ -213,7 +213,6 @@ def get_score(merge_method, phase):
             elif 'exact_match,flexible-extract' in bench_result:
                 scores.append(bench_result['exact_match,flexible-extract'])
         score = sum(scores) / len(scores)
-        score = round(score, 2)
         print(f"\nYour merged model scores {score} out of 1.00 on the dev set!")
     else:
         raise ValueError(f"Invalid phase: {phase}")
