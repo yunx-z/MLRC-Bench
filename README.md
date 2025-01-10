@@ -56,4 +56,4 @@ Others:
 
 # Pro tips
 
-You may use ChatGPT to help you generated refactored code. Feel free to use the [template prompt](https://docs.google.com/document/d/1GMREHB8phddatCQcsg9QlWJdqzryQ2xBCV7sFV21g0Q/edit?usp=sharing) I developed here, which relies on `print_all_dir_files.py` that gives you the concatenation of all files under a specified directory.
+You may use ChatGPT to help you refactor the code and further tweak upon the generated code. Feel free to use the [template prompt](https://docs.google.com/document/d/1GMREHB8phddatCQcsg9QlWJdqzryQ2xBCV7sFV21g0Q/edit?usp=sharing) I developed here, which relies on `print_all_dir_files.py` that gives you the concatenation of all files under a specified directory.
