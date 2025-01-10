@@ -5,7 +5,6 @@ This file is the entry point for MLAgentBench.
 import argparse
 import sys
 import os
-from MLAgentBench import LLM, utils, llm_test_cases
 from MLAgentBench.environment import Environment
 from MLAgentBench.agents.agent import Agent, SimpleActionAgent, ReasoningActionAgent
 from MLAgentBench.agents.agent_research import ResearchAgent
@@ -45,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("--task", type=str, default="debug", help="task name")
     parser.add_argument("--log-dir", type=str, default="./logs", help="log dir")
     parser.add_argument("--work-dir", type=str, default="./workspace", help="work dir")
-    parser.add_argument("--max-steps", type=int, default=50, help="number of steps in environment, including those with errors")
+    parser.add_argument("--max-steps", type=int, default=1e8, help="should be deprecated. number of steps in environment, including retrieval actions")
     parser.add_argument("--max-time", type=int, default=5* 60 * 60, help="max time")
     parser.add_argument("--max-api-cost", type=int, default=10, help="max api cost in dollars")
     parser.add_argument("--device", type=int, default=0, help="device id")
@@ -56,13 +55,13 @@ if __name__ == "__main__":
 
     # general agent configs
     parser.add_argument("--agent-type", type=str, default="ResearchAgent", help="agent type")
-    parser.add_argument("--llm-name", type=str, default="claude-v1", help="llm name")
-    parser.add_argument("--fast-llm-name", type=str, default="claude-v1", help="llm name")
-    parser.add_argument("--feedback-llm-name", type=str, default="claude-v1", help="llm name")
+    parser.add_argument("--llm-name", type=str, default="o1-mini", help="llm name")
+    parser.add_argument("--fast-llm-name", type=str, default="gpt-4o-mini", help="llm name")
+    parser.add_argument("--feedback-llm-name", type=str, default="o1-preview", help="llm name")
     parser.add_argument("--feedback-llm-max-tokens", type=int, default=4000, help="llm max tokens")
-    parser.add_argument("--edit-script-llm-name", type=str, default="claude-v1", help="llm name")
+    parser.add_argument("--edit-script-llm-name", type=str, default="o1-mini", help="llm name")
     parser.add_argument("--edit-script-llm-max-tokens", type=int, default=4000, help="llm max tokens")
-    parser.add_argument("--agent-max-steps", type=int, default=50, help="max iterations for agent, only counting valid steps without parsing error")
+    parser.add_argument("--agent-max-steps", type=int, default=50, help="the real number of max iterations for agent")
 
     # research agent configs
     parser.add_argument("--actions-remove-from-prompt", type=str, nargs='+', default=[], help="actions to remove in addition to the default ones: Read File, Write File, Append File, Retrieval from Research Log, Append Summary to Research Log, Python REPL, Edit Script Segment (AI)")
@@ -82,11 +81,9 @@ if __name__ == "__main__":
     if not args.retrieval or args.agent_type != "ResearchAgent":
         # should not use these actions when there is no retrieval
         args.actions_remove_from_prompt.extend(["Retrieval from Research Log", "Append Summary to Research Log", "Reflection"])
-    LLM.FAST_MODEL = args.fast_llm_name
-    LLM.LOG_DIR = args.log_dir
-    utils.FEEDBACK_MODEL = args.feedback_llm_name
-    llm_test_cases.FEEDBACK_MODEL = args.feedback_llm_name
-    utils.FEEDBACK_MAX_TOKENS = args.feedback_llm_max_tokens
-    llm_test_cases.FEEDBACK_MAX_TOKENS = args.feedback_llm_max_tokens
+    os.environ["FAST_MODEL"] = args.fast_llm_name
+    os.environ["LOG_DIR"] = args.log_dir
+    os.environ["FEEDBACK_MODEL"] = args.feedback_llm_name
+    os.environ["FEEDBACK_MAX_TOKENS"] = str(args.feedback_llm_max_tokens)
     run(getattr(sys.modules[__name__], args.agent_type), args)
     
