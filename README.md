@@ -10,6 +10,8 @@ Install dependencies with python 3.10 by running
 bash install.sh
 ```
 
+set `MLR_BENCH_DIR="/path/to/MLAgentBench/on/your/local/machine"` in `MLAgentBench/constants.py`
+
 (Optional) For Kaggle datasets, you need to set up Kaggle API and authentication (~/.kaggle/kaggle.json) as described [here](https://www.kaggle.com/docs/api). You may also need to provide manual consent to the rules of specific competitions by following the prompts. 
 
 # Tasks
@@ -20,6 +22,7 @@ Each task is a folder in `MLAgentBench/benchmarks_base/`, under which the `env/`
 
 Steps:
 - Fork this github repo to your own github space.
+- Complete steps in Setup Section for the MLAgentBench packages.
 - Create a new task folder under `MLAgentBench/benchmarks/benchmarks_base`, following the [template](https://github.com/yunx-z/MLAgentBench/tree/main/MLAgentBench/benchmarks_base/base-competition). 
 - Submit a pull request.
 
@@ -44,9 +47,4 @@ python main.py -m my_method -p test
 
 add labels of dev/test set to ref/${TASK_NAME}. Don't put them under env/ folder otherwise LLM agents can "see" them.
 
-set `MLR_BENCH_DIR="/path/to/MLAgentBench"` in `MLAgentBench/constants.py`
-
 specify `TEST_FILE_NAME="test_data_file_name_here"` in scripts/config.sh and put test_data_file under scripts/
-
-An example for submmiting a pull request of your newly added task ([Backdoor Trigger Recovery task](https://github.com/yunx-z/MLAgentBench/commit/0cca9894e875a34b0198f6a0d21a261de091c5a3#diff-a18dc95402bb68ced881913d4416f1ad5a3a408e5448dab3c27619a729f6d7ebR4))
-
