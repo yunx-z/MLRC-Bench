@@ -49,6 +49,12 @@ cp ../scripts/test_constants.py constants.py # prepare test-time configuration
 python main.py -m my_method -p test
 ```
 
+The goal of refactored code is to achieve the following requirements:
+
+Basically this command stays constant:
+`python main.py -m my_method -p dev/test`
+and then any code that could deal with evaluation metrics should be read_only and need to make sure read_only files don’t contain stuff that are necessary for training and that the agent could need to modify for their implementation.
+
 Others:
 - The LLM agent will be able to “see” all files under `env/` folder so make sure not to put any test-time information (including test data and model name used in test phases) there to avoid LLM agent “cheating”.
 - Remember to add labels of dev/test set to `ref/${TASK_NAME}`. Don't put them under `env/` folder otherwise LLM agents can "see" them.
