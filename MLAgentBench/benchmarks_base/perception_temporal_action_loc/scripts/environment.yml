@@ -1,0 +1,27 @@
+name: perception_temporal_action_loc
+
+channels:
+  - pytorch
+  - defaults
+
+dependencies:
+  # Build tools
+  - gcc
+  - gxx          # This is the g++ compiler
+  - ninja
+  # Core Python & PyTorch
+  - python
+  - pytorch
+  - cudatoolkit
+  - tensorboard
+  
+  # Scientific stack
+  - numpy
+  - pyyaml
+  - pandas
+  - h5py
+  - joblib
+  - pip  # Need to include pip itself
+
+  - pip:  # This syntax was wrong before
+      - gdown   # Proper indentation
