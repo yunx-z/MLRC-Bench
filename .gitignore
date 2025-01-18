@@ -8,3 +8,4 @@ __pycache__/
 MLAgentBench/benchmarks/
 /*.sh
 !*/**/*.sh
+.DS_Store
