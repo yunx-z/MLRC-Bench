@@ -25,6 +25,10 @@ MODEL2PRICE = {
             "input" : 15 / 1e6,
             "output" : 60 / 1e6,
             },
+        "o1" : {
+            "input" : 15 / 1e6,
+            "output" : 60 / 1e6,
+            },
         }
 
 
@@ -59,7 +63,7 @@ try:
     openai_client = openai.AzureOpenAI(
             azure_endpoint=openai_api_base,
             api_key=openai_api_key,
-            api_version="2024-10-01-preview",
+            api_version="2024-12-01-preview",
             )
 except Exception as e:
     print("WARNING: cannot load openai endpoint")
@@ -346,6 +350,8 @@ def complete_text_fast(prompt, **kwargs):
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 
 if __name__ == "__main__":
-    model = "o1-mini"
-    completion = complete_text("Hello!", "logs/tmp.log", model)
-    print(completion)
+    models = ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini"]
+    for model in models:
+        completion = complete_text("Hello!", "logs/tmp.log", model)
+        print(model)
+        print(completion)

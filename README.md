@@ -27,7 +27,7 @@ Steps:
 - Fork this github repo to your own github space.
 - Complete steps in Setup Section for the MLAgentBench packages.
 - Create a new task folder under `MLAgentBench/benchmarks_base`, following the [template](https://github.com/yunx-z/MLAgentBench/tree/main/MLAgentBench/benchmarks_base/base-competition).
-- add runtime and performance of your baseline method in `MLAgentBench/constants.py`
+- add runtime and performance of your baseline method in `MLAgentBench/constants.py` (Repeat your run multiple times to ensure consistency; the score should remain relatively stable across runs.)
 - Submit a pull request.
 
 Here are the commands to test your newly added tasks:
