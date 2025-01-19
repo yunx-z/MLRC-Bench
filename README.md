@@ -43,11 +43,18 @@ cd ../env
 python main.py -m my_method -p dev
 
 # evaluate baseline method on test set
-source config.sh
-cp ../scripts/${TEST_FILE_NAME} data/ # prepare test data
+cp -r ../scripts/test_data/* data/ # prepare test data (updated)
 cp ../scripts/test_constants.py constants.py # prepare test-time configuration
 python main.py -m my_method -p test
 ```
+
+Also if possible, please include a `background.txt`  file under scripts  folder with excerpt from relevant papers or technical reports written by competition participants (besides baseline paper) containing description and core code for relevant methods. See [this](https://github.com/yunx-z/MLAgentBench/blob/main/MLAgentBench/benchmarks_base/llm-merging/scripts/background.txt) for an example on llm-merging task. This info will be used to inspire LLM agents for better solutions.
+
+The goal of refactored code is to achieve the following requirements:
+
+Basically this command stays constant:
+`python main.py -m my_method -p dev/test`
+and then any code that could deal with evaluation metrics should be read_only and need to make sure read_only files don’t contain stuff that are necessary for training and that the agent could need to modify for their implementation.
 
 Others:
 - The LLM agent will be able to “see” all files under `env/` folder so make sure not to put any test-time information (including test data and model name used in test phases) there to avoid LLM agent “cheating”.
