@@ -43,11 +43,12 @@ cd ../env
 python main.py -m my_method -p dev
 
 # evaluate baseline method on test set
-source config.sh
-cp ../scripts/${TEST_FILE_NAME} data/ # prepare test data
+cp -r ../scripts/test_data/* data/ # prepare test data (updated)
 cp ../scripts/test_constants.py constants.py # prepare test-time configuration
 python main.py -m my_method -p test
 ```
+
+Also if possible, please include a `background.txt`  file under scripts  folder with excerpt from relevant papers or technical reports written by competition participants (besides baseline paper) containing description and core code for relevant methods. See [this](https://github.com/yunx-z/MLAgentBench/blob/main/MLAgentBench/benchmarks_base/llm-merging/scripts/background.txt) for an example on llm-merging task. This info will be used to inspire LLM agents for better solutions.
 
 The goal of refactored code is to achieve the following requirements:
 
