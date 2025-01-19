@@ -1,23 +1,127 @@
-[one-sentence summary of the competition]
+# Second Perception Test Challenge (ECCV 2024 Workshop) – Temporal Action Localisation Track
 
 ## Description
-[goal, data, evaluation of the competition, often can be found on competition's website]
+The goal of this challenge is to develop methods that accurately **localize and classify actions** in untrimmed videos (up to 35 seconds long, 30 fps, max resolution 1080p) from a predefined set of classes.
+
+---
+
+## Data
+- **Training Data: Multimodal List**  
+  - 1608 videos  
+  - Includes both **action** and **sound** annotations  
+  - Contains **video and audio features**
+
+- **Validation Set**  
+  - 401 videos, used to tune hyperparameters.
+
+- **Test Set**  
+  - Held-out set for final evaluation of your method’s performance containing 5359 videos.
+
+*(Note: You thus have three distinct subsets – train, val, and test.)*
+
+---
+
+## Output Format
+For each video in test (or val), your model should output **all action segments**, with:
+1. **Start timestamp**  
+2. **End timestamp**  
+3. **Predicted action class label**  
+4. **Confidence score**
+
+---
+
+## Evaluation
+- The main metric is **Mean Average Precision (mAP)**, computed over your detected segments.
+- You have separate splits for train, val, and test:
+  - Train on the training set.  
+  - Use the validation set to tune, select models, etc.  
+  - Evaluate final performance on the **test set**.  
+
+---
 
 ## Developing New Methods
-You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. [Describe the baseline method here]
+A starter kit is provided with an end-to-end demonstration. The baseline is located in `methods/MyMethod.py`, showcasing a **single-stage, transformer-based** approach to temporal action localization.
 
-1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
+### Baseline Method: ActionFormer
+1. **Transformer Encoder (Local Attention)**  
+   - Processes the pre-extracted video + audio features using stack(s) of local self-attention layers.  
+   - Builds a *multi-scale* (pyramidal) representation, capturing actions at varying temporal scales.
 
-2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+2. **Action Classification & Boundary Regression**  
+   - Each time step in the pyramid is classified as action vs. background.  
+   - If it is an action, the model regresses distances to the start and end boundaries.
 
-3. Add the new module to `methods/__init__.py`.
+3. **Decoding & Post-processing**  
+   - Combine classification and boundary offsets to produce action segments.  
+   - Apply Soft-NMS (or similar) to remove overlapping detections.
+
+---
+
+### Steps to Add Your Own Method
+1. **Create a New File**  
+   - Copy `methods/BaseMethod.py` into, for example, `methods/MyNewMethod.py`.  
+   - Modify the `__init__()` and `run()` functions to implement your approach.
+
+2. **Register Your Method**  
+   - In `methods/__init__.py`, add your new class to the dictionary returned by `all_method_handlers()`.  
+   - Import the new file/module so it is discoverable by the codebase.
+
+3. **Extend/Innovate**  
+   - Experiment with:
+     - Advanced boundary-refinement  
+     - Improved attention mechanisms  
+     - Novel regularization techniques  
+     - Better multimodal fusion in `MyNewMethod.py`
+
+---
 
 ## Test Method
 
-Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. [Describe what will happen for the evaluation pipeline in the **development** phase, not **test** phase.]
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. 
+This runs:
+1. **Data Loading**
+2. **Inference** using your chosen method
+3. Evaluate **mAP or other relevant metrics** over the validation/test sets
+4. Follow the **Competition Rules**
+
+---
 
 ## Competition Rules
 
-Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
+### Focus on Substantive Innovation
+- Your contribution should be **meaningful**, such as:
+  - Refined model architectures
+  - New boundary regression techniques
+  - Fusion strategies
+  - Novel loss designs
+- **Do not submit trivial solutions** (e.g., pure prompt engineering).
 
-[Describe any computation constraints, disallowed behaviours here.]
+---
+
+### Data Usage
+- Use only the **multimodal training list** (2,009 videos) for supervised training.
+- The **validation and test sets**:
+  - **Cannot** be used for any form of (self-)supervised training.
+  - **No extra annotations or human labels** may be added to val/test videos.
+- Other publicly available datasets are permitted for additional training if they **do not overlap** with the test set.
+
+---
+
+### Computation Constraints
+- Use only the **provided or publicly available pretrained video/audio features** (~300MB).
+- The primary objective is to **surpass or improve upon the ActionFormer baseline**.
+
+---
+
+### No Public VLM API Calls
+- Do not use external VLM APIs (e.g., GPT-4V, Gemini) for:
+  - Generating labels
+  - Extracting features
+  - Producing other model outputs
+
+---
+
+## Goal
+Build a **temporal action localization system** and evaluate it rigorously on the train/val/test splits.
+
+**Good luck advancing the state of the art!**
