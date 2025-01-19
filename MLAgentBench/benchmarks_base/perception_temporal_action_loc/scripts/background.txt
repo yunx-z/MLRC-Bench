@@ -1,0 +1,13 @@
+Motivated by the insights into the skewed distribution of action durations in Sec. 2.1, we transform the local self-attention in ActionFormer into global self-attention to enhance the long-range modeling and improve overall temporal action localization performance.
+
+We employ DETAD [1] to evaluate the various types of errors, which guides our improvement efforts. As shown in Fig. 3, the primary error of the ActionFormer baseline model is wrong label. We argue that this is due to the decoupling of the classification and localization branches in ActionFormer, leading to an inconsistency between classification scores and temporal localization quality. Therefore, we propose an action quality loss, using the IoU between the temporal boundary and the ground truth as soft supervision for the classification scores, allowing the classification branch to be aware of the IoU quality.
+
+Inspired by Copy Paste augmentation in object detection [7], we propose Action Copy Paste for data augmentation to enrich the temporal relationships between action instances in video. Specifically, we randomly exchange several action instances and their temporal boundary annotations between two videos within the same batch.
+
+Our model ensemble consists of pre-fusion and post-fusion components. Specifically, pre-fusion refers to concatenating the multi-modal features of video and audio backbones for training the action detection heads, while post-fusion involves using Weighted Box Fusion (WBF) [11] to integrate the predicted results from ActionFormer and ActionMamba.
+
+We trained two versions of the model:
+Multimodal Model: This model utilizes both video and audio features to predict the start and end times of actions, as well as classify their types. The combination of modalities enhances the model's ability to understand complex interactions within the video.
+Unimodal Model: In this version, only video features are used for action localisation. This allows us to evaluate the performance of visual features independently of audio inputs.
+
+After training both multimodal and unimodal models, we combined their predictions using Weighted Box Fusion (WBF) [12]. WBF [12] is a method for merging predictions from multiple models by averaging the bounding box coordinates and confidence scores, weighted by their respective accuracies. This technique allows us to leverage the strengths of both the multimodal and unimodal models, resulting in more accurate and reliable action localisation.
