@@ -17,8 +17,6 @@ The goal of this challenge is to develop methods that accurately **localize and 
 - **Test Set**  
   - Held-out set for final evaluation of your method’s performance containing 5359 videos.
 
-*(Note: You thus have three distinct subsets – train, val, and test.)*
-
 ---
 
 ## Output Format
@@ -31,7 +29,9 @@ For each video in test (or val), your model should output **all action segments*
 ---
 
 ## Evaluation
-- The main metric is **Mean Average Precision (mAP)**, computed over your detected segments.
+- The main metric is Mean Average Precision (mAP), computed over your detected segments and averaged across:
+  - Different action classes
+  - IoU thresholds from 0.1 to 0.5 in increments of 0.1 (i.e., [0.1, 0.2, 0.3, 0.4, 0.5])
 - You have separate splits for train, val, and test:
   - Train on the training set.  
   - Use the validation set to tune, select models, etc.  
@@ -108,7 +108,7 @@ This runs:
 ---
 
 ### Computation Constraints
-- Use only the **provided pretrained video/audio features** (~300MB).
+- Use only the **provided pretrained video/audio features**.
 - The primary objective is to **surpass or improve upon the ActionFormer baseline**.
 
 ---
