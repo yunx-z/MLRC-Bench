@@ -27,7 +27,7 @@ Steps:
 - Fork this github repo to your own github space.
 - Complete steps in Setup Section for the MLAgentBench packages.
 - Create a new task folder under `MLAgentBench/benchmarks_base`, following the [template](https://github.com/yunx-z/MLAgentBench/tree/main/MLAgentBench/benchmarks_base/base-competition).
-- add runtime and performance of your baseline method in `MLAgentBench/constants.py`
+- add runtime and performance of your baseline method in `MLAgentBench/constants.py` (Repeat your run multiple times to ensure consistency; the score should remain relatively stable across runs.)
 - Submit a pull request.
 
 Here are the commands to test your newly added tasks:
@@ -43,11 +43,12 @@ cd ../env
 python main.py -m my_method -p dev
 
 # evaluate baseline method on test set
-source config.sh
-cp ../scripts/${TEST_FILE_NAME} data/ # prepare test data
+cp -r ../scripts/test_data/* data/ # prepare test data (updated)
 cp ../scripts/test_constants.py constants.py # prepare test-time configuration
 python main.py -m my_method -p test
 ```
+
+Also if possible, please include a `background.txt`  file under scripts  folder with excerpt from relevant papers or technical reports written by competition participants (besides baseline paper) containing description and core code for relevant methods. See [this](https://github.com/yunx-z/MLAgentBench/blob/main/MLAgentBench/benchmarks_base/llm-merging/scripts/background.txt) for an example on llm-merging task. This info will be used to inspire LLM agents for better solutions.
 
 The goal of refactored code is to achieve the following requirements:
 
