@@ -62,7 +62,7 @@ for filename, file_id in train_val_files.items():
     download_and_extract(file_id, train_val_path, filename)
 
 # Test data goes to scripts/pt/
-test_path = 'data/pt'
+test_path = 'test_data/pt'
 os.makedirs(test_path, exist_ok=True)
 
 # Test file IDs
