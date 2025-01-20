@@ -38,7 +38,9 @@ from collections import defaultdict
   
  
 # Pipeline types  
-PIPELINES = ["implementation-only", "ideation+implementation"]  
+SINGLE_AGENT = "single-agent"
+MULTI_AGENT = "multi-agent"
+PIPELINES = [SINGLE_AGENT, MULTI_AGENT]  
   
 # LMs  
 LMS = ["o1-mini", "gpt-4o"]  
@@ -56,7 +58,7 @@ SUCCESS_THRESHOLD = 5.0
 RESULTS_DIR = f"results/SUCCESS_THRESHOLD_{SUCCESS_THRESHOLD}"  
 os.makedirs(RESULTS_DIR, exist_ok=True)  
   
-# For Figure 3, we have lines for N=0 (implementation-only), N=1,2,4 (ideation+implementation)  
+# For Figure 3, we have lines for N=0 (SINGLE_AGENT), N=1,2,4 (ideation+implementation)  
 IDEATION_IDEA_COUNTS = [1, 2, 4]  
   
 ##############################################################################  
@@ -87,7 +89,7 @@ def find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx=None):
     # Collect runs  
     runs_with_timestamps = []  
   
-    if pipeline == "implementation-only":  
+    if pipeline == SINGLE_AGENT:  
         base_pattern = f"workspace/{task}/{lm}/*"  
     else:  
         if idea_idx is None:  
@@ -130,7 +132,7 @@ def get_dev_results(task, lm, pipeline, run_id, idea_idx=None):
     Return a list of (improvement_perc, runtime, complexity) for each valid implementation in dev phase  
     for the given run. If file doesn't exist or no valid dev entries, return empty list.  
     """  
-    if pipeline == "implementation-only":  
+    if pipeline == SINGLE_AGENT:  
         # dev file  
         dev_file = f"workspace/{task}/{lm}/{run_id}/{task}/output/idea_evals.json"  
     else:  
@@ -158,7 +160,7 @@ def get_test_result(task, lm, pipeline, run_id, idea_idx=None):
     Return the test improvement_perc, runtime, complexity for the best model in the given run.  
     If file doesn't exist or no valid test entry, return None.  
     """  
-    if pipeline == "implementation-only":  
+    if pipeline == SINGLE_AGENT:  
         test_file = f"logs/{task}/{lm}/{run_id}/env_log/test_idea_evals.json"  
     else:  
         if idea_idx is None:  
@@ -187,27 +189,21 @@ def compute_success_rates(phase='test'):
     """  
     Compute success rates for Tables 1.1 and 1.2.  
     Success is defined as having improvement_perc > SUCCESS_THRESHOLD in the specified phase.  
-    Returns a DataFrame with success rates and standard deviations.  
+    Returns a DataFrame with success rates 
     """  
     rows = []  
     phase_name = 'test' if phase == 'test' else 'dev'  
-    for task in TASKS + ["Avg"]:  
+    for task in TASKS:  
         for pipeline in PIPELINES:  
             rows.append([task if pipeline == PIPELINES[0] else "", pipeline] + [None]*len(LMS))  
   
     df = pd.DataFrame(rows, columns=["Task", "System"] + LMS)  
   
-    success_counts = {lm: [] for lm in LMS}  
-    total_counts = {lm: [] for lm in LMS}  
-  
     row_idx = 0  
     for task in TASKS:  
         for pipeline in PIPELINES:  
             for lm_i, lm in enumerate(LMS):  
-                n_success_list = []  
-                n_total_list = []  
-  
-                if pipeline == "implementation-only":  
+                if pipeline == SINGLE_AGENT:  
                     run_ids = find_most_recent_8_runs_for_pipeline(task, lm, pipeline)  
                     n_total = len(run_ids)  
                     n_success = 0  
@@ -222,8 +218,6 @@ def compute_success_rates(phase='test'):
                                 best_imp = max([r[0] for r in dev_res])  
                                 if best_imp > SUCCESS_THRESHOLD:  
                                     n_success += 1  
-                    n_success_list.append(n_success)  
-                    n_total_list.append(n_total)  
                 else:  
                     n_success = 0  
                     n_total = 0  
@@ -241,8 +235,6 @@ def compute_success_rates(phase='test'):
                                     best_imp = max([r[0] for r in dev_res])  
                                     if best_imp > SUCCESS_THRESHOLD:  
                                         n_success += 1  
-                    n_success_list.append(n_success)  
-                    n_total_list.append(n_total)  
   
                 if n_total > 0:  
                     success_rate = (n_success / n_total) * 100  # percentage  
@@ -251,11 +243,8 @@ def compute_success_rates(phase='test'):
   
                 df.iloc[row_idx, 2 + lm_i] = f"{round(success_rate, 1)}"  
   
-                success_counts[lm].append(success_rate)  
-                total_counts[lm].append(100)  # Each success rate is out of 100%  
-  
             row_idx += 1  
-  
+
     return df  
   
 def compute_average_metrics(phase='test'):  
@@ -270,13 +259,11 @@ def compute_average_metrics(phase='test'):
         "Imp_"+LMS[1], "Run_"+LMS[1], "Comp_"+LMS[1],  
     ]  
     rows = []  
-    for task in TASKS + ["Avg"]:  
+    for task in TASKS:  
         for pipeline in PIPELINES:  
             rows.append([task if pipeline == PIPELINES[0] else "", pipeline] + [None]*(len(columns)-2))  
   
     df = pd.DataFrame(rows, columns=columns)  
-  
-    metrics_sum = {lm: {'imp': [], 'run': [], 'comp': []} for lm in LMS}  
   
     row_idx = 0  
     for task in TASKS:  
@@ -286,7 +273,7 @@ def compute_average_metrics(phase='test'):
                 run_vals = []  
                 comp_vals = []  
   
-                if pipeline == "implementation-only":  
+                if pipeline == SINGLE_AGENT:  
                     run_ids = find_most_recent_8_runs_for_pipeline(task, lm, pipeline)  
                     for run_id in run_ids:  
                         if phase == 'test':  
@@ -302,12 +289,6 @@ def compute_average_metrics(phase='test'):
                                 imp_vals.append(dev_res[best_idx][0])  
                                 run_vals.append(dev_res[best_idx][1])  
                                 comp_vals.append(dev_res[best_idx][2])  
-                    # if lm == "o1-mini" and task == "llm-merging":
-                    #     print(lm, pipeline, task)
-                    #     print("imp_vals", imp_vals)
-                    #     print("run_vals", run_vals)
-                    #     print("comp_vals", comp_vals)
-                    #     exit(0)
                 else:  
                     for idea_idx in IDEA_IDXS:  
                         run_ids = find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx)  
@@ -341,33 +322,7 @@ def compute_average_metrics(phase='test'):
                 df.iloc[row_idx, 3 + lm_i*3] = f"{round(run_mean,1)}±{round(run_std,1)}"  
                 df.iloc[row_idx, 4 + lm_i*3] = f"{round(comp_mean,1)}±{round(comp_std,1)}"  
   
-                # Accumulate for Avg row  
-                metrics_sum[lm]['imp'].extend(imp_vals)  
-                metrics_sum[lm]['run'].extend(run_vals)  
-                metrics_sum[lm]['comp'].extend(comp_vals)  
             row_idx +=1  
-  
-    # Compute Avg row  
-    for pipeline in PIPELINES:  
-        for lm_i, lm in enumerate(LMS):  
-            imp_vals = metrics_sum[lm]['imp']  
-            run_vals = metrics_sum[lm]['run']  
-            comp_vals = metrics_sum[lm]['comp']  
-  
-            if imp_vals:  
-                imp_mean = np.mean(imp_vals)  
-                imp_std = np.std(imp_vals)  
-                run_mean = np.mean(run_vals)  
-                run_std = np.std(run_vals)  
-                comp_mean = np.mean(comp_vals)  
-                comp_std = np.std(comp_vals)  
-            else:  
-                imp_mean = imp_std = run_mean = run_std = comp_mean = comp_std = 0.0  
-  
-            df.iloc[row_idx, 2 + lm_i*3] = f"{round(imp_mean,1)}±{round(imp_std,1)}"  
-            df.iloc[row_idx, 3 + lm_i*3] = f"{round(run_mean,1)}±{round(run_std,1)}"  
-            df.iloc[row_idx, 4 + lm_i*3] = f"{round(comp_mean,1)}±{round(comp_std,1)}"  
-        row_idx +=1  
   
     return df  
   
@@ -380,7 +335,7 @@ def compute_pass_at_k_data():
     Compute pass@k for Figure 3 according to the formula provided in the prompt.  
   
     For each LM, for N in [0, 1, 2, 4], and for each task:  
-      - For implementation-only (N=0), use the success information from the implementation-only pipeline.  
+      - For SINGLE_AGENT (N=0), use the success information from the SINGLE_AGENT pipeline.  
       - For ideation+implementation (N=1,2,4), consider all subsets of ideas of size N out of the 4 total ideas.  
         For each subset:  
           - Collect the success counts c_i for the ideas in the subset.  
@@ -402,11 +357,11 @@ def compute_pass_at_k_data():
   
     for lm in LMS:  
         for task in TASKS:  
-            # Collect success lists for implementation-only  
+            # Collect success lists for SINGLE_AGENT  
             impl_only_successes = []  
-            run_ids = find_most_recent_8_runs_for_pipeline(task, lm, "implementation-only")  
+            run_ids = find_most_recent_8_runs_for_pipeline(task, lm, SINGLE_AGENT)  
             for run_id in run_ids:  
-                dev_res = get_dev_results(task, lm, "implementation-only", run_id)  
+                dev_res = get_dev_results(task, lm, SINGLE_AGENT, run_id)  
                 is_success = any(r[0] > SUCCESS_THRESHOLD for r in dev_res)  
                 impl_only_successes.append(is_success)  
             c_impl = sum(impl_only_successes)  
@@ -426,9 +381,9 @@ def compute_pass_at_k_data():
             c_list = []  
             for idea_idx in IDEA_IDXS:  
                 idea_successes = []  
-                run_ids = find_most_recent_8_runs_for_pipeline(task, lm, "ideation+implementation", idea_idx)  
+                run_ids = find_most_recent_8_runs_for_pipeline(task, lm, MULTI_AGENT, idea_idx)  
                 for run_id in run_ids:  
-                    dev_res = get_dev_results(task, lm, "ideation+implementation", run_id, idea_idx)  
+                    dev_res = get_dev_results(task, lm, MULTI_AGENT, run_id, idea_idx)  
                     is_success = any(r[0] > SUCCESS_THRESHOLD for r in dev_res)  
                     idea_successes.append(is_success)  
                 c_i = sum(idea_successes)  
@@ -486,9 +441,9 @@ def plot_figure_3(pass_at_k_data, averaged_pass_at_k):
                     y_vals = pass_at_k_data[lm][task][N]  
                     title_task = task  
                 if N == 0:  
-                    label = "Implementation-only"  
+                    label = SINGLE_AGENT  
                 else:  
-                    label = f"N={N}"  
+                    label = f"{MULTI_AGENT}\n# ideas={N}"
                 plt.plot(x_vals, y_vals, marker='o', label=label)  
             plt.title(f"Figure 3: pass@k vs Number of Trials\n(LM={lm}, Task={title_task})")  
             plt.xlabel("Number of trials (k)")  
@@ -507,7 +462,7 @@ def plot_figure_3(pass_at_k_data, averaged_pass_at_k):
   
             caption = (  
                 f"Figure 3 for LM={lm}, Task={title_task}. pass@k on dev set vs number of trials. "  
-                "N=0 means implementation-only pipeline. N=1,2,4 means ideation+implementation pipeline "  
+                "N=0 means SINGLE_AGENT pipeline. N=1,2,4 means ideation+implementation pipeline "  
                 "with N ideas implemented. The y-axis is the probability of at least one success "  
                 "(>5% improvement) among k randomly selected trials."  
             )  
@@ -559,7 +514,7 @@ def compute_figure_4_data():
                 all_complexities = []  
   
                 for t in tasks_to_process:  
-                    if pipeline == "implementation-only":  
+                    if pipeline == SINGLE_AGENT:  
                         run_ids = find_most_recent_8_runs_for_pipeline(t, lm, pipeline)  
                         for run_id in run_ids:  
                             dev_res = get_dev_results(t, lm, pipeline, run_id)  
