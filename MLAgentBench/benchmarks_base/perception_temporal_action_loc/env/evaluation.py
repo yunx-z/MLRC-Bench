@@ -99,32 +99,20 @@ def evaluate_model(Method, phase):
         Method: Method instance with run() method
         phase: 'dev' or 'test' phase
     """
-    # Get model and config from method
-    model, cfg = Method.run("eval")
+    # Get model and config from method - use "valid" or "test" mode
+    model, cfg = Method.run("valid" if phase == "dev" else "test")
     pprint(cfg)
-    model = model.cuda()
-    
-    # Load appropriate config based on phase
-    if phase == "dev" or phase == "debug":
-        cfg_file = "configs/perception_tal_multi_valid.yaml" 
-    else:
-        cfg_file = "configs/perception_tal_multi_test.yaml"
-    
-    eval_cfg = load_config(cfg_file)
     
     # Fix random seeds
     _ = fix_random_seed(0, include_cuda=True)
     
     # Create dataset and loader
     val_dataset = make_dataset(
-        eval_cfg['dataset_name'], False, eval_cfg['val_split'], **eval_cfg['dataset']
+        cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset']
     )
     val_loader = make_data_loader(
-        val_dataset, False, None, 1, eval_cfg['loader']['num_workers']
+        val_dataset, False, None, 1, cfg['loader'].get('num_workers', 4)
     )
-    
-    # Setup model for evaluation
-    #model = nn.DataParallel(model, device_ids=eval_cfg['devices'])
     
     # Load checkpoint
     ckpt_path = os.path.join("ckpt", Method.get_name(), "model_best.pth.tar")
@@ -134,7 +122,7 @@ def evaluate_model(Method, phase):
     print(f"Loading checkpoint from {ckpt_path}")
     checkpoint = torch.load(
         ckpt_path,
-        map_location=lambda storage, loc: storage.cuda(eval_cfg['devices'][0])
+        map_location=lambda storage, loc: storage.cuda(cfg['devices'][0])
     )
     
     # Load EMA model state which typically performs better
@@ -199,13 +187,8 @@ def get_score(Method, phase):
     flat_results['label'] = np.array(flat_results['label'])
     flat_results['score'] = np.array(flat_results['score'])
     
-    # Load appropriate config
-    if phase == "dev" or phase == "debug":
-        cfg_file = "configs/perception_tal_multi_valid.yaml"
-    else:
-        cfg_file = "configs/perception_tal_multi_test.yaml"
-    
-    cfg = load_config(cfg_file)
+    # Get model and config from method with appropriate mode
+    _, cfg = Method.run("valid" if phase == "dev" else "test")
     
     # Create dataset to get ground truth info
     dataset = make_dataset(

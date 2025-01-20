@@ -25,9 +25,6 @@ def train_model(method):
     # Get model and training config
     model, cfg = method.run("train")
     pprint(cfg)
-
-    # Move model to GPU
-    model = model.cuda()
     
     # Setup output folders - ensure root ckpt folder exists
     root_ckpt = "ckpt"

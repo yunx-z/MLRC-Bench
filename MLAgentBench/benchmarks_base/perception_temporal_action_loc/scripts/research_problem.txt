@@ -99,16 +99,16 @@ This runs:
 ---
 
 ### Data Usage
-- Use only the **multimodal training list** (2,009 videos) for supervised training.
+- Use only the **multimodal training list** (1,608 videos) for supervised training.
 - The **validation and test sets**:
   - **Cannot** be used for any form of (self-)supervised training.
   - **No extra annotations or human labels** may be added to val/test videos.
-- Other publicly available datasets are permitted for additional training if they **do not overlap** with the test set.
+- No other publicly available datasets are permitted for additional training.
 
 ---
 
 ### Computation Constraints
-- Use only the **provided or publicly available pretrained video/audio features** (~300MB).
+- Use only the **provided pretrained video/audio features** (~300MB).
 - The primary objective is to **surpass or improve upon the ActionFormer baseline**.
 
 ---

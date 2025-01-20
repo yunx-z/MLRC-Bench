@@ -27,12 +27,13 @@ if __name__ == "__main__":
         print("Breaking after debug info...")
         breakpoint()
 
+    #Start timing the evaluation
+    start_time = time.time()
+
     # Training is only done in dev phase
     if args.phase == "dev":
         train_model(curr_method)
 
-    #Start timing the evaluation
-    start_time = time.time()
     evaluate_model(curr_method, args.phase)
     end_time = time.time()
     runtime = end_time - start_time
@@ -40,6 +41,7 @@ if __name__ == "__main__":
     #Get score (not counted in runtime)
     score = get_score(curr_method, args.phase)
     print(score)
+    print(f"Runtime: {runtime:.2f} seconds")
 
     # Save evaluation results
     # base_class = loaded_methods[DEFAULT_METHOD_NAME]

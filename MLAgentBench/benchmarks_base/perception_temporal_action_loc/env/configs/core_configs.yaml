@@ -1,10 +1,5 @@
-dataset_name: perception
-train_split: ['train']
-val_split: ['valid']
 devices: [0]
 dataset: {
-  json_file: ./data/pt/challenge_action_localisation_valid.json,
-  feat_folder: ./data/pt/action_localisation_valid_video_features,
   file_prefix: v_,
   file_ext: .npy,
   num_classes: 63,
@@ -18,7 +13,6 @@ dataset: {
   max_seq_len: 192,
   force_upsampling: True,
   input_modality: multi,
-  mm_feat_folder: ./data/pt/sound_localisation_valid_audio_features,
   task: action_localisation,
 }
 model: {

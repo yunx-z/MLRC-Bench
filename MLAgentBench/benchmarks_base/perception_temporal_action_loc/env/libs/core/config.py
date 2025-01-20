@@ -5,10 +5,10 @@ DEFAULTS = {
     # random seed for reproducibility, a large number is preferred
     "init_rand_seed": 1234567891,
     # dataset loader, specify the dataset here
-    "dataset_name": "epic",
-    "devices": ['cuda:0'], # default: single gpu
-    "train_split": ('training', ),
-    "val_split": ('validation', ),
+    # "dataset_name": "epic",
+    # "devices": ['cuda:0'], # default: single gpu
+    # "train_split": ('training', ),
+    # "val_split": ('validation', ),
     "model_name": "LocPointTransformer",
     "dataset": {
         # temporal stride of the feats
@@ -33,6 +33,10 @@ DEFAULTS = {
         # if true, force upsampling of the input features into a fixed size
         # only used for ActivityNet
         "force_upsampling": False,
+        "file_prefix": "v_",
+        "file_ext": ".npy",
+        "input_modality": "multi",
+        "task": "action_localisation",
     },
     "loader": {
         "batch_size": 8,
@@ -79,6 +83,7 @@ DEFAULTS = {
         "use_abs_pe": False,
         # use rel position encoding (added to self-attention)
         "use_rel_pe": False,
+        "n_mha_win_size": [7, 7, 7, 7, 7, -1],  # Update from single -1 to array
     },
     "train_cfg": {
         # radius | none (if to use center sampling)

@@ -2,6 +2,8 @@ data/*
 methods/BaseMethod.py
 libs/utils/metrics.py
 libs/utils/post_processing.py
+libs/datasets/*
 main.py
 constants.py
 evaluation.py
+configs_read_only/*

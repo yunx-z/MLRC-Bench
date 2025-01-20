@@ -15,28 +15,38 @@ class MyMethod(BaseMethod):
         # Wrap with DataParallel if multiple GPUs
         if len(cfg['devices']) > 1:
             model = nn.DataParallel(model, device_ids=cfg['devices'])
+        else:
+            model = model.cuda()
             
         return model
 
+    def deep_merge(self, dict1, dict2):
+        result = dict1.copy()
+        for key, value in dict2.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = self.deep_merge(result[key], value)
+            else:
+                result[key] = value
+        return result
+
     def run(self, mode):
-        """Handle different running modes:
-        train: training in dev phase
-        valid: validation in dev phase
-        test: evaluation in test phase
-        """
+        """Handle different running modes"""
         
-        # Load appropriate config based on mode
+        # Load appropriate configs
         if mode == "train":
-            # Get training config
-            cfg = load_config("configs/perception_tal_multi_train.yaml")
+            paths_cfg = load_config("configs_read_only/train_paths.yaml")
+            model_cfg = load_config("configs/core_configs.yaml")
         elif mode == "valid":
-            # Get validation config
-            cfg = load_config("configs/perception_tal_multi_valid.yaml")   
-        else:  
-            # Get test config
-            cfg = load_config("configs/perception_tal_multi_test.yaml")
+            paths_cfg = load_config("configs_read_only/valid_paths.yaml")
+            model_cfg = load_config("configs/core_configs.yaml")
+        else:  # test mode
+            paths_cfg = load_config("configs_read_only/test_paths.yaml")
+            model_cfg = load_config("configs/core_configs.yaml")
             
-        # Set default devices if not specified  
+        # Deep merge configs, with model_cfg taking precedence
+        cfg = self.deep_merge(paths_cfg, model_cfg)
+        
+        # Set default devices if not specified
         if 'devices' not in cfg:
             cfg['devices'] = ['cuda:0']
         
