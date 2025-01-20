@@ -3,7 +3,7 @@ import time
 
 from evaluation import *
 from methods import *
-from MLAgentBench.utils import save_evals
+# from MLAgentBench.utils import save_evals
 
 TASK_NAME = "base-competition"
 DEFAULT_METHOD_NAME = "my_method"
@@ -26,14 +26,17 @@ if __name__ == "__main__":
 
     score = get_score(curr_method, args.phase) # time for running evaluation should not be counted in runtime of method
 
-    base_class = loaded_methods[DEFAULT_METHOD_NAME]
-    method_class = loaded_methods[args.method]
-    save_evals(
-            task_name=TASK_NAME,
-            method_name=args.method,
-            method_class=method_class,
-            base_class=base_class,
-            score=score,
-            phase=args.phase,
-            runtime=runtime,
-            )
+    print(TASK_NAME, args.method, args.phase)
+    print("score:", score, "runtime:", runtime)
+
+    # base_class = loaded_methods[DEFAULT_METHOD_NAME]
+    # method_class = loaded_methods[args.method]
+    # save_evals(
+    #         task_name=TASK_NAME,
+    #         method_name=args.method,
+    #         method_class=method_class,
+    #         base_class=base_class,
+    #         score=score,
+    #         phase=args.phase,
+    #         runtime=runtime,
+    #         )
