@@ -4,10 +4,11 @@ We employ DETAD [1] to evaluate the various types of errors, which guides our im
 
 Inspired by Copy Paste augmentation in object detection [7], we propose Action Copy Paste for data augmentation to enrich the temporal relationships between action instances in video. Specifically, we randomly exchange several action instances and their temporal boundary annotations between two videos within the same batch.
 
+Recently, Mamba has shown promising potential to extend its success in long sequence modeling to video modeling [2]. Therefore, we utilize ActionMamba as a complementary action detection head to ActionFormer, aiming for subsequent model ensemble to achieve more robust results.
+
 Our model ensemble consists of pre-fusion and post-fusion components. Specifically, pre-fusion refers to concatenating the multi-modal features of video and audio backbones for training the action detection heads, while post-fusion involves using Weighted Box Fusion (WBF) [11] to integrate the predicted results from ActionFormer and ActionMamba.
 
 We trained two versions of the model:
 Multimodal Model: This model utilizes both video and audio features to predict the start and end times of actions, as well as classify their types. The combination of modalities enhances the model's ability to understand complex interactions within the video.
 Unimodal Model: In this version, only video features are used for action localisation. This allows us to evaluate the performance of visual features independently of audio inputs.
-
 After training both multimodal and unimodal models, we combined their predictions using Weighted Box Fusion (WBF) [12]. WBF [12] is a method for merging predictions from multiple models by averaging the bounding box coordinates and confidence scores, weighted by their respective accuracies. This technique allows us to leverage the strengths of both the multimodal and unimodal models, resulting in more accurate and reliable action localisation.

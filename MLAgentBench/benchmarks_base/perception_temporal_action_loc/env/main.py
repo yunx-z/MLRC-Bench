@@ -40,8 +40,8 @@ if __name__ == "__main__":
 
     #Get score (not counted in runtime)
     score = get_score(curr_method, args.phase)
-    print(score)
-    print(f"Runtime: {runtime:.2f} seconds")
+    print(TASK_NAME, args.method, args.phase)
+    print("score:", score, "runtime:", runtime)
 
     # Save evaluation results
     # base_class = loaded_methods[DEFAULT_METHOD_NAME]
