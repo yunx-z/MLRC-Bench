@@ -1,3 +1,5 @@
+import os
+
 ALL_BASE_RUNTIME = {
         "base-competition" : {
             "dev" : 100,
@@ -35,4 +37,4 @@ ALL_BASE_PERFORMANCE = {
     }
 
 
-MLR_BENCH_DIR = "/Users/shitanshubhushan/Documents/MLAgentBench" # absolute path
+MLR_BENCH_DIR = os.getenv("MLR_BENCH_DIR", "~/MLAgentBench") # absolute path is preferred
