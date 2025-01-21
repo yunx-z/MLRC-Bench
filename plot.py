@@ -43,14 +43,14 @@ MULTI_AGENT = "multi-agent"
 PIPELINES = [SINGLE_AGENT, MULTI_AGENT]  
   
 # LMs  
-LMS = ["o1-mini", "gpt-4o"]  
+LMS = ["gpt-4o"]  
   
 # Tasks  
 TASKS = ["llm-merging", "backdoor-trigger-recovery"]  
   
 # Idea indices for ideation+implementation pipeline  
 IDEA_IDXS = [0, 1, 2, 3]  
-IDEA_PROPOSAL_MODEL = "o1-preview"  
+IDEA_PROPOSAL_MODEL = "gpt-4o"  
   
 # We consider a success if improvement_perc > 5.0  
 SUCCESS_THRESHOLD = 5.0  
@@ -253,11 +253,9 @@ def compute_average_metrics(phase='test'):
     For the specified phase, compute mean and std of improvement_perc, relative_runtime, relative_complexity.  
     Returns a DataFrame with formatted strings showing mean ± std.  
     """  
-    columns = [  
-        "Task", "System",  
-        "Imp_"+LMS[0], "Run_"+LMS[0], "Comp_"+LMS[0],  
-        "Imp_"+LMS[1], "Run_"+LMS[1], "Comp_"+LMS[1],  
-    ]  
+    columns = ["Task", "System"]
+    for lm in LMS:
+        columns += ["Imp_"+lm, "Run_"+lm, "Comp_"+lm]
     rows = []  
     for task in TASKS:  
         for pipeline in PIPELINES:  
