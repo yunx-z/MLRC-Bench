@@ -1,9 +1,16 @@
 ## Perception Test Challenge
 
-## Dataset
-Originally from perception test challenge, only train and validation data were publicly available so we split the train data into 80% train and 20% validation. We use the validation data as test data.
+## Dataset Attribution
+This project uses data from the Perception Test Challenge [[link to original](https://github.com/google-deepmind/perception_test?tab=readme-ov-file)].
+Copyright [2022] [DeepMind Technologies Limited]
 
-License - Apache 2.0
+Modifications:
+- Split the original training dataset into 80% train and 20% validation
+- Repurposed the original validation dataset as test data
+
+The original dataset is licensed under the Apache License, Version 2.0 (the "License");
+you may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
 
 ## Setup
 
