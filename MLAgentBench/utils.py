@@ -9,7 +9,8 @@ from pprint import pprint
 from MLAgentBench.LLM import complete_text
 from MLAgentBench.LLM_as_a_Judge import llm_evaluate_method
 # from MLAgentBench.llm_test_cases import test_cases_evaluation 
-from MLAgentBench.schema import EnvException
+# from MLAgentBench.schema import EnvException
+
 from MLAgentBench.constants import *
 
 def calculate_complexity(code):
