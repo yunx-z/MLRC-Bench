@@ -14,6 +14,10 @@ ALL_BASE_RUNTIME = {
             "test" : 429.746381,
             "debug" : 400,
             },
+        "perception_temporal_action_loc" : {
+            "dev" : 1025.33,
+            "test" : 313.69,
+        },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
     }
 
@@ -33,6 +37,10 @@ ALL_BASE_PERFORMANCE = {
             "test" : 12.972998823683664,
             "debug" : 2,
             },
+        "perception_temporal_action_loc" : {
+            "dev" : 0.2359,
+            "test" : 0.1234,
+        },
         # TODO: add the baseline performance of your new tasks here.
     }
 

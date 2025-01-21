@@ -36,4 +36,4 @@ conda clean --all
 * Score on validation = 0.2268,0.2536,0.2273 (22.68%,25.36%,22.73%) (Score on original baseline code: 23.80)
 * Time taken on test = 313.85,320.47,306.75 seconds
 * Score on test = 0.1216,0.1252,0.1235 (12.16%,12.52%,12.35%) (Score on original baseline code: 12.52)
-**Note**: Training and testing was ran thrice.
+**Note**: Training and testing was ran thrice. Results in MLAgentBench/constants.py are the average of the three runs.
