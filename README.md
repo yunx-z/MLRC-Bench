@@ -36,6 +36,7 @@ Here are the commands to test your newly added tasks:
 cd MLAgentBench/benchmarks_base/${TASK_NAME}/scripts/
 conda env create -f environment.yml
 conda activate ${TASK_NAME}
+# Yunxiang will install MLAgentBench and openai packages in the newly created conda environment
 python prepare.py
 
 # evaluate baseline method on validation set
