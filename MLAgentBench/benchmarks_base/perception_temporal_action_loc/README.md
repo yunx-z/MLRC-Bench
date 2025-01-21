@@ -1,5 +1,10 @@
 ## Perception Test Challenge
 
+## Dataset
+Originally from perception test challenge, only train and validation data were publicly available so we split the train data into 80% train and 20% validation. We use the validation data as test data.
+
+License - Apache 2.0
+
 ## Setup
 
 ```bash
