@@ -38,6 +38,7 @@ ALL_BASE_PERFORMANCE = {
             "debug" : 2,
             },
         "perception_temporal_action_loc" : {
+            # range 0-1
             "dev" : 0.2359,
             "test" : 0.1234,
         },
