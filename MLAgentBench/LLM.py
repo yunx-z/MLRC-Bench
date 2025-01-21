@@ -5,9 +5,9 @@ import re
 import json
 from .schema import TooLongPromptError, LLMError
 
-
-# https://openai.com/api/pricing/
-# As of 01/10/2025
+# https://openai.com/api/pricing/ as of 01/10/2025
+# https://aws.amazon.com/bedrock/pricing/ as of 01/20/2025
+# https://ai.google.dev/pricing#1_5pro as of 01/20/2025
 MODEL2PRICE = {
         "gpt-4o" : {
             "input" : 2.5 / 1e6,
@@ -29,6 +29,46 @@ MODEL2PRICE = {
             "input" : 15 / 1e6,
             "output" : 60 / 1e6,
             },
+        "claude-3-5-sonnet-v2" : {
+            "input" : 0.003 / 1000,
+            "output" : 0.015 / 1000,
+            },
+        "claude-3-5-haiku" : {
+            "input" : 0.0008 / 1000,
+            "output" : 0.004 / 1000,
+            },
+        "claude-3-opus" : {
+            "input" : 0.015 / 1000,
+            "output" : 0.075 / 1000,
+            },
+        "gemini-exp-1206" : {
+            "input" : 0,
+            "output" : 0,
+            },
+        "gemini-2.0-flash-thinking-exp-1219" : {
+            "input" : 0,
+            "output" : 0,
+            },
+        "gemini-2.0-flash-exp" : {
+            "input" : 0,
+            "output" : 0,
+            },
+        "gemini-1.5-pro-002" : {
+            "input" : 1.25 / 1e6,
+            "output" : 5 / 1e6,
+            },
+        "gemini-1.5-flash-002" : {
+            "input" : 0.075 / 1e6,
+            "output" : 0.3 / 1e6,
+            },
+        "llama3-1-405b-instruct" : {
+            "input" : 0.0024 / 1000,
+            "output" : 0.0024 / 1000,
+            },
+        "llama3-3-70b-instruct" : {
+            "input" : 0.00072 / 1000,
+            "output" : 0.00072 / 1000,
+            },
         }
 
 
@@ -48,8 +88,17 @@ except Exception as e:
 
 try:   
     import anthropic
-    # setup anthropic API key
-    anthropic_client = anthropic.Anthropic(api_key=open("claude_api_key.txt").read().strip())
+    import boto3
+    from botocore.exceptions import ClientError
+
+    bedrock_client = boto3.client(service_name='bedrock-runtime', region_name='us-west-2', aws_access_key_id=os.environ["AWS_ACCESS_KEY"], aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"])
+    BEDROCK_MODEL_IDS = {
+        "claude-3-5-sonnet-v2" : "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+        "claude-3-5-haiku" : "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+        "claude-3-opus" : "us.anthropic.claude-3-opus-20240229-v1:0",
+        "llama3-3-70b-instruct" : "us.meta.llama3-3-70b-instruct-v1:0",
+        "llama3-1-405b-instruct" : "meta.llama3-1-405b-instruct-v1:0",
+        }
 except Exception as e:
     pass
     # print(e)
@@ -66,46 +115,48 @@ try:
             api_version="2024-12-01-preview",
             )
 except Exception as e:
-    print("WARNING: cannot load openai endpoint")
+    pass
 
 try:
     import vertexai
     from vertexai.preview.generative_models import GenerativeModel, Part
     from google.cloud.aiplatform_v1beta1.types import SafetySetting, HarmCategory
-    vertexai.init(project=PROJECT_ID, location="us-central1")
+    vertexai.init(project=os.environ["GCP_PROJECT_ID"], location="us-central1")
 except Exception as e:
     pass
-    # print(e)
-    # print("Could not load VertexAI API.")
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from transformers import StoppingCriteria, StoppingCriteriaList
     import torch
+    from tenacity import retry, stop_after_attempt, wait_fixed
+
+    loaded_hf_models = {}
+
+    class StopAtSpecificTokenCriteria(StoppingCriteria):
+        def __init__(self, stop_sequence):
+            super().__init__()
+            self.stop_sequence = stop_sequence
+
+        def __call__(self, input_ids, scores, **kwargs):
+            # Create a tensor from the stop_sequence
+            stop_sequence_tensor = torch.tensor(self.stop_sequence, device=input_ids.device, dtype=input_ids.dtype)
+
+            # Check if the current sequence ends with the stop_sequence
+            current_sequence = input_ids[:, -len(self.stop_sequence) :]
+            return bool(torch.all(current_sequence == stop_sequence_tensor).item())
 except Exception as e:
     pass
 
-loaded_hf_models = {}
-
-class StopAtSpecificTokenCriteria(StoppingCriteria):
-    def __init__(self, stop_sequence):
-        super().__init__()
-        self.stop_sequence = stop_sequence
-
-    def __call__(self, input_ids, scores, **kwargs):
-        # Create a tensor from the stop_sequence
-        stop_sequence_tensor = torch.tensor(self.stop_sequence, device=input_ids.device, dtype=input_ids.dtype)
-
-        # Check if the current sequence ends with the stop_sequence
-        current_sequence = input_ids[:, -len(self.stop_sequence) :]
-        return bool(torch.all(current_sequence == stop_sequence_tensor).item())
-
-def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens):
+def log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens, thought=None):
     """ Log the prompt and completion to a file."""
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
     with open(log_file, "a") as f:
         f.write("\n===================prompt=====================\n")
         f.write(f"{prompt}")
+        if thought:
+            f.write(f"\n==================={model} thought ({max_tokens_to_sample})=====================\n")
+            f.write(f"{thought}")
         f.write(f"\n==================={model} response ({max_tokens_to_sample})=====================\n")
         f.write(completion)
         f.write("\n===================tokens=====================\n")
@@ -159,15 +210,16 @@ def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/Cod
     sequences = [sequence[len(encoded_input.input_ids[0]) :] for sequence in sequences]
     all_decoded_text = tokenizer.batch_decode(sequences)
     completion = all_decoded_text[0]
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     if log_file is not None:
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
     return completion
 
 
-def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, **kwargs):
+def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample = 8000, temperature=0.5, log_file=None, **kwargs):
     """ Call the gemini API to complete a prompt."""
     # Load the model
-    model = GenerativeModel("gemini-pro")
+    gemini_model = GenerativeModel(model)
     # Query the model
     parameters = {
             "temperature": temperature,
@@ -179,70 +231,99 @@ def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_toke
             harm_category: SafetySetting.HarmBlockThreshold(SafetySetting.HarmBlockThreshold.BLOCK_NONE)
             for harm_category in iter(HarmCategory)
         }
-    safety_settings = {
-        }
-    response = model.generate_content( [prompt], generation_config=parameters, safety_settings=safety_settings)
-    completion = response.text
+    response = gemini_model.generate_content( [prompt], generation_config=parameters, safety_settings=safety_settings)
+    if "thinking" in model:
+        thought = response.candidates[0].content.parts[0].text
+        completion = response.candidates[0].content.parts[1].text
+    else:
+        thought = None
+        completion = response.text
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
+    num_prompt_tokens = response.usage_metadata.prompt_token_count
+    num_sample_tokens = response.usage_metadata.candidates_token_count
     if log_file is not None:
-        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
+        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens, thought=thought)
     return completion
 
-def complete_text_claude(prompt, stop_sequences=None, model="claude-v1", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, messages=None, **kwargs):
+def complete_text_claude(prompt, stop_sequences=None, model="claude-v1", max_tokens_to_sample = 8000, temperature=0.5, log_file=None, messages=None, **kwargs):
     """ Call the Claude API to complete a prompt."""
     if stop_sequences is None:
         stop_sequences = [anthropic.HUMAN_PROMPT]
 
-    ai_prompt = anthropic.AI_PROMPT
-    if "ai_prompt" in kwargs is not None:
-        ai_prompt = kwargs["ai_prompt"]
 
-    
-    try:
-        if model == "claude-3-opus-20240229":
-            while True:
-                try:
-                    message = anthropic_client.messages.create(
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": prompt,
-                            }
-                        ] if messages is None else messages,
-                        model=model,
-                        stop_sequences=stop_sequences,
-                        temperature=temperature,
-                        max_tokens=max_tokens_to_sample,
-                        **kwargs
-                    )
-                except anthropic.InternalServerError as e:
-                    pass
-                try:
-                    completion = message.content[0].text
-                    break
-                except:
-                    print("end_turn???")
-                    pass
-        else:
-            rsp = anthropic_client.completions.create(
-                prompt=f"{anthropic.HUMAN_PROMPT} {prompt} {ai_prompt}",
-                stop_sequences=stop_sequences,
-                model=model,
-                temperature=temperature,
-                max_tokens_to_sample=max_tokens_to_sample,
-                **kwargs
-            )
-            completion = rsp.completion
-        
-    except anthropic.APIStatusError as e:
-        print(e)
-        raise TooLongPromptError()
-    except Exception as e:
-        raise LLMError(e)
 
+    model_id = BEDROCK_MODEL_IDS[model]
+    native_request = {
+	"anthropic_version": "bedrock-2023-05-31",
+	"max_tokens": max_tokens_to_sample,
+	"temperature": temperature,
+        "stop_sequences": stop_sequences,
+	"messages": [
+	    {
+		"role": "user",
+		"content": [{"type": "text", "text": prompt}],
+	    }
+	],
+    }
+
+    # Convert the native request to JSON.
+    request = json.dumps(native_request)
+
+    # Invoke the model with the request.
+    response = bedrock_client.invoke_model(modelId=model_id, body=request)
+
+    # Decode the response body.
+    model_response = json.loads(response["body"].read())
+    # model_response {'id': 'msg_bdrk_01HmMRoLhxeydUYyyrsSCn5R', 'type': 'message', 'role': 'assistant', 'model': 'claude-3-5-haiku-20241022', 'content': [{'type': 'text', 'text': 'Hi there! How are you doing today? Is there anything I can help you with?'}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'usage': {'input_tokens': 9, 'output_tokens': 23}}
+
+    # Extract and print the response text.
+    completion = model_response["content"][0]["text"]
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
+    num_prompt_tokens = model_response["usage"]["input_tokens"]
+    num_sample_tokens = model_response["usage"]["output_tokens"]
     
     if log_file is not None:
-        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
+        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens)
     return completion
+
+def complete_text_llama(prompt, stop_sequences=None, model="llama3-3-70b-instruct", max_tokens_to_sample = 4000, temperature=0.5, log_file=None, messages=None, **kwargs):
+    model_id = BEDROCK_MODEL_IDS[model]
+    # Embed the prompt in Llama 3's instruction format.
+    formatted_prompt = f"""
+    <|begin_of_text|><|start_header_id|>user<|end_header_id|>
+    {prompt}
+    <|eot_id|>
+    <|start_header_id|>assistant<|end_header_id|>
+    """
+    native_request = {
+	"prompt": formatted_prompt,
+	"max_gen_len": max_tokens_to_sample,
+	"temperature": temperature,
+    }
+
+    # Convert the native request to JSON.
+    request = json.dumps(native_request)
+
+    # Invoke the model with the request.
+    response = bedrock_client.invoke_model(modelId=model_id, body=request)
+
+    # Decode the response body.
+    model_response = json.loads(response["body"].read())
+    # model_response {'id': 'msg_bdrk_01HmMRoLhxeydUYyyrsSCn5R', 'type': 'message', 'role': 'assistant', 'model': 'claude-3-5-haiku-20241022', 'content': [{'type': 'text', 'text': 'Hi there! How are you doing today? Is there anything I can help you with?'}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'usage': {'input_tokens': 9, 'output_tokens': 23}}
+
+    # Extract and print the response text.
+    completion = model_response["generation"]
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
+    # Since bedrock's llama-series model does not support stop_sequences, we need to truncate observation by ourselves
+    completion = re.sub(r"^Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
+
+    num_prompt_tokens = model_response["prompt_token_count"]
+    num_sample_tokens = model_response["generation_token_count"]
+    
+    if log_file is not None:
+        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens, num_sample_tokens)
+    return completion
+
 
 
 def get_embedding_crfm(text, model="openai/gpt-4-0314"):
@@ -287,6 +368,7 @@ def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314"
         print(request.error)
         raise LLMError(request.error)
     completion = request_result.completions[0].text
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     if log_file is not None:
         log_to_file(log_file, prompt if not messages else str(messages), completion, model, max_tokens_to_sample)
     return completion
@@ -325,6 +407,11 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
     return completion
 
+@retry(
+    stop=stop_after_attempt(10),
+    wait=wait_fixed(60),
+    # after=lambda retry_state: print(f"Attempt #{retry_state.attempt_number} failed!"),
+)
 def complete_text(prompt, log_file, model, **kwargs):
     """ Complete text using the specified model with appropriate API. """
     assert log_file is not None, "log_file is None"
@@ -332,6 +419,8 @@ def complete_text(prompt, log_file, model, **kwargs):
     if model.startswith("claude"):
         # use anthropic API
         completion = complete_text_claude(prompt, stop_sequences=[anthropic.HUMAN_PROMPT, "Observation:"], log_file=log_file, model=model, **kwargs)
+    elif model.startswith("llama"):
+        completion = complete_text_llama(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
     elif model.startswith("gemini"):
         completion = complete_text_gemini(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
     elif model.startswith("huggingface"):
@@ -350,8 +439,9 @@ def complete_text_fast(prompt, **kwargs):
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 
 if __name__ == "__main__":
-    models = ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini"]
-    for model in models:
+    for model in MODEL2PRICE:
+        if model.startswith("o1"):
+            continue
         completion = complete_text("Hello!", "logs/tmp.log", model)
         print(model)
         print(completion)

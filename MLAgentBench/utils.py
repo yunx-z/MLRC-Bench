@@ -159,8 +159,8 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     else:
         idea = None
 
-    explanation = summarize_code(method_code)
-    llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name)
+    explanation = summarize_code(method_code) if phase == "test" else None
+    llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name) if phase == "test" else None
 
     eval_file = "output/idea_evals.json"
     if os.path.exists(eval_file):
