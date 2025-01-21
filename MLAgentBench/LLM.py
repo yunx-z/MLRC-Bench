@@ -1,9 +1,11 @@
 """ This file contains the code for calling all LLM APIs. """
 
 import os
+import time
 import re
 import json
 from .schema import TooLongPromptError, LLMError
+
 
 # https://openai.com/api/pricing/ as of 01/10/2025
 # https://aws.amazon.com/bedrock/pricing/ as of 01/20/2025
@@ -129,7 +131,6 @@ try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from transformers import StoppingCriteria, StoppingCriteriaList
     import torch
-    from tenacity import retry, stop_after_attempt, wait_fixed
 
     loaded_hf_models = {}
 
@@ -407,31 +408,39 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
     return completion
 
-@retry(
-    stop=stop_after_attempt(10),
-    wait=wait_fixed(60),
-    # after=lambda retry_state: print(f"Attempt #{retry_state.attempt_number} failed!"),
-)
+MAX_RETRIES=5
+WAIT_TIME=60
 def complete_text(prompt, log_file, model, **kwargs):
     """ Complete text using the specified model with appropriate API. """
     assert log_file is not None, "log_file is None"
-    
-    if model.startswith("claude"):
-        # use anthropic API
-        completion = complete_text_claude(prompt, stop_sequences=[anthropic.HUMAN_PROMPT, "Observation:"], log_file=log_file, model=model, **kwargs)
-    elif model.startswith("llama"):
-        completion = complete_text_llama(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
-    elif model.startswith("gemini"):
-        completion = complete_text_gemini(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
-    elif model.startswith("huggingface"):
-        completion = complete_text_hf(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
-    elif "/" in model:
-        # use CRFM API since this specifies organization like "openai/..."
-        completion = complete_text_crfm(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
-    else:
-        # use OpenAI API
-        completion = complete_text_openai(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
-    return completion
+
+    retry = 0
+    error_msg = None
+    while retry < MAX_RETRIES:
+        retry += 1
+        try:
+            if model.startswith("claude"):
+                # use anthropic API
+                completion = complete_text_claude(prompt, stop_sequences=[anthropic.HUMAN_PROMPT, "Observation:"], log_file=log_file, model=model, **kwargs)
+            elif model.startswith("llama"):
+                completion = complete_text_llama(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+            elif model.startswith("gemini"):
+                completion = complete_text_gemini(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+            elif model.startswith("huggingface"):
+                completion = complete_text_hf(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+            elif "/" in model:
+                # use CRFM API since this specifies organization like "openai/..."
+                completion = complete_text_crfm(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+            else:
+                # use OpenAI API
+                completion = complete_text_openai(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+            return completion
+        except Exception as e:
+            print(f"{model} attempt {retry} failed!")
+            error_msg = e
+            time.sleep(WAIT_TIME)
+
+    raise LLMError(error_msg)
 
 # specify fast models for summarization etc
 def complete_text_fast(prompt, **kwargs):
@@ -439,9 +448,9 @@ def complete_text_fast(prompt, **kwargs):
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 
 if __name__ == "__main__":
-    for model in MODEL2PRICE:
-        if model.startswith("o1"):
-            continue
-        completion = complete_text("Hello!", "logs/tmp.log", model)
-        print(model)
-        print(completion)
+    # for model in MODEL2PRICE:
+    for model in ["gemini-exp-1206"]:
+        for i in range(20):
+            completion = complete_text("Hello!", "logs/tmp.log", model)
+            print(model)
+            print(completion)
