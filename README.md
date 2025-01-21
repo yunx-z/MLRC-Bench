@@ -13,7 +13,7 @@ Install dependencies with python 3.10 by running
 bash install.sh
 ```
 
-set `MLR_BENCH_DIR="/path/to/MLAgentBench/on/your/local/machine"` in `MLAgentBench/constants.py`
+set `export MLR_BENCH_DIR="/absolute/path/to/MLAgentBench/on/your/local/machine"` in `~/.bashrc` and `source ~/.bashrc`
 
 (Optional) For Kaggle datasets, you need to set up Kaggle API and authentication (~/.kaggle/kaggle.json) as described [here](https://www.kaggle.com/docs/api). You may also need to provide manual consent to the rules of specific competitions by following the prompts. 
 
@@ -36,6 +36,7 @@ Here are the commands to test your newly added tasks:
 cd MLAgentBench/benchmarks_base/${TASK_NAME}/scripts/
 conda env create -f environment.yml
 conda activate ${TASK_NAME}
+# Yunxiang will install MLAgentBench and openai packages in the newly created conda environment
 python prepare.py
 
 # evaluate baseline method on validation set

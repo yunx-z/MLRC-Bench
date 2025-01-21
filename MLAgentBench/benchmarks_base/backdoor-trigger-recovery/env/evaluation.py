@@ -114,6 +114,7 @@ def code_generate(prompt, batch_size=128, model=None, tokenizer=None):
             batch,
             max_new_tokens=128,
             pad_token_id=tokenizer.pad_token_id,
+            do_sample=False,
         )
         batch_generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(batch, generated_ids)]
         batch_responses = tokenizer.batch_decode(batch_generated_ids, skip_special_tokens=True)
