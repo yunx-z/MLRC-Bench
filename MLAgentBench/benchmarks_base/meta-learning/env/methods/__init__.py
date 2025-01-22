@@ -6,6 +6,14 @@ def all_method_handlers():
     loaded_methods = {
             "my_method" : MyMethod,
             ## TODO Add more implemented methods here
+            "random" : MyMethod
             }
+    
+    loaded_method_dirs = {
+            "my_method" : "protonet",
+            ## TODO Add more implemented directories here
+            "random" : "random"
+            }
+ 
 
-    return loaded_methods
+    return loaded_methods, loaded_method_dirs
