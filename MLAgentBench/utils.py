@@ -146,10 +146,18 @@ def summarize_code(code):
 # 
 #     return None
 
-def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime):
+def save_evals(task_name, method_name, method_class_or_file_path, base_class_or_file_path, score, phase, runtime):
+    # check whether method_class is a file_name or an actual class (Grant's requests)
     # save idea, method_name, method_code, feedback, score into a file
-    method_code_file = inspect.getfile(method_class)
-    base_method_code_file = inspect.getfile(base_class)
+    if isinstance(method_class_or_file_path, str) and isinstance(base_class_or_file_path, str):  # Check if it's a string
+        method_code_file = method_class_or_file_path
+        base_method_code_file = base_class_or_file_path
+    elif inspect.isclass(method_class_or_file_path) and inspect.isclass(base_class_or_file_path):  # Check if it's a class
+        method_code_file = inspect.getfile(method_class)
+        base_method_code_file = inspect.getfile(base_class)
+    else:
+        raise ValueError("check the type of method_class_or_file_path or base_class_or_file_path")
+
     method_code = open(method_code_file, 'r').read()
     base_method_code = open(base_method_code_file, 'r').read()
 
