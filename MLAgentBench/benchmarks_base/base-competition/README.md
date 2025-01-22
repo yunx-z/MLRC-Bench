@@ -43,4 +43,4 @@ python main.py -m my_method -p test
 * Score on validation = s1, s2, s3 (Score on original baseline code: s0)
 * Time taken on test = t4, t5, t6 seconds
 * Score on test = s4, s5, s6 (Score on original baseline code: s0')
-**Note**: Training and testing was ran thrice. Results in MLAgentBench/constants.py are the average of the three runs.
+**Note**: Training and testing was ran thrice. Results in `MLAgentBench/constants.py` are the average of the three runs.
