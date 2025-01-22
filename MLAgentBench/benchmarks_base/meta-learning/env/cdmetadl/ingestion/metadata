@@ -1,0 +1,1 @@
+command: python -m cdmetadl.ingestion.ingestion --input_data_dir=$input --output_dir_ingestion=$output --submission_dir=$submission_program

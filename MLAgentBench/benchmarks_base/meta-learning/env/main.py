@@ -1,4 +1,5 @@
 import argparse
+import os
 import time
 
 from evaluation import *
@@ -16,15 +17,15 @@ if __name__ == "__main__":
 
     os.makedirs("output", exist_ok=True) # `save_evals` assume that `output/` folder exists
 
-    loaded_methods = all_method_handlers()
-    curr_method = loaded_methods[args.method](args.method)
+    loaded_methods, loaded_method_dirs = all_method_handlers()
+    curr_dir = loaded_method_dirs[args.method]
 
     start_time = time.time()
-    evaluate_model(curr_method, args.phase)
+    evaluate_model(curr_dir, args.phase)
     end_time = time.time()
     runtime = end_time - start_time
 
-    score = get_score(curr_method, args.phase) # time for running evaluation should not be counted in runtime of method
+    score = get_score(curr_dir, args.phase) # time for running evaluation should not be counted in runtime of method
 
     base_class = loaded_methods[DEFAULT_METHOD_NAME]
     method_class = loaded_methods[args.method]
