@@ -35,4 +35,4 @@ ALL_BASE_PERFORMANCE = {
     }
 
 
-MLR_BENCH_DIR = "/mnt/c/Users/grant/Downloads/MLAgentBench" # absolute path
+MLR_BENCH_DIR = "/data2/gdmurphy/MLAgentBench" # absolute path

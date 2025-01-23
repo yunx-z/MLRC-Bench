@@ -1,0 +1,14 @@
+{
+    "dataset_name": "Birds",
+    "dataset_description": "EXTENDED - Birds dataset",
+    "total_categories": 315,
+    "total_super_categorie": 0,
+    "uniform_number_of_images_per_category": false,
+    "minimum_images_per_category": 124,
+    "median_images_per_category": 150,
+    "maximum_images_per_category": 259,
+    "has_super_categories": false,
+    "image_column_name": "FILE_NAME",
+    "category_column_name": "CATEGORY",
+    "super_category_column_name": "SUPER_CATEGORY"
+}

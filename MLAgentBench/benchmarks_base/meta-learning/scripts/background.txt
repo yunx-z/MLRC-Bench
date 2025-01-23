@@ -1,0 +1,2 @@
+excerpt from relevant papers (besides baseline paper) containing description and core code for relevant methods.
+see llm-merging task for example
