@@ -7,6 +7,7 @@ workspace/
 bak/
 __pycache__/
 MLAgentBench/benchmarks/
+MLAgentBench/benchmarks_base_exp/
 /*.sh
 !*/**/*.sh
 **/.DS_Store
