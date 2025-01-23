@@ -1,0 +1,23 @@
+name: machine_unlearning
+channels:
+ - pytorch
+ - conda-forge
+ - defaults
+dependencies:
+ - python
+ - pytorch
+ - torchvision
+ - cudatoolkit
+ - numpy
+ - pandas
+ - scikit-learn
+ - jupyter
+ - pip
+ - pip:
+   - kaggle
+   - absl-py
+   - tensorboard
+   - tqdm
+   - matplotlib
+   - nbformat
+   - papermill
