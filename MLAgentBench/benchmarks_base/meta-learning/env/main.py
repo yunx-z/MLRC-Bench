@@ -5,6 +5,7 @@ import time
 from evaluation import *
 from methods import *
 from MLAgentBench.utils import save_evals
+from methods.protonet.api import MetaLearner
 
 TASK_NAME = "base-competition"
 DEFAULT_METHOD_NAME = "my_method"
@@ -17,7 +18,7 @@ if __name__ == "__main__":
 
     os.makedirs("output", exist_ok=True) # `save_evals` assume that `output/` folder exists
 
-    loaded_methods, loaded_method_dirs = all_method_handlers()
+    loaded_method_dirs = all_method_handlers()
     curr_dir = loaded_method_dirs[args.method]
 
     start_time = time.time()
@@ -27,8 +28,8 @@ if __name__ == "__main__":
 
     score = get_score(curr_dir, args.phase) # time for running evaluation should not be counted in runtime of method
 
-    base_class = loaded_methods[DEFAULT_METHOD_NAME]
-    method_class = loaded_methods[args.method]
+    base_class = MetaLearner
+    method_class = curr_dir
     save_evals(
             task_name=TASK_NAME,
             method_name=args.method,

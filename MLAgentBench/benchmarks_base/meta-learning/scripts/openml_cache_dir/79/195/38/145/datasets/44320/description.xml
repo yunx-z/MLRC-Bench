@@ -1,0 +1,87 @@
+<oml:data_set_description xmlns:oml="http://openml.org/openml">
+  <oml:id>44320</oml:id>
+  <oml:name>Meta_Album_BRD_Extended</oml:name>
+  <oml:version>1</oml:version>
+  <oml:description>## **Meta-Album Birds Dataset (Extended)**
+***
+When Meta-Album was created, the Birds dataset(https://www.kaggle.com/datasets/gpiosenka/100-bird-species) contained images of 315 bird species, but now it has increased the number of species to 450. It has more than 49 000 images, each with a resolution of 224x224 px. All the images have their natural background, which can lead to bias since, for example, some birds are frequently found in water backgrounds. Additionally, the dataset is imbalanced regarding the ratio of male species images to female species images. The preprocessed version distributed in Meta-Album is made from the original dataset by resizing all the images to a resolution of 128x128 px using an anti-aliasing filter.  
+
+
+
+### **Dataset Details**
+![](https://meta-album.github.io/assets/img/samples/BRD.png)
+
+**Meta Album ID**: LR_AM.BRD  
+**Meta Album URL**: [https://meta-album.github.io/datasets/BRD.html](https://meta-album.github.io/datasets/BRD.html)  
+**Domain ID**: LR_AM  
+**Domain Name**: Large Animals  
+**Dataset ID**: BRD  
+**Dataset Name**: Birds  
+**Short Description**: Birds dataset for image classification  
+**\# Classes**: 315  
+**\# Images**: 49054  
+**Keywords**: birds, animals  
+**Data Format**: images  
+**Image size**: 128x128  
+
+**License (original data release)**: CC0 Public Domain  
+**License URL(original data release)**: https://www.kaggle.com/gpiosenka/100-bird-species
+https://creativecommons.org/publicdomain/zero/1.0/
+ 
+**License (Meta-Album data release)**: CC0 Public Domain  
+**License URL (Meta-Album data release)**: [https://creativecommons.org/publicdomain/zero/1.0/](https://creativecommons.org/publicdomain/zero/1.0/)  
+
+**Source**: BIRDS 400 - SPECIES IMAGE CLASSIFICATION  
+**Source URL**: https://www.kaggle.com/gpiosenka/100-bird-species  
+  
+**Original Author**: Gerald Piosenka  
+**Original contact**: https://www.kaggle.com/gpiosenka/contact  
+
+**Meta Album author**: Dustin Carrion  
+**Created Date**: 01 March 2022  
+**Contact Name**: Ihsan Ullah  
+**Contact Email**: meta-album@chalearn.org  
+**Contact URL**: [https://meta-album.github.io/](https://meta-album.github.io/)  
+
+
+
+### **Cite this dataset**
+```
+@article{birds,
+    title={BIRDS 400 - SPECIES IMAGE CLASSIFICATION},
+    author={Gerald Piosenka},
+    url={https://www.kaggle.com/datasets/gpiosenka/100-bird-species},
+    publisher= {Kaggle}
+}
+```
+
+
+### **Cite Meta-Album**
+```
+@inproceedings{meta-album-2022,
+        title={Meta-Album: Multi-domain Meta-Dataset for Few-Shot Image Classification},
+        author={Ullah, Ihsan and Carrion, Dustin and Escalera, Sergio and Guyon, Isabelle M and Huisman, Mike and Mohr, Felix and van Rijn, Jan N and Sun, Haozhe and Vanschoren, Joaquin and Vu, Phan Anh},
+        booktitle={Thirty-sixth Conference on Neural Information Processing Systems Datasets and Benchmarks Track},
+        url = {https://meta-album.github.io/},
+        year = {2022}
+    }
+```
+
+
+### **More**
+For more information on the Meta-Album dataset, please see the [[NeurIPS 2022 paper]](https://meta-album.github.io/paper/Meta-Album.pdf)  
+For details on the dataset preprocessing, please see the [[supplementary materials]](https://openreview.net/attachment?id=70_Wx-dON3q&amp;name=supplementary_material)  
+Supporting code can be found on our [[GitHub repo]](https://github.com/ihsaan-ullah/meta-album)  
+Meta-Album on Papers with Code [[Meta-Album]](https://paperswithcode.com/dataset/meta-album)  
+
+
+
+### **Other versions of this dataset**
+[[Micro]](https://www.openml.org/d/44241)  [[Mini]](https://www.openml.org/d/44285)</oml:description>
+  <oml:description_version>3</oml:description_version>
+  <oml:format>arff</oml:format>
+  <oml:creator>Ihsan Ullah</oml:creator>     <oml:collection_date>30-09-2022</oml:collection_date>  <oml:upload_date>2022-11-08T17:29:58</oml:upload_date>
+  <oml:language>English</oml:language>  <oml:licence>CC BY-NC 4.0</oml:licence>  <oml:url>http://145.38.195.79:80/datasets/0004/44320/dataset_44320.arff</oml:url>
+  <oml:parquet_url>http://145.38.195.79:80/datasets/0004/44320/dataset_44320.pq</oml:parquet_url>  <oml:file_id>22111034</oml:file_id>  <oml:default_target_attribute>CATEGORY</oml:default_target_attribute>            <oml:visibility>public</oml:visibility>        <oml:status>active</oml:status>
+  <oml:processing_date>2022-11-08 17:30:03</oml:processing_date>      <oml:md5_checksum>8945251eedaa56d15793754896aa95e0</oml:md5_checksum>
+</oml:data_set_description>

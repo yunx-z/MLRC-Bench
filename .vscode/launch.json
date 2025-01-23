@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",       // or "python" in newer VS Code Python extensions
+            "request": "launch",
+            
+            // Point directly to the python executable inside the 'meta_learning' Conda environment:
+            "python": "/home/gmurph1234/anaconda3/envs/meta_learning/bin/python",
+            
+            // Debug the currently open Python file:
+            "program": "${file}",
+            
+            "console": "integratedTerminal",
+
+            "cwd": "${workspaceFolder}/MLAgentBench/benchmarks_base/meta-learning/env",
+
+            // Provide the command-line arguments here:
+            "args": [
+                "-m", "my_method", 
+                "-p", "dev"
+            ]
+        }
+    ]
+}
