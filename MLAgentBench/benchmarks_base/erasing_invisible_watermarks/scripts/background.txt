@@ -1,0 +1,22 @@
+Technical Background for Invisible Watermark Removal
+
+From NeurIPS 2024 Competition - Erasing the Invisible:
+
+The black-box attack track simulates real-world scenarios where attackers must operate without knowledge of the watermarking technique employed. This reflects common industry situations where watermark methods are kept confidential to protect against unauthorized removal or tampering.
+
+Key Challenges:
+1. Watermark removal without prior knowledge of embedding technique
+2. Preservation of image quality and content
+3. Robustness across different watermarking methods
+4. Real-time processing capabilities
+
+Common Approaches:
+1. Image filtering and enhancement
+2. Neural network-based reconstruction
+3. Frequency domain analysis
+4. Adaptive noise reduction
+
+Evaluation focuses on:
+- Image quality preservation (PSNR, SSIM)
+- Watermark removal effectiveness
+- Processing efficiency 
