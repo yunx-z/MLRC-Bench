@@ -7,8 +7,10 @@ import ast
 from pprint import pprint
 
 from MLAgentBench.LLM import complete_text
+from MLAgentBench.LLM_as_a_Judge import llm_evaluate_method
 # from MLAgentBench.llm_test_cases import test_cases_evaluation 
-from MLAgentBench.schema import EnvException
+# from MLAgentBench.schema import EnvException
+
 from MLAgentBench.constants import *
 
 def calculate_complexity(code):
@@ -29,7 +31,7 @@ def sanitize_json_string(s):
     return re.sub(r'"([^"]*)"', lambda m: '"' + m.group(1).replace('\n', '\\n').replace('\"', '\\"') + '"', s)
 
 def summarize_code(code):
-    FEEDBACK_MODEL = os.getenv("FEEDBACK_MODEL", "gpt-4o")
+    FEEDBACK_MODEL = os.getenv("FEEDBACK_MODEL", "o1")
     FEEDBACK_MAX_TOKENS = int(os.getenv("FEEDBACK_MAX_TOKENS", "4000"))
     MAX_RETRYS = 3
 
@@ -144,7 +146,8 @@ def summarize_code(code):
 # 
 #     return None
 
-def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime):
+def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime, is_debug=False):
+    # check whether method_class is a file_name or an actual class (Grant's requests)
     # save idea, method_name, method_code, feedback, score into a file
     if isinstance(method_class, str) and isinstance(base_class, str):  # Check if it's a string
         method_code_file = method_class
@@ -165,7 +168,8 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     else:
         idea = None
 
-    explanation = summarize_code(method_code)
+    explanation = summarize_code(method_code) if phase == "test" and not is_debug else None
+    llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name) if phase == "test" and not is_debug else None
 
     eval_file = "output/idea_evals.json"
     if os.path.exists(eval_file):
@@ -184,7 +188,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "phase" : phase,
             "performance" : score,
             "improvement_perc" : 100 * (score - BASE_PERFORMANCE) / BASE_PERFORMANCE,
-            "step" : int(os.getenv("CURR_STEP", "0")),
+            "step" : int(os.getenv("CURR_STEP", "-1")),
             # "relevance_score" : relevance_score, 
             # "test_case_pass_rate" : test_case_pass_rate,
             "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
@@ -195,6 +199,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "method_code_file" : method_code_file,
             "code" : method_code,
             "explanation" : explanation,
+            "llm_eval" : llm_as_a_judge_eval_result,
             # "relevance_feedback" : feedback,
             # "test_case_message" : test_case_message,
             }
@@ -205,6 +210,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
 
 # Example Usage
 if __name__ == "__main__":
+    from pprint import pprint
     # anchor = "dare"
     # idea_proposal_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/idea.txt"
     # full_code_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/llm_merging/merging/IntelligentMerge.py"
@@ -213,8 +219,10 @@ if __name__ == "__main__":
     full_code = open(full_code_file, 'r').read()
     # fres = get_llm_feedback(idea_proposal, full_code)
     explanation = summarize_code(full_code)
+    llm_eval_result = llm_evaluate_method(explanation, full_code, "llm-merging")
     print("Finished!")
     print(explanation)
+    pprint(llm_eval_result)
     # for k in fres:
     #     print(k)
     #     print(fres[k])

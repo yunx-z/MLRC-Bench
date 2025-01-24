@@ -13,7 +13,8 @@ from MLAgentBench.constants import *
 try:
     from MLAgentBench.agents.agent_autogpt  import AutoGPTAgent
 except:
-    print("Failed to import AutoGPTAgent; Make sure you have installed the autogpt dependencies if you want to use it.")
+    pass
+    # print("Failed to import AutoGPTAgent; Make sure you have installed the autogpt dependencies if you want to use it.")
 
 
 def run(agent_cls, args):

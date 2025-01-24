@@ -1,0 +1,127 @@
+# Second Perception Test Challenge (ECCV 2024 Workshop) – Temporal Action Localisation Track
+
+## Description
+The goal of this challenge is to develop methods that accurately **localize and classify actions** in untrimmed videos (up to 35 seconds long, 30 fps, max resolution 1080p) from a predefined set of classes.
+
+---
+
+## Data
+- **Training Data: Multimodal List**  
+  - 1608 videos  
+  - Includes both **action** and **sound** annotations  
+  - Contains **video and audio features**
+
+- **Validation Set**  
+  - 401 videos, used to tune hyperparameters.
+
+- **Test Set**  
+  - Held-out set for final evaluation of your method’s performance containing 5359 videos.
+
+---
+
+## Output Format
+For each video in test (or val), your model should output **all action segments**, with:
+1. **Start timestamp**  
+2. **End timestamp**  
+3. **Predicted action class label**  
+4. **Confidence score**
+
+---
+
+## Evaluation
+- The main metric is Mean Average Precision (mAP), computed over your detected segments and averaged across:
+  - Different action classes
+  - IoU thresholds from 0.1 to 0.5 in increments of 0.1 (i.e., [0.1, 0.2, 0.3, 0.4, 0.5])
+- You have separate splits for train, val, and test:
+  - Train on the training set.  
+  - Use the validation set to tune, select models, etc.  
+  - Evaluate final performance on the **test set**.  
+
+---
+
+## Developing New Methods
+A starter kit is provided with an end-to-end demonstration. The baseline is located in `methods/MyMethod.py`, showcasing a **single-stage, transformer-based** approach to temporal action localization.
+
+### Baseline Method: ActionFormer
+1. **Transformer Encoder (Local Attention)**  
+   - Processes the pre-extracted video + audio features using stack(s) of local self-attention layers.  
+   - Builds a *multi-scale* (pyramidal) representation, capturing actions at varying temporal scales.
+
+2. **Action Classification & Boundary Regression**  
+   - Each time step in the pyramid is classified as action vs. background.  
+   - If it is an action, the model regresses distances to the start and end boundaries.
+
+3. **Decoding & Post-processing**  
+   - Combine classification and boundary offsets to produce action segments.  
+   - Apply Soft-NMS (or similar) to remove overlapping detections.
+
+---
+
+### Steps to Add Your Own Method
+1. **Create a New File**  
+   - Copy `methods/BaseMethod.py` into, for example, `methods/MyNewMethod.py`.  
+   - Modify the `__init__()` and `run()` functions to implement your approach.
+
+2. **Register Your Method**  
+   - In `methods/__init__.py`, add your new class to the dictionary returned by `all_method_handlers()`.  
+   - Import the new file/module so it is discoverable by the codebase.
+
+3. **Extend/Innovate**  
+   - Experiment with:
+     - Advanced boundary-refinement  
+     - Improved attention mechanisms  
+     - Novel regularization techniques  
+     - Better multimodal fusion in `MyNewMethod.py`
+
+---
+
+## Test Method
+
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. 
+This runs:
+1. **Data Loading**
+2. **Inference** using your chosen method
+3. Evaluate **mAP or other relevant metrics** over the validation/test sets
+4. Follow the **Competition Rules**
+
+---
+
+## Competition Rules
+
+### Focus on Substantive Innovation
+- Your contribution should be **meaningful**, such as:
+  - Refined model architectures
+  - New boundary regression techniques
+  - Fusion strategies
+  - Novel loss designs
+- **Do not submit trivial solutions** (e.g., pure prompt engineering).
+
+---
+
+### Data Usage
+- Use only the **multimodal training list** (1,608 videos) for supervised training.
+- The **validation and test sets**:
+  - **Cannot** be used for any form of (self-)supervised training.
+  - **No extra annotations or human labels** may be added to val/test videos.
+- No other publicly available datasets are permitted for additional training.
+
+---
+
+### Computation Constraints
+- Use only the **provided pretrained video/audio features**.
+- The primary objective is to **surpass or improve upon the ActionFormer baseline**.
+
+---
+
+### No Public VLM API Calls
+- Do not use external VLM APIs (e.g., GPT-4V, Gemini) for:
+  - Generating labels
+  - Extracting features
+  - Producing other model outputs
+
+---
+
+## Goal
+Build a **temporal action localization system** and evaluate it rigorously on the train/val/test splits.
+
+**Good luck advancing the state of the art!**

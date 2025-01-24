@@ -1,3 +1,4 @@
+import os
 import argparse
 import time
 
@@ -36,4 +37,5 @@ if __name__ == "__main__":
             score=score,
             phase=args.phase,
             runtime=runtime,
+            is_debug=True
             )

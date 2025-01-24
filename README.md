@@ -13,7 +13,7 @@ Install dependencies with python 3.10 by running
 bash install.sh
 ```
 
-set `MLR_BENCH_DIR="/path/to/MLAgentBench/on/your/local/machine"` in `MLAgentBench/constants.py`
+set `export MLR_BENCH_DIR="/absolute/path/to/MLAgentBench/on/your/local/machine"` in `~/.bashrc` and `source ~/.bashrc`
 
 (Optional) For Kaggle datasets, you need to set up Kaggle API and authentication (~/.kaggle/kaggle.json) as described [here](https://www.kaggle.com/docs/api). You may also need to provide manual consent to the rules of specific competitions by following the prompts. 
 
@@ -27,7 +27,7 @@ Steps:
 - Fork this github repo to your own github space.
 - Complete steps in Setup Section for the MLAgentBench packages.
 - Create a new task folder under `MLAgentBench/benchmarks_base`, following the [template](https://github.com/yunx-z/MLAgentBench/tree/main/MLAgentBench/benchmarks_base/base-competition).
-- add runtime and performance of your baseline method in `MLAgentBench/constants.py`
+- add runtime and performance of your baseline method in `MLAgentBench/constants.py` (Repeat your run multiple times to ensure consistency; the score should remain relatively stable across runs.)
 - Submit a pull request.
 
 Here are the commands to test your newly added tasks:
@@ -36,6 +36,7 @@ Here are the commands to test your newly added tasks:
 cd MLAgentBench/benchmarks_base/${TASK_NAME}/scripts/
 conda env create -f environment.yml
 conda activate ${TASK_NAME}
+# Yunxiang will install MLAgentBench and openai packages in the newly created conda environment
 python prepare.py
 
 # evaluate baseline method on validation set
@@ -43,11 +44,18 @@ cd ../env
 python main.py -m my_method -p dev
 
 # evaluate baseline method on test set
-source config.sh
-cp ../scripts/${TEST_FILE_NAME} data/ # prepare test data
+cp -r ../scripts/test_data/* data/ # prepare test data (updated)
 cp ../scripts/test_constants.py constants.py # prepare test-time configuration
 python main.py -m my_method -p test
 ```
+
+Also if possible, please include a `background.txt`  file under scripts  folder with excerpt from relevant papers or technical reports written by competition participants (besides baseline paper) containing description and core code for relevant methods. See [this](https://github.com/yunx-z/MLAgentBench/blob/main/MLAgentBench/benchmarks_base/llm-merging/scripts/background.txt) for an example on llm-merging task. This info will be used to inspire LLM agents for better solutions.
+
+The goal of refactored code is to achieve the following requirements:
+
+Basically this command stays constant:
+`python main.py -m my_method -p dev/test`
+and then any code that could deal with evaluation metrics should be read_only and need to make sure read_only files don’t contain stuff that are necessary for training and that the agent could need to modify for their implementation.
 
 Others:
 - The LLM agent will be able to “see” all files under `env/` folder so make sure not to put any test-time information (including test data and model name used in test phases) there to avoid LLM agent “cheating”.

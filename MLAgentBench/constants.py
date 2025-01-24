@@ -1,3 +1,5 @@
+import os
+
 ALL_BASE_RUNTIME = {
         "base-competition" : {
             "dev" : 100,
@@ -12,6 +14,10 @@ ALL_BASE_RUNTIME = {
             "test" : 429.746381,
             "debug" : 400,
             },
+        "perception_temporal_action_loc" : {
+            "dev" : 1025.33,
+            "test" : 313.69,
+        },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
         "meta-learning": {
             "val" : 16.12773323059082,
@@ -35,6 +41,11 @@ ALL_BASE_PERFORMANCE = {
             "test" : 12.972998823683664,
             "debug" : 2,
             },
+        "perception_temporal_action_loc" : {
+            # range 0-1
+            "dev" : 0.2359,
+            "test" : 0.1234,
+        },
         # TODO: add the baseline performance of your new tasks here.
         "meta-learning": {
             # range 0-1
@@ -44,4 +55,5 @@ ALL_BASE_PERFORMANCE = {
     }
 
 
-MLR_BENCH_DIR = "/data2/gdmurphy/MLAgentBench" # absolute path
+
+MLR_BENCH_DIR = os.getenv("MLR_BENCH_DIR", "~/MLAgentBench") # absolute path is preferred
