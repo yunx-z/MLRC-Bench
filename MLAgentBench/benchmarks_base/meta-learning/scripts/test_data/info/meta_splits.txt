@@ -1,0 +1,4 @@
+{
+	"meta-train": ["BCT", "BRD", "CRS", "FLW", "MD_MIX"],
+	"meta-test": ["PLK", "PLT_VIL", "RESISC", "SPT", "TEX"]
+}

@@ -22,7 +22,7 @@ def evaluate_model(method_dir, phase):
         with open(metadata_path, 'w'):
             pass  # Just create and close the file
 
-    input_data_dir = os.path.join(os.getcwd(), "data", "public_data")
+    input_data_dir = os.path.join(os.getcwd(), "data")
     
     if phase == 'dev':
         config_path = os.path.join(directory, "config.json")
@@ -78,7 +78,7 @@ def get_score(method_dir, phase):
     # 3. (optional) save sample-level evaluation scores to a file (this may not be possible with Kaggle API evaluation)
     # 4. use `print()` function to print a message informing the evaluation score, which will be visible to LLM agents.
     # 5. return the final score (a single number, the higher the better)
-    input_data_dir = os.path.join(os.getcwd(), "data", "public_data")
+    input_data_dir = os.path.join(os.getcwd(), "data")
 
     cmd = [
         "python", "-m", "cdmetadl.run_scoring",

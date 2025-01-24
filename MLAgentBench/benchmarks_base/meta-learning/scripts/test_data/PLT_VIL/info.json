@@ -1,0 +1,14 @@
+{
+    "dataset_name": "PlantVillage",
+    "dataset_description": "MINI - PlantVillage dataset",
+    "total_categories": 38,
+    "total_super_categorie": 14,
+    "uniform_number_of_images_per_category": true,
+    "minimum_images_per_category": 40,
+    "median_images_per_category": 40,
+    "maximum_images_per_category": 40,
+    "has_super_categories": true,
+    "image_column_name": "FILE_NAME",
+    "category_column_name": "CATEGORY",
+    "super_category_column_name": "SUPER_CATEGORY"
+}

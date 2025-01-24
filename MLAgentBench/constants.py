@@ -13,6 +13,10 @@ ALL_BASE_RUNTIME = {
             "debug" : 400,
             },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
+        "meta-learning": {
+            "val" : 16.12773323059082,
+            "test" : 27.63893985748291
+        }
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -32,6 +36,11 @@ ALL_BASE_PERFORMANCE = {
             "debug" : 2,
             },
         # TODO: add the baseline performance of your new tasks here.
+        "meta-learning": {
+            # range 0-1
+            "val" : 0.1886189034134081,
+            "test" : 0.3657513612634356
+        }
     }
 
 
