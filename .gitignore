@@ -1,4 +1,5 @@
 openai_api_key.txt
+results/
 test_cases/
 MLAgentBench.egg-info/
 logs/
@@ -6,5 +7,8 @@ workspace/
 bak/
 __pycache__/
 MLAgentBench/benchmarks/
+MLAgentBench/benchmarks_base_exp/
 /*.sh
 !*/**/*.sh
+**/.DS_Store
+.DS_Store
