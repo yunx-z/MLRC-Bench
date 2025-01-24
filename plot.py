@@ -160,16 +160,13 @@ def find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx=None):
   
 def get_dev_results(task, lm, pipeline, run_id, idea_idx=None):  
     if pipeline == SINGLE_AGENT:  
-        dev_file = f"workspace/{task}/{lm}/{run_id}/{task}/output/idea_evals.json"  
+        dev_file =f"logs/{task}/{lm}/{run_id}/env_log/idea_evals.json" 
     elif pipeline == MULTI_AGENT:  
         if idea_idx is None:  
             raise ValueError("idea_idx must be specified for multi-agent pipeline.")  
-        dev_file = (  
-            f"workspace/{task}--{idea_idx}--{IDEA_PROPOSAL_MODEL}/{lm}/{run_id}/"  
-            f"{task}--{idea_idx}--{IDEA_PROPOSAL_MODEL}/output/idea_evals.json"  
-        )  
+        dev_file = f"logs/{task}--{idea_idx}--{IDEA_PROPOSAL_MODEL}/{lm}/{run_id}/env_log/idea_evals.json"  
     else:  
-        dev_file = f"workspace/{task}/{lm}/{run_id}/{task}/output/idea_evals.json"  
+        dev_file = f"logs/{task}--{HUMAN_IDEA_IDX}--{HUMAN_IDEA_PROPOSAL_MODEL}/{lm}/{run_id}/env_log/idea_evals.json"  
   
     data = load_json_safely(dev_file)  
     if not data:  

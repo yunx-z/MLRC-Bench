@@ -146,7 +146,7 @@ def summarize_code(code):
 # 
 #     return None
 
-def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime):
+def save_evals(task_name, method_name, method_class, base_class, score, phase, runtime, is_debug=False):
     # check whether method_class is a file_name or an actual class (Grant's requests)
     # save idea, method_name, method_code, feedback, score into a file
     if isinstance(method_class, str) and isinstance(base_class, str):  # Check if it's a string
@@ -168,8 +168,8 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     else:
         idea = None
 
-    explanation = summarize_code(method_code) if phase == "test" else None
-    llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name) if phase == "test" else None
+    explanation = summarize_code(method_code) if phase == "test" and not is_debug else None
+    llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name) if phase == "test" and not is_debug else None
 
     eval_file = "output/idea_evals.json"
     if os.path.exists(eval_file):
@@ -188,7 +188,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "phase" : phase,
             "performance" : score,
             "improvement_perc" : 100 * (score - BASE_PERFORMANCE) / BASE_PERFORMANCE,
-            "step" : int(os.getenv("CURR_STEP", "0")),
+            "step" : int(os.getenv("CURR_STEP", "-1")),
             # "relevance_score" : relevance_score, 
             # "test_case_pass_rate" : test_case_pass_rate,
             "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
