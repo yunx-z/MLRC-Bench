@@ -1,5 +1,5 @@
-Total execution time: 23.410950899124146
-Meta-train time: 6.038870334625244
-Meta-test time: 16.051058769226074
+Total execution time: 26.95771813392639
+Meta-train time: 6.662530422210693
+Meta-test time: 19.042255878448486
 Number of test datasets: 5
 Tasks per dataset: 10
