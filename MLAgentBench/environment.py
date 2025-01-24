@@ -380,20 +380,27 @@ class Environment:
             shutil.rmtree(save_folder)
         os.makedirs(save_folder)
 
-        # save ALL files in the folder
+
+        # save files in the folder that are not read-only and less than 50MB
         for path, subdirs, files in os.walk(os.path.join(self.work_dir)):
 
             relpath = os.path.relpath(path, self.work_dir)
             dest = os.path.join(save_folder, relpath)
 
             for file_name in files:
-                file_path = os.path.join(relpath, file_name)
-                # check wether the file to copy is part of self.log_dir
-                if  os.path.abspath(os.path.join(self.work_dir, file_path)).startswith(os.path.abspath(self.log_dir.split("/env_log")[0])):
-                    continue                    
-                if not os.path.exists(dest):
-                    os.makedirs(dest)            
-                shutil.copyfile(os.path.join(self.work_dir, file_path), os.path.join(save_folder, file_path))
+                file_path = os.path.join(relpath, file_name) if relpath != "." else file_name
+                abs_file_path = os.path.join(self.work_dir, file_path)
+                
+                # Check if the file is not read-only and is less than 50MB
+                if "pycache" not in file_path and file_path not in self.read_only_files and os.path.getsize(abs_file_path) < 50 * 1024 * 1024:
+                    # Check whether the file to copy is part of self.log_dir
+                    if os.path.abspath(abs_file_path).startswith(os.path.abspath(self.log_dir.split("/env_log")[0])):
+                        continue
+                    
+                    if not os.path.exists(dest):
+                        os.makedirs(dest)
+                    
+                    shutil.copyfile(abs_file_path, os.path.join(save_folder, file_path)) 
 
     ############## for logging convenience ##############
 
