@@ -1,23 +1,28 @@
-[one-sentence summary of the competition]
+The competition focuses on cross-domain meta-learning for few-shot image classification, challenging participants to develop scalable and robust models that can quickly adapt to diverse tasks with varying numbers of classes ("ways") and training examples per class ("shots") across domains like healthcare, ecology, and manufacturing.
 
 ## Description
-[goal, data, evaluation of the competition, often can be found on competition's website]
+Goal and Data
+This competition challenges participants to develop meta-learning models that adapt quickly to few-shot classification tasks across ten diverse domains (e.g., healthcare, ecology, manufacturing). Drawing on the newly expanded Meta Album meta-dataset (10 image datasets unified at 128×128 resolution), the final evaluation tasks vary in “ways” (2–20 classes) and “shots” (1–20 training examples per class). By combining such heterogeneous tasks, the challenge highlights the importance of scalability, robustness to domain shifts, and flexible generalization in the “any-way any-shot” meta-learning setting. 5 datasets will be used for training and 5 will be used for testing.
+Participants develop a `MetaLearner` whose `meta_fit` function returns a `Learner` whose `fit` function returns a `Predictor` with a `predict` function.
 
+Evaluation and Metric
+Submissions are evaluated with blind testing on ten representative datasets. Each task includes a support set (training) and a query set (testing), and the competition’s primary metric is a random-guess normalized balanced accuracy. First, a balanced classification accuracy (bac) is computed by averaging per-class accuracies (i.e., macro-average recall). Then, to account for varying numbers of classes (ways), the bac is normalized by the expected performance of random guessing. This ensures a fair comparison across tasks with different ways/shots configurations and highlights each model’s true ability to learn effectively from limited examples in multiple domains.
 ## Developing New Methods
-You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. [Describe the baseline method here]
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/protonet` and `methods/random` for an example implementation of a baseline method. `random` simply chooses a random classification while `protonet` classifies by projecting images into a feature space, computing class centroids (prototypes) as mean embeddings, and assigning new samples to the nearest centroid, training episodically to minimize query-prototype distances.
 
-1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
+1. To add a new method, modify the `MyMetaLearner, MyLearner, and MyPredictor` classes in `methods/protonet/model.py` to adjust the model and the `config.json` in `methods/protonet/` to adjust the configurations of `meta_train_generator` and `meta_valid_generator` and save it as a new directory in `methods/`. Be sure to include an empty file called `metadata` and the same `api.py` file from `methods/protonet/api.py` without editing either file.
 
-2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+2. Add the directory to the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
 
-3. Add the new module to `methods/__init__.py`.
 
 ## Test Method
 
-Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. [Describe what will happen for the evaluation pipeline in the **development** phase, not **test** phase.]
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. In the development phase, you will meta-train on the first 3 datasets and meta_test on the second 2. In the test phase, you will meta-train on the first 5 datasets and meta_test on the second 5.
 
 ## Competition Rules
 
 Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
 
-[Describe any computation constraints, disallowed behaviours here.]
+The `query_images_per_class` field in a `config.json` cannot be greater than 20.
+The `validation_datasets` field in a `config.json` cannot be greater than 4.
+it is mandatory that you seeded your algorithms. Make sure there are no other hardcoded random seeds in your code.

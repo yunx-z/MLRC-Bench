@@ -1,2 +1,22 @@
-excerpt from relevant papers (besides baseline paper) containing description and core code for relevant methods.
-see llm-merging task for example
+Here are some examples of some successful strategies for the competition:
+Team MetaBeyond
+Team MetaBeyond designed a Light-weight Task Adaptation Network (LTAN) by integrating multiple lightweight task-adaptation modules with two generalizable pre-trained backbones (ResNet-50 and PoolFormer). During meta-training, they added an MLP-based classification layer after the backbones, froze the parameters of the shallower layers, and fine-tuned the remaining network. At meta-testing, they removed the MLP classifier and replaced it with a prototype-based classification head.
+
+To address the domain gap between the 10 domains of the competition, they attached learnable task-adaptive parameters to the backbone models. The backbones were frozen for each task during meta-testing, while only the task-adaptive parameters were learned. A key strength of this method is the use of different task-adaptive parameters for each backbone. To reduce computational cost and runtime, LTAN employed Automatic Mixed Precision during the task-adaptation process.
+
+Team EmmanuelPintelas
+Team EmmanuelPintelas introduced a new augmentation and Validation Optimization Pipeline scheduler to improve the training performance of any CNN-based model. Their method combined an ensemble of Distance-based and Linear-based ML models. During meta-training, they applied Circular Augmentations to emphasize specific transformations in a looping manner, with different subsets of transformations applied to each epoch's images.
+
+To prevent local minima during meta-training, the model reverted to parameters associated with the last highest validation score if validation performance did not improve over a set number of steps. At meta-test time, their solution leveraged the ensemble of Distance-based and Linear-based models, adapting based on the task configurations.
+
+Team CDML
+Team CDML improved the MetaDelta++ baseline by fine-tuning three pre-trained models (ResNet50, SE ResNeXt50, and SE ResNeXt101) with anti-aliasing filters during meta-training. Unlike MetaDelta++, this approach excluded random cropping as a data augmentation technique to avoid losing critical information.
+
+For fine-tuning the SE ResNeXt models, a combination of supervised cross-entropy loss and triplet margin loss was used to enhance feature representations. During meta-testing, the feature representations from all backbones were concatenated and transformed using the self-optimal transport algorithm, and classification was performed using a soft k-means algorithm.
+
+Team metaCD2
+The MetaDelta framework is a meta-learning system designed for efficient and generalizable few-shot image classification. It uses pretrained CNN encoders, fine-tuned through batch training, to generate feature embeddings for input images. During inference, a parameter-free decoder (e.g., ProtoNet or soft k-means) assigns labels to query images based on class prototypes calculated from support examples. MetaDelta integrates multiple meta-learners, trained with different hyperparameters on separate GPUs, and combines their predictions using a meta-ensemble module to improve generalization to unseen datasets. To ensure time and resource efficiency, a central controller manages the multi-threaded training and testing processes.
+
+Team metaCD2 enhanced the MetaDelta++ baseline in the Meta-learning league by using an attention-based spatial contrastive loss, which improves the generalization ability of models. However, since contrastive learning can lead to over-clustering within the same class, they addressed this issue in the Free-style league with a contrastive distillation approach to stabilize the model.
+
+Additionally, they introduced regularization by computing teacher model predictions on weakly-augmented meta-training instances and aligning them with predictions on strongly augmented instances. This approach compensated for the excessive disentanglement caused by the spatial contrastive loss.
