@@ -13,5 +13,6 @@ Multimodal Model: This model utilizes both video and audio features to predict t
 Unimodal Model: In this version, only video features are used for action localisation. This allows us to evaluate the performance of visual features independently of audio inputs.
 After training both multimodal and unimodal models, we combined their predictions using Weighted Box Fusion (WBF) [12]. WBF [12] is a method for merging predictions from multiple models by averaging the bounding box coordinates and confidence scores, weighted by their respective accuracies. This technique allows us to leverage the strengths of both the multimodal and unimodal models, resulting in more accurate and reliable action localisation.
 
-Source: https://arxiv.org/abs/2410.09088
-https://drive.google.com/file/d/1nnkpe_MF4L1Bd6akkofiVL7mBRi7VcqX/view
+Reference: 
+[1] Han, Yinan, Qingyuan Jiang, Hongming Mei, Yang Yang, and Jinhui Tang. "The Solution for Temporal Action Localisation Task of Perception Test Challenge 2024." arXiv preprint arXiv:2410.09088 (2024).
+[2] Li, S., Gao, Z., Huang, H., & Sun, X. (2024). AITC Team: Perception Test Challenge 2024 - Task 3 - Action Localisation. AI Technology Center, Online-Video BU, Tencent; Wuhan University; University of Electronic Science and Technology of China. Retrieved from https://drive.google.com/file/d/1nnkpe_MF4L1Bd6akkofiVL7mBRi7VcqX/view

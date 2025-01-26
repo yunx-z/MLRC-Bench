@@ -63,4 +63,5 @@ The final approach was based on **token-space optimization**, specifically using
 
 This method, while not perfect, provided a robust framework for backdoor trigger recovery and highlighted the potential of token-space optimization in interpretability and security tasks.
 
-Source: https://zygi.me/blog/adventures-in-trojan-detection
+## Reference
+[1] Zygimantas, K. “Adventures in Trojan Detection.” Zygi.me, https://zygi.me/blog/adventures-in-trojan-detection. Accessed 26 Jan. 2025.
