@@ -38,6 +38,7 @@ from collections import defaultdict
 from math import comb  
 from itertools import combinations  
   
+from MLAgentBench.constants import *
 ##############################################################################  
 # Global config  
 ##############################################################################  
@@ -50,7 +51,7 @@ PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]
   
 # LMs  
 LMS = ["o1-mini", "gpt-4o", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]  
-colors = ['#a1c9f4', '#ffb482', '#8de5a1', '#ff9f9b', '#d0bbff', '#debb9b', '#fab0e4', '#cfcfcf', '#fffea3', '#b9f2f0']
+colors = ['#0173b2', '#de8f05', '#029e73', '#d55e00', '#cc78bc', '#ca9161', '#fbafe4', '#949494', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
 # Tasks  
 TASKS = ["llm-merging", "backdoor-trigger-recovery"]  
@@ -64,7 +65,7 @@ HUMAN_IDEA_IDX = "rag"
 HUMAN_IDEA_PROPOSAL_MODEL = "human"  
   
 # Consider success if improvement_perc > 5.0  
-SUCCESS_THRESHOLD = 5.0  
+SUCCESS_THRESHOLD = 10.0  
   
 # Results directory  
 RESULTS_DIR = f"results/SUCCESS_THRESHOLD_{SUCCESS_THRESHOLD}"  
@@ -86,7 +87,11 @@ def extract_timestamp_from_dirname(dirname):
     pattern = r'^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$'  
     m = re.match(pattern, dirname)  
     if m:  
-        return tuple(int(x) for x in m.groups())  
+        ts = tuple(int(x) for x in m.groups())  
+        if ts[0] >= 10: # we only use experiments conducted from January
+            return None
+        else:
+            return ts
     return None  
   
 def load_json_safely(path):  
@@ -102,26 +107,7 @@ def find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx=None):
     """  
     Collect run dirs from workspace and logs, unify, then keep the last 8 by ascending time.  
     """  
-    ws_runs = []  
-    if pipeline == SINGLE_AGENT:  
-        base_pattern_ws = f"workspace/{task}/{lm}/*"  
-    elif pipeline == MULTI_AGENT:  
-        if idea_idx is None:  
-            raise ValueError("idea_idx must be specified for multi-agent pipeline.")  
-        base_pattern_ws = f"workspace/{task}--{idea_idx}--{IDEA_PROPOSAL_MODEL}/{lm}/*"  
-    elif pipeline == HUMAN_SINGLE_AGENT:  
-        base_pattern_ws = f"workspace/{task}--{HUMAN_IDEA_IDX}--{HUMAN_IDEA_PROPOSAL_MODEL}/{lm}/*"  
-    else:  
-        base_pattern_ws = ""  
-  
-    if base_pattern_ws:  
-        for path in glob.glob(base_pattern_ws):  
-            if os.path.isdir(path):  
-                dirname = os.path.basename(path)  
-                ts = extract_timestamp_from_dirname(dirname)  
-                if ts is not None:  
-                    ws_runs.append((dirname, ts))  
-  
+
     log_runs = []  
     if pipeline == SINGLE_AGENT:  
         base_pattern_logs = f"logs/{task}/{lm}/*"  
@@ -142,14 +128,7 @@ def find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx=None):
                 if ts is not None:  
                     log_runs.append((dirname, ts))  
   
-    combined = {}  
-    for rn, ts in ws_runs:  
-        combined[rn] = ts  
-    for rn, ts in log_runs:  
-        if rn not in combined or combined[rn] < ts:  
-            combined[rn] = ts  
-  
-    items = list(combined.items())  
+    items = list(log_runs)  
     items.sort(key=lambda x: x[1])  # ascending  
     items = items[-8:]  
     return [x[0] for x in items]  
@@ -172,13 +151,16 @@ def get_dev_results(task, lm, pipeline, run_id, idea_idx=None):
     if not data:  
         return []  
     out = []  
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["dev"] 
+    BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["dev"]
+
     for imp in data.get("implementations", []):  
         if imp.get("phase") == "dev":  
             out.append(  
                 (  
-                    imp.get("improvement_perc", 0.0),  
-                    imp.get("relative_runtime", 0.0),  
-                    imp.get("relative_complexity", 0.0),  
+                    100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
+                    100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
+                    imp["relative_complexity"],
                 )  
             )  
     return out  
@@ -196,11 +178,14 @@ def get_test_result(task, lm, pipeline, run_id, idea_idx=None):
     data = load_json_safely(test_file)  
     if not data:  
         return None  
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] 
+    BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
+
     for imp in data.get("implementations", []):  
         if imp.get("phase") == "test":  
             return (  
-                imp.get("improvement_perc", 0.0),  
-                imp.get("relative_runtime", 0.0),  
+                100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
+                100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
                 imp.get("relative_complexity", 0.0),  
             )  
     return None  
@@ -456,6 +441,9 @@ def compute_average_metrics_data(phase='test', include_llm_eval=False):
                 def mean_std(arr):  
                     if not arr:  
                         return (0.0, 0.0)  
+                    if np.isnan(np.std(arr, ddof=1)):
+                        print(arr)
+                        exit(0)
                     return (np.mean(arr), np.std(arr, ddof=1))  
   
                 imp_m, imp_s = mean_std(imp_vals)  
@@ -480,87 +468,49 @@ def compute_average_metrics_data(phase='test', include_llm_eval=False):
     return result  
   
 def build_table_2(average_data, phase='test', include_llm_eval=False):  
-    n_extra = 5 if (include_llm_eval and phase=='test') else 0  
-    cols = ["Task","System"]  
-    for lm in LMS:  
-        cols.append(f"Imp_{lm}")  
-        cols.append(f"Run_{lm}")  
-        cols.append(f"Comp_{lm}")  
-        if include_llm_eval and phase=='test':  
-            cols.append(f"Clar_{lm}")  
-            cols.append(f"Val_{lm}")  
-            cols.append(f"Rig_{lm}")  
-            cols.append(f"Inn_{lm}")  
-            cols.append(f"Gen_{lm}")  
+    """  
+    Builds a longer-style table with columns:  
+      Task | System | Metric | ...one column per LM...  
+    so that each metric (e.g. Imp, Run, Comp) appears in its own row.  
+    """  
+    # We'll define which metrics to include:  
+    base_metrics = [  
+        ("Imp",  "imp_mean",  "imp_std"),  
+        ("Run",  "run_mean",  "run_std"),  
+        ("Comp", "comp_mean", "comp_std"),  
+    ]  
+    llm_eval_metrics = [  
+        ("Clarity",        "clarity_mean",   "clarity_std"),  
+        ("Validity",       "validity_mean",  "validity_std"),  
+        ("Rigorousness",   "rigorous_mean",  "rigorous_std"),  
+        ("Innovativeness", "innov_mean",     "innov_std"),  
+        ("Generalizability","gener_mean",    "gener_std"),  
+    ]  
+    # If including LLM eval metrics, add them:  
+    metrics = base_metrics[:]  
+    if include_llm_eval and phase == 'test':  
+        metrics += llm_eval_metrics  
+  
+    # Build the columns: "Task", "System", "Metric" plus each LM as a column  
+    columns = ["Task", "System", "Metric"] + LMS  
   
     rows = []  
-    pipeline_lm_arrays = defaultdict(lambda: [[] for _ in range(len(cols)-2)])  
-  
+    # Go through each task & pipeline & gather the metrics as separate rows  
     for task in TASKS:  
-        for i,pipeline in enumerate(PIPELINES):  
-            row_task = task if i==0 else ""  
-            row = [row_task, pipeline]  
-            for lm_i, lm in enumerate(LMS):  
-                d = average_data.get((task,pipeline,lm),{})  
-                imp_m, imp_s = d.get('imp_mean',0.0), d.get('imp_std',0.0)  
-                run_m, run_s = d.get('run_mean',0.0), d.get('run_std',0.0)  
-                comp_m,comp_s= d.get('comp_mean',0.0), d.get('comp_std',0.0)  
-                row.append(f"{round(imp_m,1)}±{round(imp_s,1)}")  
-                row.append(f"{round(run_m,1)}±{round(run_s,1)}")  
-                row.append(f"{round(comp_m,1)}±{round(comp_s,1)}")  
+        for pipeline in PIPELINES:  
+            for (metric_label, mean_key, std_key) in metrics:  
+                # Prepare the row up to the LM values  
+                row = [task, pipeline, metric_label]  
+                # For each LM, pick up its mean±std for this metric  
+                for lm in LMS:  
+                    d = average_data.get((task, pipeline, lm), {})  
+                    m = d.get(mean_key, 0.0)  
+                    s = d.get(std_key, 0.0)  
+                    row.append(f"{round(m,1)}±{round(s,1)}")  
+                rows.append(row)  
   
-                base = 2 + lm_i*(3+n_extra)  
-                pipeline_lm_arrays[(pipeline,lm)][base-2].append(imp_m)  
-                pipeline_lm_arrays[(pipeline,lm)][base-1].append(run_m)  
-                pipeline_lm_arrays[(pipeline,lm)][base].append(comp_m)  
-  
-                if include_llm_eval and phase=='test':  
-                    c_m = d.get('clarity_mean',0.0); c_s = d.get('clarity_std',0.0)  
-                    v_m = d.get('validity_mean',0.0); v_s = d.get('validity_std',0.0)  
-                    r_m = d.get('rigorous_mean',0.0); r_s = d.get('rigorous_std',0.0)  
-                    i_m = d.get('innov_mean',0.0); i_s = d.get('innov_std',0.0)  
-                    g_m = d.get('gener_mean',0.0); g_s = d.get('gener_std',0.0)  
-                    row.append(f"{round(c_m,1)}±{round(c_s,1)}")  
-                    row.append(f"{round(v_m,1)}±{round(v_s,1)}")  
-                    row.append(f"{round(r_m,1)}±{round(r_s,1)}")  
-                    row.append(f"{round(i_m,1)}±{round(i_s,1)}")  
-                    row.append(f"{round(g_m,1)}±{round(g_s,1)}")  
-                    pipeline_lm_arrays[(pipeline,lm)][base+1].append(c_m)  
-                    pipeline_lm_arrays[(pipeline,lm)][base+2].append(v_m)  
-                    pipeline_lm_arrays[(pipeline,lm)][base+3].append(r_m)  
-                    pipeline_lm_arrays[(pipeline,lm)][base+4].append(i_m)  
-                    pipeline_lm_arrays[(pipeline,lm)][base+5].append(g_m)  
-  
-            rows.append(row)  
-  
-    for pipeline in PIPELINES:  
-        row = ["Avg", pipeline]  
-        for lm_i, lm in enumerate(LMS):  
-            arrs = pipeline_lm_arrays[(pipeline,lm)]  
-            def mval(a):  
-                return round(np.mean(a),1) if a else 0.0  
-            base = lm_i*(3+n_extra)  
-            i_avg = mval(arrs[base+0])  
-            r_avg = mval(arrs[base+1])  
-            c_avg = mval(arrs[base+2])  
-            row.append(f"{i_avg}")  
-            row.append(f"{r_avg}")  
-            row.append(f"{c_avg}")  
-            if include_llm_eval and phase=='test':  
-                clar_avg = mval(arrs[base+3])  
-                val_avg  = mval(arrs[base+4])  
-                rig_avg  = mval(arrs[base+5])  
-                inn_avg  = mval(arrs[base+6])  
-                gen_avg  = mval(arrs[base+7])  
-                row.append(f"{clar_avg}")  
-                row.append(f"{val_avg}")  
-                row.append(f"{rig_avg}")  
-                row.append(f"{inn_avg}")  
-                row.append(f"{gen_avg}")  
-        rows.append(row)  
-  
-    df = pd.DataFrame(rows, columns=cols)  
-    return df  
+    df = pd.DataFrame(rows, columns=columns)  
+    return df 
   
 ##############################################################################  
 # Figure 3: pass@k  
@@ -1092,6 +1042,9 @@ def load_baseline_data_for_task(task):
     rig_list=[]  
     inn_list=[]  
     gen_list=[]  
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] 
+    BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
+
 
     for imp in data.get("implementations", []):  
         if imp.get("phase")=="test":  
@@ -1099,24 +1052,25 @@ def load_baseline_data_for_task(task):
             run_vals.append(imp.get("runtime",0.0))  
             comp_vals.append(imp.get("method_complexity",0.0))  
             llm_eval=imp.get("llm_eval",{})  
-            wc=llm_eval.get("with_code",{})  
-            for subf, arr in [  
-                ("Clarity", clar_list),  
-                ("Validity", val_list),  
-                ("Rigorousness", rig_list),  
-                ("Innovativeness", inn_list),  
-                ("Generalizability", gen_list),  
-            ]:  
-                rating=wc.get(subf,{}).get("Rating",0)  
-                # scale rating 1..5 => 20..100  
-                arr.append(rating if rating>0 else 0)  
+            if llm_eval:
+                wc=llm_eval.get("with_code",{})  
+                for subf, arr in [  
+                    ("Clarity", clar_list),  
+                    ("Validity", val_list),  
+                    ("Rigorousness", rig_list),  
+                    ("Innovativeness", inn_list),  
+                    ("Generalizability", gen_list),  
+                ]:  
+                    rating=wc.get(subf,{}).get("Rating",0)  
+                    # scale rating 1..5 => 20..100  
+                    arr.append(rating if rating>0 else 0)  
 
     if not perf_vals:  
         return None  
     return (  
-        np.mean(perf_vals),  
-        np.mean(run_vals),  
-        np.mean(comp_vals),  
+        BASE_PERFORMANCE, # np.mean(perf_vals),  
+        BASE_RUNTIME, # np.mean(run_vals),  
+        comp_vals[0],  # assume LLOC of each test is same
         np.mean(clar_list),
         np.mean(val_list),
         np.mean(rig_list),
@@ -1296,6 +1250,8 @@ def plot_radar_chart_for_each_task():
   
         # pipeline-lm lines  
         for (lm,pipeline), vals in pipeline_lm_data.items():  
+            if pipeline != SINGLE_AGENT:
+                continue
             (p_, r_, c_, cl_, va_, ri_, inn_, ge_) = vals  
             # normalize p_,r_,c_  
             pnorm = normf(p_, pmin, pmax)  
@@ -1308,26 +1264,34 @@ def plot_radar_chart_for_each_task():
             linevals=[pnorm, rnorm, cnorm, cl_, va_, ri_, inn_, ge_]  
             style_ = PIPELINE_LINESTYLES.get(pipeline, 'solid')  
             color_ = LM_COLORS.get(lm, 'black')  
-            label_ = f"{lm},{pipeline}"  
+            label_ = f"{lm}"  
             lines.append((label_, linevals, style_, color_))  
   
         # Now plot  
-        fig=plt.figure(figsize=(6,6))  
-        ax=plt.subplot(111, polar=True)  
-        ax.set_theta_offset(np.pi/2)  
-        ax.set_theta_direction(-1)  
-        N=len(spokes)  
-        angles=list(np.linspace(0,2*np.pi,N,endpoint=False))  
-        ax.set_thetagrids([a*180/np.pi for a in angles], spokes)  
-  
-        for (lab, vals, ls, col) in lines:  
-            # close  
-            angles_ = angles+[angles[0]]  
-            vals_   = vals+[vals[0]]  
-            ax.plot(angles_, vals_, linestyle=ls, color=col, linewidth=1.5, label=lab)  
-            ax.fill(angles_, vals_, alpha=0.1, color=col)  
-		    
-	# Sort the legend alphabetically
+        fig = plt.figure(figsize=(6, 6))
+        ax = plt.subplot(111, polar=True)
+
+        # Configure the polar plot
+        ax.set_theta_offset(np.pi / 2)  # Rotate the starting angle to the top
+        ax.set_theta_direction(-1)  # Reverse the direction to clockwise
+
+        # Set up the spokes
+        N = len(spokes)
+        angles = list(np.linspace(0, 2 * np.pi, N, endpoint=False))
+        ax.set_thetagrids([a * 180 / np.pi for a in angles], spokes)
+        ax.tick_params(axis='x', pad=20)  # Add padding to the spoke labels to avoid overlap
+
+        # Plot the lines
+        for (lab, vals, ls, col) in lines:
+            # Close the data loop for the radar chart
+            angles_ = angles + [angles[0]]
+            vals_ = vals + [vals[0]]
+            
+            # Plot the line and fill area
+            ax.plot(angles_, vals_, linestyle=ls, color=col, linewidth=1.5, label=lab)
+            # ax.fill(angles_, vals_, alpha=0.1, color=col)
+                    
+        # Sort the legend alphabetically
         handles, labels = ax.get_legend_handles_labels()
         sorted_legend = sorted(zip(labels, handles), key=lambda x: x[0])
         sorted_labels, sorted_handles = zip(*sorted_legend)
@@ -1342,9 +1306,9 @@ def plot_radar_chart_for_each_task():
             "Baseline is dashed in black, pipeline-LM combos use line style + color by pipeline + LM.\n"  
             "Objective metrics are linearly normalized to [0..100]. Subjective (1..5 => [20..100]).\n"  
         )  
-        capfn = os.path.join(RESULTS_DIR, f"radar_per_task_{task.replace(' ','_')}_caption.txt")  
-        with open(capfn, 'w') as ff:  
-            ff.write(cap)  
+        # capfn = os.path.join(RESULTS_DIR, f"radar_per_task_{task.replace(' ','_')}_caption.txt")  
+        # with open(capfn, 'w') as ff:  
+        #     ff.write(cap)  
   
 ##############################################################################  
 # API cost budget  
@@ -1389,9 +1353,9 @@ def generate_api_cost_report():
             lines.append(f"  Pipeline={pipeline}, LM={lm}, cost={round(c_,2)}")  
     lines.append(f"\nTotal Cost of All Experiments: {round(total,2)}")  
   
-    outfn=os.path.join(RESULTS_DIR,"api_cost_report.txt")  
-    with open(outfn,"w") as f:  
-        f.write("\n".join(lines))  
+    # outfn=os.path.join(RESULTS_DIR,"api_cost_report.txt")  
+    # with open(outfn,"w") as f:  
+    #     f.write("\n".join(lines))  
   
 ##############################################################################  
 # Main  
@@ -1410,10 +1374,10 @@ def main():
         f.write(t1_1_latex)  
     with open(os.path.join(RESULTS_DIR,"table_1_2.tex"),"w") as f:  
         f.write(t1_2_latex)  
-    with open(os.path.join(RESULTS_DIR,"table_1_1_caption.txt"),"w") as f:  
-        f.write(f"Table 1.1: Test success rate (improvement>{SUCCESS_THRESHOLD}%).\n")  
-    with open(os.path.join(RESULTS_DIR,"table_1_2_caption.txt"),"w") as f:  
-        f.write(f"Table 1.2: Dev success rate (best dev improvement>{SUCCESS_THRESHOLD}%).\n")  
+    # with open(os.path.join(RESULTS_DIR,"table_1_1_caption.txt"),"w") as f:  
+    #     f.write(f"Table 1.1: Test success rate (improvement>{SUCCESS_THRESHOLD}%).\n")  
+    # with open(os.path.join(RESULTS_DIR,"table_1_2_caption.txt"),"w") as f:  
+    #     f.write(f"Table 1.2: Dev success rate (best dev improvement>{SUCCESS_THRESHOLD}%).\n")  
   
     # Tables 2.1 / 2.2  
     data_2_1 = compute_average_metrics_data(phase='test', include_llm_eval=True)  
@@ -1427,10 +1391,10 @@ def main():
         f.write(t2_1_latex)  
     with open(os.path.join(RESULTS_DIR,"table_2_2.tex"),"w") as f:  
         f.write(t2_2_latex)  
-    with open(os.path.join(RESULTS_DIR,"table_2_1_caption.txt"),"w") as f:  
-        f.write("Table 2.1: Test-time improvement_perc, relative_runtime, relative_complexity, plus LLM metrics.\n")  
-    with open(os.path.join(RESULTS_DIR,"table_2_2_caption.txt"),"w") as f:  
-        f.write("Table 2.2: Dev-time best improvement_perc, relative_runtime, relative_complexity.\n")  
+    # with open(os.path.join(RESULTS_DIR,"table_2_1_caption.txt"),"w") as f:  
+    #     f.write("Table 2.1: Test-time improvement_perc, relative_runtime, relative_complexity, plus LLM metrics.\n")  
+    # with open(os.path.join(RESULTS_DIR,"table_2_2_caption.txt"),"w") as f:  
+    #     f.write("Table 2.2: Dev-time best improvement_perc, relative_runtime, relative_complexity.\n")  
   
     # (Original) Radar charts for 2.1 & 2.2  
     # plot_radar_chart_for_table_2(df_2_1, df_2_2)  
