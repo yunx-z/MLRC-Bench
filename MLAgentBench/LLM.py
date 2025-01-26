@@ -47,7 +47,7 @@ MODEL2PRICE = {
             "input" : 0,
             "output" : 0,
             },
-        "gemini-2.0-flash-thinking-exp-1219" : {
+        "gemini-2.0-flash-thinking-exp-0121" : {
             "input" : 0,
             "output" : 0,
             },
@@ -92,8 +92,11 @@ try:
     import anthropic
     import boto3
     from botocore.exceptions import ClientError
+    from botocore.config import Config
 
-    bedrock_client = boto3.client(service_name='bedrock-runtime', region_name='us-west-2', aws_access_key_id=os.environ["AWS_ACCESS_KEY"], aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"])
+    my_config = Config(read_timeout=1000)
+
+    bedrock_client = boto3.client(service_name='bedrock-runtime', region_name='us-west-2', aws_access_key_id=os.environ["AWS_ACCESS_KEY"], aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"], config=my_config)
     BEDROCK_MODEL_IDS = {
         "claude-3-5-sonnet-v2" : "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
         "claude-3-5-haiku" : "us.anthropic.claude-3-5-haiku-20241022-v1:0",
@@ -234,6 +237,7 @@ def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_toke
         }
     response = gemini_model.generate_content( [prompt], generation_config=parameters, safety_settings=safety_settings)
     if "thinking" in model:
+        print(response)
         thought = response.candidates[0].content.parts[0].text
         completion = response.candidates[0].content.parts[1].text
     else:
@@ -408,7 +412,7 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
     return completion
 
-MAX_RETRIES=5
+MAX_RETRIES=10
 WAIT_TIME=60
 def complete_text(prompt, log_file, model, **kwargs):
     """ Complete text using the specified model with appropriate API. """
@@ -449,8 +453,8 @@ def complete_text_fast(prompt, **kwargs):
 
 if __name__ == "__main__":
     # for model in MODEL2PRICE:
-    for model in ["gemini-exp-1206"]:
+    for model in ["gemini-2.0-flash-thinking-exp-0121"]:
         for i in range(20):
-            completion = complete_text("Hello!", "logs/tmp.log", model)
+            completion = complete_text("Classical math game, use all 4 numbers and + - × / to make 24! Number: 8, 4, 6, 7", "logs/tmp.log", model)
             print(model)
             print(completion)

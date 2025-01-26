@@ -1,4 +1,5 @@
 openai_api_key.txt
+MLAgentBench/benchmarks_base/backdoor-trigger-recovery/scripts/test_data/hidden_test.json
 results/
 test_cases/
 MLAgentBench.egg-info/
@@ -12,3 +13,5 @@ MLAgentBench/benchmarks_base_exp/
 !*/**/*.sh
 **/.DS_Store
 .DS_Store
+MLAgentBench/benchmarks_base/perception_temporal_action_loc/
+tmp/

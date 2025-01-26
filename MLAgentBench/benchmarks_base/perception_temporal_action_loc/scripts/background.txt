@@ -12,3 +12,6 @@ We trained two versions of the model:
 Multimodal Model: This model utilizes both video and audio features to predict the start and end times of actions, as well as classify their types. The combination of modalities enhances the model's ability to understand complex interactions within the video.
 Unimodal Model: In this version, only video features are used for action localisation. This allows us to evaluate the performance of visual features independently of audio inputs.
 After training both multimodal and unimodal models, we combined their predictions using Weighted Box Fusion (WBF) [12]. WBF [12] is a method for merging predictions from multiple models by averaging the bounding box coordinates and confidence scores, weighted by their respective accuracies. This technique allows us to leverage the strengths of both the multimodal and unimodal models, resulting in more accurate and reliable action localisation.
+
+Source: https://arxiv.org/abs/2410.09088
+https://drive.google.com/file/d/1nnkpe_MF4L1Bd6akkofiVL7mBRi7VcqX/view
