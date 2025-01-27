@@ -153,7 +153,7 @@ def evaluate_model(Method, phase):
     with open(f"data/{test_target_list}", 'r') as reader:
         target_list = json.load(reader)
 
-    evaluation_dataset = load_from_file(f"data/{phase}.jsonl")
+    evaluation_dataset = load_from_file(f"data/{test_prompt_data}")
 
     predictions = Method.run(target_list, evaluation_dataset=evaluation_dataset)
 
@@ -196,7 +196,7 @@ def get_score(Method, phase):
         sys.exit("Found direct copy of a target string in predictions.")
 
     # load dataset again for evaluation
-    evaluation_dataset = load_from_file(f"data/{test_prompt_data}.jsonl") 
+    evaluation_dataset = load_from_file(f"data/{test_prompt_data}") 
     trojan_model, tokenizer = load_eval_model(test_model_id)
 
     # Try generating responses
