@@ -47,5 +47,5 @@ conda clean --all
 * Time taken to train and validate = 542.0315222740173, .05367534933511104, 505.67512345314026
 * Score on validation = 0.053832025891711176, 505.4854168891907, 0.05515877249475864
 * Time taken on test = Test time is based on kaggle submission time.
-* Score on test =  1737923269, 1737923874, 1737924647 (Score on original baseline code: 0.0583642010)
+* Score on test =  0.0588217216, 0.0639509074, 0.0605025745 (Score on original baseline code: 0.0583642010)
 **Note**: Training and testing was ran thrice. Results in MLAgentBench/constants.py are the average of the three runs.
