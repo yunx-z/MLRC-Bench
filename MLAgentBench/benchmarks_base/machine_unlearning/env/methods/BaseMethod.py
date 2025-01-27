@@ -10,15 +10,14 @@ class BaseMethod(object):
     def get_name(self):
         return self.name
         
-    def run(self, original_model, retain_loader, forget_loader, val_loader, phase="dev"):
+    def run(self, net, retain_loader, forget_loader, val_loader):
         """Base method for machine unlearning
         
         Args:
-            original_model: The model to be unlearned
+            net: The model to be unlearned
             retain_loader: DataLoader for retained training data
             forget_loader: DataLoader for data to be forgotten 
             val_loader: DataLoader for validation data
-            phase: One of ["dev", "debug", "test"] - debug returns retrained model copy
             
         Returns:
             The unlearned model
