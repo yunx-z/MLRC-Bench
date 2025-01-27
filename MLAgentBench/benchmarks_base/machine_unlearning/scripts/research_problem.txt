@@ -62,6 +62,12 @@ Your method's `run()` function should be written in a way that can be directly c
 - Include all necessary cleanup code
 - Match the notebook's function structure
 
+Please review the provided run-unlearn-finetune.ipynb notebook to understand the execution environment and ensure your implementation is compatible with it.
+
+The code conversion is handled by notebook_utils.py, which is available for modification. By default, it extracts just the run() function implementation, but developers can modify this file to support their preferred code organization approach.
+
+Note: While notebook_utils.py can be customized to accommodate different coding patterns, ensure your modifications maintain compatibility with the notebook environment and competition requirements.
+
 The evaluation pipeline will automatically convert your method's `run()` implementation into the notebook format.
 
 Feel free to experiment with:
