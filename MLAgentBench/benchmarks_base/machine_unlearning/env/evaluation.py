@@ -25,6 +25,7 @@ import kaggle
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 from load_cifar_script import get_cifar10_data, get_cifar10_pretrained_models
+from notebook_utils import method_to_notebook_code
 
 # Constants
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -427,22 +428,6 @@ def update_metadata(target_file, new_notebook_name):
    # Write updated metadata
    with open(target_file, 'w') as f:
        json.dump(target_metadata, f, indent=1)
-
-def method_to_notebook_code(method):
-    """Extract run() implementation and format for notebook."""
-    source = inspect.getsource(method.run)
-    body = "\n    ".join(line for line in source.split("\n")[1:])
-    min_indent = min(len(line) - len(line.lstrip()) 
-                    for line in body.split("\n") if line.strip())
-    body = "\n".join(line[min_indent:] for line in body.split("\n"))
-    
-    return f'''def unlearning(
-    net, 
-    retain_loader, 
-    forget_loader, 
-    val_loader):
-    """Generated from {method.get_name()} implementation."""
-    {body}'''
 
 def _evaluate_test(method):
     """Test phase evaluation using existing notebook template."""
