@@ -27,14 +27,14 @@ def get_cifar10_data(rng: int = 42) -> dict[str, DataLoader]:
 
     train_set = torchvision.datasets.CIFAR10(
         root="./data", train=True, download=True, transform=normalize)
-    train_loader = DataLoader(train_set, batch_size=128, shuffle=True, num_workers=2)
+    train_loader = DataLoader(train_set, batch_size=128, shuffle=True, num_workers=0)
 
     # we split held out data into test and validation set
     held_out = torchvision.datasets.CIFAR10(
         root="./data", train=False, download=True, transform=normalize)
     test_set, val_set = random_split(held_out, [0.5, 0.5], generator=RNG)
-    test_loader = DataLoader(test_set, batch_size=128, shuffle=False, num_workers=2)
-    val_loader = DataLoader(val_set, batch_size=128, shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_set, batch_size=128, shuffle=False, num_workers=0)
+    val_loader = DataLoader(val_set, batch_size=128, shuffle=False, num_workers=0)
 
     # download the forget and retain index split
     local_path = "forget_idx.npy"
@@ -54,9 +54,9 @@ def get_cifar10_data(rng: int = 42) -> dict[str, DataLoader]:
     retain_set = Subset(train_set, retain_idx)
 
     forget_loader = DataLoader(
-        forget_set, batch_size=128, shuffle=True, num_workers=2)
+        forget_set, batch_size=128, shuffle=True, num_workers=0)
     retain_loader = DataLoader(
-        retain_set, batch_size=128, shuffle=True, num_workers=2, generator=RNG)
+        retain_set, batch_size=128, shuffle=True, num_workers=0, generator=RNG)
     
     return {
         "training": train_loader,

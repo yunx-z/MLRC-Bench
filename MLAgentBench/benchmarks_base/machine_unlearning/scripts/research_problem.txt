@@ -1,23 +1,112 @@
-[one-sentence summary of the competition]
+# Machine Unlearning Challenge
+
+**One-sentence summary**  
+Develop efficient algorithms for “machine unlearning” such that, after forgetting certain training data, the resulting model closely matches one that was never trained on that data in the first place.
+
+---
 
 ## Description
-[goal, data, evaluation of the competition, often can be found on competition's website]
+
+We focus on **machine unlearning**, i.e., “removing the influence” of a subset of the training data (the *forget set*) from a trained model, so that the resulting model behaves similarly to one trained *without* that subset. This is especially relevant for privacy regulations (e.g., “right to be forgotten”), where individuals can request removal of their data from a model.
+
+### Goal
+
+Our goal is to compare the strengths and weaknesses of different unlearning methods under a *shared* and *standardized* evaluation. Participants receive:
+
+1. A **pre-trained** model (trained on facial images, CASIA-SURF, to predict age group in test phase, CIFAR-10 in dev phase).  
+2. A **forget set** (data samples to remove) and a **retain set** (the rest of training data).  
+3. A hidden **test set** for final scoring.
+
+**Output**: An unlearned model that should:
+- **Erase** the forget set’s influence to match the behavior of a retrained model that never saw those forget samples.  
+- **Retain** good accuracy on the remaining data and on the test set.  
+- **Finish** within provided compute/runtime constraints.
+
+### Data & Evaluation
+
+- **Dataset**: CASIA-SURF, containing facial images labeled by age group (10 classes) in test phase, CIFAR-10 in dev phase.  
+- **Pretrained model**: A classifier trained for 30 epochs on the entire dataset.  
+- **Forgetting**: Must “remove” any trace of the forget set.  
+- **Utility**: Must stay accurate on the retain data and a hidden test set.  
+- **Metrics**:  
+  1. **Forgetting quality** – compares unlearned model \(\theta_u\) to a model retrained from scratch \(\theta_r\) without the forget set.  
+  2. **Utility** – checks retain/test accuracy relative to \(\theta_r\).  
+  3. **Efficiency** – run under time constraints (< 8h on provided compute).
+
+The challenge uses an *online* evaluation on Kaggle. Each submitted unlearning method will be run multiple times against multiple “original” and “retrained-from-scratch” checkpoints, producing a final score that balances forgetting quality and model utility.
+
+---
 
 ## Developing New Methods
-You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. [Describe the baseline method here]
 
-1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
+We provide a **starter kit** with:
+- Data loading scripts and sample code.  
+- Baseline example method (`MyMethod.py`), which simply fine-tunes the original model on the retain set for a few epochs.
 
-2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+**Baseline Method**  
+The baseline starts with the full, pretrained model and “forgets” by running a few epochs of fine-tuning on the retain set. It relies on *catastrophic forgetting* and is not expected to excel on our detailed unlearning metric, but it serves as an easy-to-follow template for your custom solutions.
 
-3. Add the new module to `methods/__init__.py`.
+### Steps to Add a New Method
+
+1. **Create a new file** in `methods/` (e.g. `MyGreatUnlearning.py`).  
+2. **Inherit** from `BaseMethod.py` (implementing or overriding `__init__()` and `run()`).  
+3. **Register** it in `methods/__init__.py`:  
+   - Add an entry returning your class in the `all_method_handlers()` dictionary.  
+   - Import your new file so it is recognized by `main.py`.  
+
+### Important Note About Method Implementation
+Your method's `run()` function should be written in a way that can be directly copied into the notebook's `unlearning()` function. Key points:
+- Keep the same parameter signature: `(net, retain_loader, forget_loader, val_loader)`
+- Avoid using additional parameters like `phase`
+- Use in-place model modifications (the notebook expects this)
+- Include all necessary cleanup code
+- Match the notebook's function structure
+
+The evaluation pipeline will automatically convert your method's `run()` implementation into the notebook format.
+
+Feel free to experiment with:
+- Gradient-based unlearning (e.g. gradient ascent on forget set + standard training on retain set).  
+- Layer re-initialization or parameter pruning.  
+- Noise injection on certain parameters or layers.  
+- Other creative approaches that meaningfully remove the forget set’s influence yet preserve accuracy on retain/test.
+
+---
 
 ## Test Method
+After adding your new file in `methods/`, you can test locally:
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`.
+## What Happens
 
-Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. [Describe what will happen for the evaluation pipeline in the **development** phase, not **test** phase.]
+### Unlearning Step
+1. **Loads** the original pretrained model and your unlearning code.  
+2. **Applies** the “forget” procedure to produce an unlearned model.
+
+### Evaluation
+1. **Compares** your unlearned model against a reference model \(\theta_r\) that is retrained-from-scratch **without** the forget data.  
+2. **Computes** metrics related to forgetting quality and utility (retain/test accuracy).  
+3. **Aggregates** these into a **final score**.
+
+Your local test run uses a CIFAR10 for quick checks. The official Kaggle scoring runs your approach **multiple times** with different seeds, generating multiple unlearned models for a more robust final metric.
+
+---
 
 ## Competition Rules
 
-Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
+### Focus on Novel Algorithms
+- **Aim** for genuinely new unlearning approaches (e.g., multi-phase re-initialization, specialized objective, custom scheduling).  
+- **Not allowed**: trivial “prompting,” ignoring the forgetting step, or simply skipping training.
 
-[Describe any computation constraints, disallowed behaviours here.]
+### Compute Constraints
+- **CPU/GPU** usage must finish within 8 hours total.  
+- **Internet access** is disabled during evaluation.  
+- Publicly available data/models can be used if **bundled offline** in the submitted notebook.
+
+### No Full Retraining
+- **Do not** just retrain from scratch on the retain set (that defeats the purpose of **approximate** unlearning).  
+- Partial re-init or partial retraining is fine, but must be **significantly cheaper** than naive full retraining.
+
+### Submission Requirements
+- Must produce a **final unlearned checkpoint** that excludes the forget set’s influence.  
+- Must adhere to **Kaggle’s code-of-conduct**.
+
+We look forward to your innovative solutions—**happy unlearning**!

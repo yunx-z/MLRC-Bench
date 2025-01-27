@@ -2,6 +2,4 @@ data/*
 methods/BaseMethod.py
 evaluation.py
 main.py
-constants.py
-metric.py
 load_cifar_script.py
