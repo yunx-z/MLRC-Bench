@@ -407,27 +407,30 @@ def _evaluate_dev(method,
 ###### TEST PHASE ######
 
 def update_metadata(target_file, new_notebook_name):
-   # Read target metadata
-   with open(target_file, 'r') as f:
-       target_metadata = json.load(f)
+    # Read target metadata
+    with open(target_file, 'r') as f:
+        target_metadata = json.load(f)
+    
+    # Get username from already authenticated API
+    username = api.get_config_value('username')
 
-   # Update fields
-   target_metadata.update({
-       'id': f"armeddinosaur/{new_notebook_name}",
-       'title': new_notebook_name,
-       'code_file': f"{new_notebook_name}.ipynb",
-       'language': 'python',
-       'kernel_type': 'notebook',
-       'is_private': True,
-       'enable_gpu': True, 
-       'enable_tpu': False,
-       'enable_internet': False,
-       'competition_sources': ['neurips-2023-machine-unlearning']
-   })
+    # Update fields
+    target_metadata.update({
+        'id': f"{username}/{new_notebook_name}",
+        'title': new_notebook_name,
+        'code_file': f"{new_notebook_name}.ipynb",
+        'language': 'python',
+        'kernel_type': 'notebook',
+        'is_private': True,
+        'enable_gpu': True, 
+        'enable_tpu': False,
+        'enable_internet': False,
+        'competition_sources': ['neurips-2023-machine-unlearning']
+    })
 
-   # Write updated metadata
-   with open(target_file, 'w') as f:
-       json.dump(target_metadata, f, indent=1)
+    # Write updated metadata
+    with open(target_file, 'w') as f:
+        json.dump(target_metadata, f, indent=1)
 
 def _evaluate_test(method):
     """Test phase evaluation using existing notebook template."""
