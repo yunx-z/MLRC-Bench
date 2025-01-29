@@ -37,6 +37,9 @@ import seaborn as sns
 from collections import defaultdict  
 from math import comb  
 from itertools import combinations  
+import matplotlib.colors as mcolors
+import colorsys
+
   
 from MLAgentBench.constants import *
 ##############################################################################  
@@ -44,13 +47,13 @@ from MLAgentBench.constants import *
 ##############################################################################  
   
 # Pipeline types  
-SINGLE_AGENT = "single-agent"  
-MULTI_AGENT = "multi-agent"  
-HUMAN_SINGLE_AGENT = "human+single-agent"  
+SINGLE_AGENT = "MLAB"  
+MULTI_AGENT = "CoI-Agent Idea + MLAB"  
+HUMAN_SINGLE_AGENT = "Human Idea + MLAB"  
 PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]  
   
 # LMs  
-LMS = ["o1-mini", "gpt-4o", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]  
+LMS = ["claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct", "o1-mini", "gpt-4o"]  
 colors = ['#0173b2', '#de8f05', '#029e73', '#d55e00', '#cc78bc', '#ca9161', '#fbafe4', '#949494', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
 # Tasks  
@@ -58,19 +61,15 @@ TASKS = ["llm-merging", "backdoor-trigger-recovery"]
   
 # Idea indices  
 IDEA_IDXS = [0, 1, 2, 3]  
-IDEA_PROPOSAL_MODEL = "o1-preview"  
+IDEA_PROPOSAL_MODEL = "o1-preview" 
+adaptive_threshold = 0.05
   
 # For human+single-agent  
 HUMAN_IDEA_IDX = "rag"  
 HUMAN_IDEA_PROPOSAL_MODEL = "human"  
   
-# Consider success if improvement_perc > 5.0  
-SUCCESS_THRESHOLD = 10.0  
   
-# Results directory  
-RESULTS_DIR = f"results/SUCCESS_THRESHOLD_{SUCCESS_THRESHOLD}"  
-os.makedirs(RESULTS_DIR, exist_ok=True)  
-  
+ 
 # For figure line styles  
 PIPELINE_LINESTYLES = {  
     SINGLE_AGENT: "solid",  
@@ -78,7 +77,32 @@ PIPELINE_LINESTYLES = {
     HUMAN_SINGLE_AGENT: "dotted",  
 }  
   
-  
+HUMAN_PERFORMANCE = {
+    # only for test
+    "llm-merging": {"performance" : 0.83}, 
+    "backdoor-trigger-recovery": {"performance" : 67.5732}, 
+} 
+all_task_improvement_perc = []
+for task in HUMAN_PERFORMANCE:
+    human_perf = HUMAN_PERFORMANCE[task]["performance"] 
+    base_perf = ALL_BASE_PERFORMANCE[task]["test"]
+    task_improvement_perc = 100 * (human_perf - base_perf) / base_perf 
+    HUMAN_PERFORMANCE[task]["improvement_perc"] = task_improvement_perc 
+    all_task_improvement_perc.append(task_improvement_perc)
+
+HUMAN_PERFORMANCE["Average"] = {"improvement_perc" : sum(all_task_improvement_perc) / len(all_task_improvement_perc)}
+
+# Consider success if improvement_perc > 5.0  
+# TASK_THRESHOLD[task] = 5.0  
+# Task adaptive threshold
+TASK_THRESHOLD = {task : HUMAN_PERFORMANCE[task]["improvement_perc"]*adaptive_threshold for task in TASKS}
+print("HUMAN_PERFORMANCE", HUMAN_PERFORMANCE)
+print(f"task success threshold: {adaptive_threshold} of human improvement", TASK_THRESHOLD)
+
+# Results directory  
+RESULTS_DIR = f"results/adaptive_threshold_{adaptive_threshold}/IDEA_PROPOSAL_MODEL_{IDEA_PROPOSAL_MODEL}"  
+os.makedirs(RESULTS_DIR, exist_ok=True) 
+ 
 ##############################################################################  
 # Utility functions  
 ##############################################################################  
@@ -225,13 +249,13 @@ def compute_success_rates_data(phase='test'):
                         if phase=='test':  
                             r = get_test_result(task, lm, pipeline, rid)  
                             success_list.append(  
-                                1 if (r and r[0]>SUCCESS_THRESHOLD) else 0  
+                                1 if (r and r[0]>TASK_THRESHOLD[task]) else 0  
                             )  
                         else: # dev  
                             dev_res = get_dev_results(task, lm, pipeline, rid)  
                             if dev_res:  
                                 best_imp = max(x[0] for x in dev_res)  
-                                success_list.append(1 if (best_imp>SUCCESS_THRESHOLD) else 0)  
+                                success_list.append(1 if (best_imp>TASK_THRESHOLD[task]) else 0)  
                             else:  
                                 success_list.append(0)  
                 elif pipeline == MULTI_AGENT:  
@@ -243,13 +267,13 @@ def compute_success_rates_data(phase='test'):
                             if phase=='test':  
                                 r = get_test_result(task, lm, pipeline, rid, idea_idx)  
                                 agg.append(  
-                                    1 if (r and r[0]>SUCCESS_THRESHOLD) else 0  
+                                    1 if (r and r[0]>TASK_THRESHOLD[task]) else 0  
                                 )  
                             else:  
                                 dev_res = get_dev_results(task, lm, pipeline, rid, idea_idx)  
                                 if dev_res:  
                                     best_imp = max(x[0] for x in dev_res)  
-                                    agg.append(1 if (best_imp>SUCCESS_THRESHOLD) else 0)  
+                                    agg.append(1 if (best_imp>TASK_THRESHOLD[task]) else 0)  
                                 else:  
                                     agg.append(0)  
                     success_list = agg  
@@ -259,13 +283,13 @@ def compute_success_rates_data(phase='test'):
                         if phase=='test':  
                             r = get_test_result(task, lm, pipeline, rid)  
                             success_list.append(  
-                                1 if (r and r[0]>SUCCESS_THRESHOLD) else 0  
+                                1 if (r and r[0]>TASK_THRESHOLD[task]) else 0  
                             )  
                         else:  
                             dev_res = get_dev_results(task, lm, pipeline, rid)  
                             if dev_res:  
                                 best_imp = max(x[0] for x in dev_res)  
-                                success_list.append(1 if (best_imp>SUCCESS_THRESHOLD) else 0)  
+                                success_list.append(1 if (best_imp>TASK_THRESHOLD[task]) else 0)  
                             else:  
                                 success_list.append(0)  
   
@@ -276,6 +300,62 @@ def compute_success_rates_data(phase='test'):
                     mean_sr, std_sr = 0.0, 0.0  
                 result[(task,pipeline,lm)] = (mean_sr, std_sr)  
     return result  
+
+def convert_table_1(df):
+    """Converts the output of construct_table_1 to the desired transposed format."""
+
+    tasks = df['Task'].unique()
+    systems = df['System'].unique()
+    lms = LMS
+
+    new_rows = []
+    for task in tasks:
+        if task == "Avg": # handle the avg rows
+            continue
+        new_row = [task]
+        for system in systems:
+            if system == "Avg":
+                continue
+            for lm in lms:
+                if system != SINGLE_AGENT and lm != "gpt-4o":
+                    continue
+
+                value = df[(df['Task'] == task) & (df['System'] == system)][lm].values
+                if len(value) > 0:
+                    new_row.append(value[0])
+                else:
+                    print(task, system, lm, "no value")
+                    new_row.append("")
+        new_rows.append(new_row)
+    
+    #Handle the avg rows
+    new_row = ["Avg"]
+    for system in systems:
+        if system == "Avg":
+            continue
+        for lm in lms:
+            if system != SINGLE_AGENT and lm != "gpt-4o":
+                continue
+
+            value = df[(df['Task'] == "Avg") & (df['System'] == system)][lm].values
+            if len(value) > 0:
+                new_row.append(value[0])
+            else:
+                new_row.append("")
+    new_rows.append(new_row)
+
+    new_columns = ["Task"]
+    for system in systems:
+        if system == "Avg":
+            continue
+        for lm in lms:
+            if system != SINGLE_AGENT and lm != "gpt-4o":
+                continue
+            safe_system = system.replace("\n", "\\\\")
+            new_columns.append(f"\makecell{{{safe_system}\\\\{lm}}}")
+
+    new_df = pd.DataFrame(new_rows, columns=new_columns)
+    return new_df
   
 def construct_table_1(success_data, phase='test'):  
     rows = []  
@@ -283,7 +363,7 @@ def construct_table_1(success_data, phase='test'):
   
     for task in TASKS:  
         for i, pipeline in enumerate(PIPELINES):  
-            row_task = task if i==0 else ""  
+            row_task = task 
             row = [row_task, pipeline]  
             for lm in LMS:  
                 mean_sr, std_sr = success_data.get((task,pipeline,lm),(0.0,0.0))  
@@ -305,7 +385,7 @@ def construct_table_1(success_data, phase='test'):
   
     cols = ["Task","System"]+LMS  
     df = pd.DataFrame(rows, columns=cols)  
-    return df  
+    return convert_table_1(df)  
   
 ##############################################################################  
 # Table 2.x average metrics (still uses improvement & relative values)  
@@ -466,7 +546,44 @@ def compute_average_metrics_data(phase='test', include_llm_eval=False):
                     'gener_mean':g_m,'gener_std':g_s,  
                 }  
     return result  
-  
+
+def convert_table_2(df):
+    """Converts the output of build_table_2 to the desired transposed format."""
+
+    tasks = df['Task'].unique()
+    metrics = df['Metric'].unique()
+    systems = df['System'].unique()
+    lms = LMS  # Use the global LMS
+
+    new_rows = []
+    for task in tasks:
+        for metric in metrics:
+            new_row = [task, metric]
+            for system in systems:
+                for lm in lms:
+                    if system != SINGLE_AGENT and lm != "gpt-4o":
+                        continue
+                    value = df[(df['Task'] == task) & (df['Metric'] == metric) & (df['System'] == system)][lm].values
+                    if len(value) > 0:
+                        new_row.append(value[0])
+                    else:
+                        assert 0
+                        new_row.append("")  # Handle cases where data is missing
+            new_rows.append(new_row)
+
+    # Construct the columns for the new DataFrame
+    new_columns = ["Task", "Metric"]
+    for system in systems:
+        for lm in lms:
+            if system != SINGLE_AGENT and lm != "gpt-4o":
+                continue
+
+            safe_system = system.replace("\n", "\\\\")
+            new_columns.append(f"\makecell{{{safe_system}\\\\{lm}}}")
+
+    new_df = pd.DataFrame(new_rows, columns=new_columns)
+    return new_df
+ 
 def build_table_2(average_data, phase='test', include_llm_eval=False):  
     """  
     Builds a longer-style table with columns:  
@@ -510,58 +627,72 @@ def build_table_2(average_data, phase='test', include_llm_eval=False):
                 rows.append(row)  
   
     df = pd.DataFrame(rows, columns=columns)  
-    return df 
+    return convert_table_2(df) 
   
 ##############################################################################  
 # Figure 3: pass@k  
 ##############################################################################  
-  
-def get_dev_improvement_success(task, lm, pipeline, run_id, threshold=5.0, idea_idx=None):  
+
+# change to test TODO
+def get_test_improvement_success(task, lm, pipeline, run_id, threshold=5.0, idea_idx=None):  
     """  
-    Return True if dev results exist with improvement>threshold.  
+    Return True if test results exist with improvement>threshold.  
     """  
-    dev_res = []  
+    test_res = []  
     if pipeline==SINGLE_AGENT:  
-        dev_res = get_dev_results(task, lm, pipeline, run_id)  
+        test_res = get_test_result(task, lm, pipeline, run_id)  
     elif pipeline==MULTI_AGENT and idea_idx is not None:  
-        dev_res = get_dev_results(task, lm, pipeline, run_id, idea_idx)  
+        test_res = get_test_result(task, lm, pipeline, run_id, idea_idx)  
     else:  
-        dev_res = get_dev_results(task, lm, pipeline, run_id)  
-    return any(r[0]>threshold for r in dev_res)  
+        test_res = get_test_result(task, lm, pipeline, run_id)  
+    return test_res and test_res[0]>threshold  
   
 def compute_pass_at_k_data():  
     pass_at_k_data = {lm: defaultdict(dict) for lm in LMS}  
-    m=8  
+    m=8 # TODO: avoid hardcode 8 
     kvals = range(1,m+1)  
-  
+
+    def get_pass_at_k(kvals, c_impl):
+        # pass@k  
+        arr_impl=[]  
+        for k in kvals:  
+            if k>m:  
+                pass_k = 1.0 if c_impl>0 else 0.0  
+            else:  
+                denom = comb(m,k)  
+                num = comb(m-c_impl,k)  
+                pass_k = 1.0 - num/denom if denom>0 else 0.0  
+            arr_impl.append(pass_k)   
+        return arr_impl
+
     for lm in LMS:  
         for task in TASKS:  
             # single-agent  
-            runs_sa = find_most_recent_8_runs_for_pipeline(task, lm, SINGLE_AGENT)  
-            sa_successes = 0  
-            for rid in runs_sa:  
-                if get_dev_improvement_success(task, lm, SINGLE_AGENT, rid, threshold=SUCCESS_THRESHOLD):  
-                    sa_successes+=1  
-            c_impl = sa_successes  
-            # pass@k  
-            arr_impl=[]  
-            for k in kvals:  
-                if k>m:  
-                    pass_k = 1.0 if c_impl>0 else 0.0  
-                else:  
-                    denom = comb(m,k)  
-                    num = comb(m-c_impl,k)  
-                    pass_k = 1.0 - num/denom if denom>0 else 0.0  
-                arr_impl.append(pass_k)  
-            pass_at_k_data[lm][task][0] = arr_impl  
-  
+            for N, pipeline in [(0, SINGLE_AGENT), (-1, HUMAN_SINGLE_AGENT)]:
+                runs_sa = find_most_recent_8_runs_for_pipeline(task, lm, pipeline)  
+                sa_successes = 0
+                for rid in runs_sa:
+                    if get_test_improvement_success(task, lm, pipeline, rid, threshold=TASK_THRESHOLD[task]):  
+                        sa_successes+=1  
+                c_impl = sa_successes  
+                pass_at_k_data[lm][task][N] = get_pass_at_k(kvals, c_impl) 
+
+            # multi-agent
+            # total_success_over_all_ideas = 0
+            # for idea_idx in IDEA_IDXS:  
+            #     runs_ = find_most_recent_8_runs_for_pipeline(task, lm, MULTI_AGENT, idea_idx)  
+            #     for rid in runs_:  
+            #         if get_test_improvement_success(task, lm, MULTI_AGENT, rid, threshold=TASK_THRESHOLD[task], idea_idx=idea_idx):  
+            #             total_success_over_all_ideas+=1  
+            # pass_at_k_data[lm][task][1] = get_pass_at_k(range(1,m*len(IDEA_IDXS)+1), total_success_over_all_ideas)
+ 
             # multi-agent  
             c_list=[]  
             for idea_idx in IDEA_IDXS:  
                 runs_ = find_most_recent_8_runs_for_pipeline(task, lm, MULTI_AGENT, idea_idx)  
                 c_ = 0  
                 for rid in runs_:  
-                    if get_dev_improvement_success(task, lm, MULTI_AGENT, rid, threshold=SUCCESS_THRESHOLD, idea_idx=idea_idx):  
+                    if get_test_improvement_success(task, lm, MULTI_AGENT, rid, threshold=TASK_THRESHOLD[task], idea_idx=idea_idx):  
                         c_+=1  
                 c_list.append(c_)  
             for N in [1,2,4]:  
@@ -587,36 +718,41 @@ def compute_pass_at_k_data():
     # average  
     averaged = {lm:{} for lm in LMS}  
     for lm in LMS:  
-        for N in [0,1,2,4]:  
-            sums=[0.0]*m  
+        for N in [-1,0,1,2,4]:  
+            sums=[0.0]*len(pass_at_k_data[lm][TASKS[0]][N]) 
             for task in TASKS:  
-                y_ = pass_at_k_data[lm][task].get(N, [0.0]*m)  
+                y_ = pass_at_k_data[lm][task][N] 
                 sums=[a+b for a,b in zip(sums,y_)]  
             avg=[x/len(TASKS) for x in sums]  
             averaged[lm][N]=avg  
     return pass_at_k_data, averaged  
   
 def plot_figure_3(pass_at_k_data, averaged_pass_at_k):  
-    xvals=range(1,9)  
+    plt.rcParams['font.size'] = 10
     for lm in LMS:  
+        if lm != "gpt-4o":
+            continue
         for task in TASKS+["Average"]:  
             plt.figure(figsize=(6,4))  
-            for N in [0,1,2,4]:  
+            for N in [0,-1,1,2,4]:  
                 if task=="Average":  
                     y=averaged_pass_at_k[lm][N]  
                     t_="Average Over All Tasks"  
                 else:  
-                    y=pass_at_k_data[lm][task].get(N,[0]*8)  
+                    y=pass_at_k_data[lm][task][N]  
                     t_=task  
                 if N==0:  
                     label=f"{SINGLE_AGENT}"  
+                elif N==-1:
+                    label=f"{HUMAN_SINGLE_AGENT}"
                 else:  
-                    label=f"{MULTI_AGENT},N={N}"  
+                    label=f"{MULTI_AGENT}\n# Ideas = {N}"  
+                xvals=range(1,1+len(y))  
                 plt.plot(xvals, y, marker='o', label=label)  
-            plt.title(f"LM={lm}, Task={t_}")  
-            plt.xlabel("k (# trials)")  
+            plt.title(f"{lm}, {t_}")  
+            plt.xlabel("Number of Trials (k)")  
             plt.ylabel("pass@k")  
-            plt.ylim([0,1.05])  
+            # plt.ylim([0,1.05])  
             plt.xticks(list(xvals))  
             plt.grid(True)  
             plt.legend()  
@@ -634,8 +770,8 @@ def plot_figure_3(pass_at_k_data, averaged_pass_at_k):
                 capfn = os.path.join(RESULTS_DIR,f"figure_3_{lm}_average_caption.txt")  
             else:  
                 capfn = os.path.join(RESULTS_DIR,f"figure_3_{lm}_{task.replace(' ','_')}_caption.txt")  
-            with open(capfn,"w") as f:  
-                f.write(caption)  
+            # with open(capfn,"w") as f:  
+            #     f.write(caption)  
   
 ##############################################################################  
 # Figure 4: dev improvement vs i-th implementation  
@@ -704,59 +840,87 @@ def compute_figure_4_data():
                 }  
     return fig4_data  
   
-def plot_figure_4(fig4_data):  
-    metrics=["improvement_perc","relative_runtime","relative_complexity"]  
-    titles=["Dev Improvement over baseline","Dev Relative runtime over baseline","Dev Relative complexity over baseline"]  
-    nums=[1,2,3]  
-    for i,met in enumerate(metrics):  
-        for task in TASKS+["Average"]:  
-            plt.figure(figsize=(8,6))  
-            for lm in LMS:  
-                for pipeline in PIPELINES:  
-                    arr=fig4_data[task][(lm,pipeline)][met]  
-                    if not arr:  
-                        continue  
-                    xvals=range(1,len(arr)+1)  
-                    style_=PIPELINE_LINESTYLES.get(pipeline,'solid')  
-                    color_=LM_COLORS.get(lm,'black')  
-                    lab=f"{lm}, {pipeline}"  
-                    plt.plot(xvals, arr, marker='o', linestyle=style_, color=color_, label=lab)  
-            tt=f"Figure 4.{nums[i]}: {titles[i]} ({task})" if task!="Average" else f"Figure 4.{nums[i]}: {titles[i]} (All Tasks Avg)"  
-            plt.title(tt)  
-            plt.xlabel("i-th implementation")  
-            plt.ylabel(met)  
-            plt.grid(True)  
-            plt.legend()  
-            outfn= os.path.join(RESULTS_DIR,f"figure_4_{nums[i]}_{task.replace(' ','_')}.pdf")  
-            plt.savefig(outfn,bbox_inches='tight')  
-            plt.close()  
-            cap=(  
-                f"Figure 4.{nums[i]} for {task}. "  
-                f"Plots {met} vs implementation index. Different line styles for pipeline, different colors for LM."  
-            )  
-            capfn= os.path.join(RESULTS_DIR,f"figure_4_{nums[i]}_{task.replace(' ','_')}_caption.txt")  
-            with open(capfn,"w") as f:  
-                f.write(cap)  
+def plot_figure_4(fig4_data):
+    plt.rcParams['font.size'] = 18
+    metrics = ["improvement_perc", "relative_runtime", "relative_complexity"]
+    titles = ["Performance Improvement (%)", "Increased Runtime (%)", "Increased Lines of Code (%)"] 
+    nums = [1, 2, 3]
+    
+    # Assuming HUMAN_PERFORMANCE is a predefined dictionary mapping tasks and metrics to human performance values
+
+    
+    for i, met in enumerate(metrics):
+        for task in TASKS + ["Average"]:
+            plt.figure(figsize=(8, 6))
+            for lm in LMS:
+                for pipeline in PIPELINES:
+                    if pipeline != SINGLE_AGENT:
+                        continue
+                    arr = fig4_data[task][(lm, pipeline)][met]
+                    if not arr:
+                        continue
+                    xvals = range(1, len(arr) + 1)
+                    style_ = PIPELINE_LINESTYLES.get(pipeline, 'solid')
+                    color_ = LM_COLORS.get(lm, 'black')
+                    lab = f"{lm}"
+                    plt.plot(xvals, arr, marker='o', linestyle=style_, color=color_, label=lab)
+            
+            # Add horizontal dashed line for human performance
+            if task in HUMAN_PERFORMANCE and met in HUMAN_PERFORMANCE[task]:
+                human_perf = HUMAN_PERFORMANCE[task][met]
+                plt.axhline(y=human_perf, color='black', linestyle='--', label='human', linewidth=2)
+            
+            tt = f"{task}" if task != "Average" else "Average over all tasks"
+            plt.title(tt)
+            plt.xlabel("i-th implementation in a trial") 
+            plt.ylabel(titles[i])
+            plt.grid(True)
+            plt.legend()  # Ensure the legend includes the new line
+            outfn = os.path.join(RESULTS_DIR, f"figure_4_{nums[i]}_{task.replace(' ', '_')}.pdf")
+            plt.savefig(outfn, bbox_inches='tight')
+            plt.close()
+            cap = (
+                f"Figure 4.{nums[i]} for {task}. "
+                f"Plots {met} vs implementation index. Different line styles for pipeline, different colors for LM. "
+                f"A dashed line indicates human performance for the task."
+            )
+            capfn = os.path.join(RESULTS_DIR, f"figure_4_{nums[i]}_{task.replace(' ', '_')}_caption.txt")
+            # with open(capfn, "w") as f:
+            #     f.write(cap)
   
 ##############################################################################  
 # Scatter: cost vs success  
 ##############################################################################  
-  
+
+def load_idea_cost(task,lm):
+    idea_costs = []
+    for i in IDEA_IDXS:
+        coi_idea_file = f"../CoI-Agent/results/{task}/{lm}/{i}/result.json"
+        with open(coi_idea_file, 'r') as reader:
+            items = json.load(reader)
+        idea_costs.append(items["api_cost"])
+    return sum(idea_costs) / len(idea_costs)
+
 def compute_api_cost_and_success_for_scatter():  
     data_points=[]  
     for pipeline in PIPELINES:  
         for lm in LMS:  
+            if lm == "gemini-exp-1206":
+                continue
             costs=[]  
             successes=[]  
             for task in TASKS:  
                 if pipeline==MULTI_AGENT:  
+                    if lm != "gpt-4o":
+                        continue
                     for idx in IDEA_IDXS:  
                         rids = find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idx)  
                         for rid in rids:  
                             c_=load_api_cost(task,lm,pipeline,rid,idx)  
-                            costs.append(c_)  
+                            idea_cost=load_idea_cost(task,lm)
+                            costs.append(c_+idea_cost)  
                             res=get_test_result(task,lm,pipeline,rid,idx)  
-                            s=1 if (res and res[0]>SUCCESS_THRESHOLD) else 0  
+                            s=1 if (res and res[0]>TASK_THRESHOLD[task]) else 0  
                             successes.append(s)  
                 elif pipeline==SINGLE_AGENT:  
                     rids = find_most_recent_8_runs_for_pipeline(task,lm,pipeline)  
@@ -764,16 +928,21 @@ def compute_api_cost_and_success_for_scatter():
                         c_=load_api_cost(task,lm,pipeline,rid)  
                         costs.append(c_)  
                         res=get_test_result(task,lm,pipeline,rid)  
-                        s=1 if(res and res[0]>SUCCESS_THRESHOLD) else 0  
+                        s=1 if(res and res[0]>TASK_THRESHOLD[task]) else 0  
                         successes.append(s)  
                 else:  
+                    if lm != "gpt-4o":
+                        continue
                     rids=find_most_recent_8_runs_for_pipeline(task,lm,pipeline)  
                     for rid in rids:  
                         c_=load_api_cost(task,lm,pipeline,rid)  
                         costs.append(c_)  
                         res=get_test_result(task,lm,pipeline,rid)  
-                        s=1 if(res and res[0]>SUCCESS_THRESHOLD) else 0  
+                        s=1 if(res and res[0]>TASK_THRESHOLD[task]) else 0  
                         successes.append(s)  
+            # print(lm)
+            # print(costs)
+            # print(successes)
             if costs and successes:
                 avc = np.mean(costs) 
                 avs = np.mean(successes)*100 
@@ -796,9 +965,25 @@ def compute_pareto_front(data_points):
     return front  
   
 def plot_scatter_api_cost_vs_success():  
+    plt.rcParams['font.size'] = 10
+    from adjustText import adjust_text
     data=compute_api_cost_and_success_for_scatter()  
     shape_map={SINGLE_AGENT:'o',MULTI_AGENT:'s',HUMAN_SINGLE_AGENT:'^'}  
     plt.figure(figsize=(7,5))  
+    # x_offset = {
+    #         "claude-3-5-sonnet-v2": -1,
+    #         "llama3-1-405b-instruct": 1,
+    #         "o1-mini": -0.5, 
+    #         "gpt-4o" : 0,
+    #         }
+    # y_offset = {
+    #         "claude-3-5-sonnet-v2": 0.5,
+    #         "llama3-1-405b-instruct": -2,
+    #         "o1-mini": 1, 
+    #         "gpt-4o" : 0,
+    #         }
+
+    texts = []
     for dp in data:  
         x=dp["avg_cost"]  
         y=dp["avg_sr"]  
@@ -807,11 +992,27 @@ def plot_scatter_api_cost_vs_success():
         sh=shape_map.get(pipeline,'o')  
         col=LM_COLORS.get(lm,'black')  
         plt.scatter(x,y,marker=sh,color=col,s=100,edgecolors='black')  
-        plt.text(x+0.01,y,f"{lm}\n({pipeline})",fontsize=9)  
+        safe_pipeline = pipeline.replace('w/ ', 'w/\n')
+        if lm == "claude-3-5-sonnet-v2":
+            text = plt.text(x-0.5,y-0.5,f"{lm}\n({safe_pipeline})", ha='left', multialignment='left')  
+        else:
+            text = plt.text(x,y,f"{lm}\n({safe_pipeline})", ha='left', multialignment='left')  
+        texts.append(text)
+
     pf=compute_pareto_front(data)  
     pf_x=[p["avg_cost"] for p in pf]  
     pf_y=[p["avg_sr"] for p in pf]  
-    plt.plot(pf_x,pf_y,color='green',linestyle='--',label='Pareto Front')  
+    plt.plot(pf_x,pf_y,color='black',linestyle='--',label='Pareto Front')  
+
+    # Enhanced adjust_text parameters
+    adjust_text(texts, autoalign='y',
+                expand_points=(1.3, 1.3),  # Further expand points
+                # arrowprops=dict(arrowstyle="-", color='black', lw=0.5),
+                force_text=(0.2, 0.5), force_points=(0.3, 0.7),
+                force_pull=0.9, # new parameter
+                avoid_points=False, #new parameter
+                )
+
     plt.xlabel("Average API Cost Per Trial (USD)")  
     plt.ylabel("Average Success Rate (%)")  
     # plt.title("Scatter: API Cost vs Success Rate (Test)")  
@@ -824,8 +1025,8 @@ def plot_scatter_api_cost_vs_success():
         "Scatter plot of average API cost (x-axis) vs average success rate (y-axis). "  
         "Shapes => pipeline, colors => LM, dashed green line => Pareto front."  
     )  
-    with open(os.path.join(RESULTS_DIR,"scatter_api_cost_vs_success_caption.txt"),"w") as f:  
-        f.write(cap)  
+    # with open(os.path.join(RESULTS_DIR,"scatter_api_cost_vs_success_caption.txt"),"w") as f:  
+    #     f.write(cap)  
   
 ##############################################################################  
 # Correlation heatmaps  
@@ -900,6 +1101,7 @@ def gather_test_correlation_data():
     return df_with, df_without  
   
 def plot_correlation_heatmaps():
+    plt.rcParams['font.size'] = 10
     dfw, dfwo = gather_test_correlation_data()
     subj = ["Clarity", "Validity", "Rigorousness", "Innovativeness", "Generalizability"]
     obj = ["improvement_perc", "relative_runtime", "relative_complexity"]
@@ -914,7 +1116,7 @@ def plot_correlation_heatmaps():
         ex = [c for c in allf if c in df_.columns]
         if len(df_) < 2 or len(ex) < 2:
             continue
-        corr_ = df_[ex].corr()
+        corr_ = df_[ex].corr(method='spearman')
         rAvail = [f for f in subj if f in corr_.index]
         cAvail = [f for f in obj if f in corr_.columns]
         if not rAvail or not cAvail:
@@ -927,7 +1129,8 @@ def plot_correlation_heatmaps():
             cbar_kws={'label': 'Correlation'}
         )
         ax.set_xticklabels(ax.get_xticklabels(), rotation=0)  # Horizontal labels
-        plt.title(f"{nm}")
+        nm2title = {"with_code" : "w/ code", "without_code" : "w/o code"}
+        plt.title(f"{nm2title[nm]}")
         outfn = os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}.pdf")
         plt.savefig(outfn, bbox_inches='tight')
         plt.close()
@@ -935,8 +1138,8 @@ def plot_correlation_heatmaps():
             f"Correlation heatmap ({nm}) between LLM-as-a-Judge subjective metrics (rows) "
             f"and ML objective metrics (cols) for valid test implementations."
         )
-        with open(os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_caption.txt"), "w") as f:
-            f.write(cap)
+        # with open(os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_caption.txt"), "w") as f:
+        #     f.write(cap)
 
   
 ##############################################################################  
@@ -996,8 +1199,8 @@ def plot_radar_chart_for_table_2(df_21, df_22):
         outfn=os.path.join(RESULTS_DIR,"radar_table_2_1.pdf")  
         plt.savefig(outfn,bbox_inches='tight')  
         plt.close()  
-        with open(os.path.join(RESULTS_DIR,"radar_table_2_1_caption.txt"),"w") as f:  
-            f.write("Radar chart for Table 2.1 (test) with objective+subjective metrics.\n")  
+        # with open(os.path.join(RESULTS_DIR,"radar_table_2_1_caption.txt"),"w") as f:  
+        #     f.write("Radar chart for Table 2.1 (test) with objective+subjective metrics.\n")  
   
     # Table 2.2  
     if not df_22.empty:  
@@ -1016,8 +1219,8 @@ def plot_radar_chart_for_table_2(df_21, df_22):
         outfn=os.path.join(RESULTS_DIR,"radar_table_2_2.pdf")  
         plt.savefig(outfn,bbox_inches='tight')  
         plt.close()  
-        with open(os.path.join(RESULTS_DIR,"radar_table_2_2_caption.txt"),"w") as f:  
-            f.write("Radar chart for Table 2.2 (dev) with objective metrics only.\n")  
+        # with open(os.path.join(RESULTS_DIR,"radar_table_2_2_caption.txt"),"w") as f:  
+        #     f.write("Radar chart for Table 2.2 (dev) with objective metrics only.\n")  
   
 ##############################################################################  
 # NEW Radar chart with absolute performance + baseline  
@@ -1186,7 +1389,14 @@ def gather_test_absolute_data_for_task(task):
                 ge_= np.mean(gen_list) if gen_list else 0  
                 out[(lm, pipeline)] = (p_, r_, c_, cl_, va_, ri_, inn_, ge_)  
     return out  
-  
+
+# handle degenerate case  
+def normf(val, vmin, vmax):  
+    # normalize to 1-5
+    if abs(vmax-vmin)<1e-9:  
+        return 50.0  
+    return 1+4*(val-vmin)/(vmax-vmin) 
+
 def plot_radar_chart_for_each_task():  
     """  
     For each real task (skip 'Average'):  
@@ -1214,7 +1424,7 @@ def plot_radar_chart_for_each_task():
   
         # 1) gather all performance, runtime, complexity in a list for normalization  
         perf_vals = [base_perf]  
-        run_vals  = [-base_run]  
+        run_vals  = [-base_run] # higher the better 
         comp_vals = [-base_comp]  
         for k,v in pipeline_lm_data.items():  
             perf_vals.append(v[0])  
@@ -1229,13 +1439,7 @@ def plot_radar_chart_for_each_task():
         rmin, rmax = min(run_vals), max(run_vals)  
         cmin, cmax = min(comp_vals), max(comp_vals)  
   
-        # handle degenerate case  
-        def normf(val, vmin, vmax):  
-            # normalize to 1-5
-            if abs(vmax-vmin)<1e-9:  
-                return 50.0  
-            return 1+4*(val-vmin)/(vmax-vmin) 
-  
+ 
         # We'll store lines as (label, [8 values], style, color)  
         lines=[]  
   
@@ -1264,7 +1468,7 @@ def plot_radar_chart_for_each_task():
             linevals=[pnorm, rnorm, cnorm, cl_, va_, ri_, inn_, ge_]  
             style_ = PIPELINE_LINESTYLES.get(pipeline, 'solid')  
             color_ = LM_COLORS.get(lm, 'black')  
-            label_ = f"{lm}"  
+            label_ = f"{lm}" 
             lines.append((label_, linevals, style_, color_))  
   
         # Now plot  
@@ -1289,7 +1493,16 @@ def plot_radar_chart_for_each_task():
             
             # Plot the line and fill area
             ax.plot(angles_, vals_, linestyle=ls, color=col, linewidth=1.5, label=lab)
-            # ax.fill(angles_, vals_, alpha=0.1, color=col)
+            # Create lighter color by adjusting lightness
+            rgb = mcolors.to_rgb(col)  # Convert to RGB tuple
+            h, l, s = colorsys.rgb_to_hls(*rgb)  # Convert to HLS
+            
+            # Lighten the color (adjust 1.5 to control lightness)
+            light_l = min(1.0, l * 1.5)  # Increase lightness by 50%
+            light_rgb = colorsys.hls_to_rgb(h, light_l, s)
+            
+            # Plot fill with lighter color
+            ax.fill(angles_, vals_, color=light_rgb, alpha=0.3)  # Adjust alpha if needed
                     
         # Sort the legend alphabetically
         handles, labels = ax.get_legend_handles_labels()
@@ -1297,7 +1510,7 @@ def plot_radar_chart_for_each_task():
         sorted_labels, sorted_handles = zip(*sorted_legend)
         plt.legend(sorted_handles, sorted_labels, bbox_to_anchor=(1.2, 1.05))
         plt.title(f"{task}")  
-        outfn = os.path.join(RESULTS_DIR, f"radar_per_task_{task.replace(' ','_')}.pdf")  
+        outfn = os.path.join(RESULTS_DIR, f"radar_{task.replace(' ','_')}.pdf")  
         plt.savefig(outfn, bbox_inches='tight')  
         plt.close()  
   
@@ -1309,6 +1522,102 @@ def plot_radar_chart_for_each_task():
         # capfn = os.path.join(RESULTS_DIR, f"radar_per_task_{task.replace(' ','_')}_caption.txt")  
         # with open(capfn, 'w') as ff:  
         #     ff.write(cap)  
+
+def plot_combined_radar_charts():
+    plt.rcParams['font.size'] = 12
+    spokes = ["Effectiveness", "Efficiency", "Simplicity", "Clarity", "Validity", "Rigorousness", "Innovativeness", "Generalizability"]
+    tasks = [t for t in TASKS if t != 'Average']  # Exclude 'Average' task
+    
+    # Determine grid layout (example: 2 rows, 3 cols for 6 tasks)
+    n_rows = 1
+    n_cols = len(tasks) # (len(tasks) + 1) // 2  # Adjust as needed
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(10, n_rows*6), subplot_kw={'polar': True})
+    axes = axes.flatten()  # Flatten to iterate easily
+
+    legend_elements = {}
+    
+    for idx, task in enumerate(tasks):
+        ax = axes[idx]
+        # --- Data Loading and Normalization (Same as Original) ---
+        baseline = load_baseline_data_for_task(task)
+        base_perf, base_run, base_comp, *base_subj = baseline
+        pipeline_lm_data = gather_test_absolute_data_for_task(task)
+        
+        # Normalize metrics
+        perf_vals = [base_perf] + [v[0] for v in pipeline_lm_data.values()]
+        run_vals = [-base_run] + [-v[1] for v in pipeline_lm_data.values()]
+        comp_vals = [-base_comp] + [-v[2] for v in pipeline_lm_data.values()]
+        
+        pmin, pmax = min(perf_vals), max(perf_vals)
+        rmin, rmax = min(run_vals), max(run_vals)
+        cmin, cmax = min(comp_vals), max(comp_vals)
+        
+        # --- Baseline Data ---
+        bperf = normf(base_perf, pmin, pmax)
+        brun = normf(-base_run, rmin, rmax)
+        bcomp = normf(-base_comp, cmin, cmax)
+        bline = [bperf, brun, bcomp] + base_subj  # Assume base_subj has 5 elements
+        
+        # --- Pipeline Data ---
+        lines = [("Baseline", bline, '--', 'black')]
+        for (lm, pipeline), vals in pipeline_lm_data.items():
+            if pipeline != SINGLE_AGENT:
+                continue
+            p, r, c, *subj = vals
+            pnorm = normf(p, pmin, pmax)
+            rnorm = normf(-r, rmin, rmax)
+            cnorm = normf(-c, cmin, cmax)
+            linevals = [pnorm, rnorm, cnorm] + subj
+            style = PIPELINE_LINESTYLES.get(pipeline, 'solid')
+            color = LM_COLORS.get(lm, 'black')
+            lines.append((lm, linevals, style, color))
+        
+        # --- Plotting on Subplot ---
+        ax.set_theta_offset(np.pi / 2)
+        ax.set_theta_direction(-1)
+        angles = np.linspace(0, 2 * np.pi, len(spokes), endpoint=False)
+        ax.set_thetagrids(np.degrees(angles), spokes, fontsize=12)
+        ax.tick_params(axis='x', pad=17, labelsize=12)  # Reduced padding
+        ax.tick_params(axis='y', labelsize=12)  # Smaller radial labels
+
+        # Plot each line
+        for (lab, vals, ls, col) in lines:
+            assert len(angles) == len(vals)
+            closed_angles = np.append(angles, angles[0])
+            closed_vals = np.append(vals, vals[0])
+            line = ax.plot(closed_angles, closed_vals, ls=ls, color=col, linewidth=1.5, label=lab)
+            # Light fill
+            light_col = mcolors.to_rgba(col, alpha=0.1)
+            ax.fill(closed_angles, closed_vals, color=light_col)
+            if lab not in legend_elements:
+                legend_elements[lab] = line[0]
+        
+        # Add legend to the right of each subplot
+        ax.set_title(task, fontsize=18)  # Add title padding
+
+    
+    # Hide unused subplots
+    # for j in range(len(tasks), len(axes)):
+    
+    #  axes[j].axis('off')
+    # --- Create Unified Legend ---
+    # Sort legend elements alphabetically
+    sorted_labels = sorted(legend_elements.keys())
+    sorted_handles = [legend_elements[l] for l in sorted_labels]
+    
+    # Create unified legend at bottom
+    fig.legend(sorted_handles, sorted_labels,
+              loc='lower center',
+              ncol=3,
+              bbox_to_anchor=(0.5, -0.00),
+              frameon=False,
+              fontsize=12)
+ 
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.1)  # Make space for legend
+    plt.savefig(os.path.join(RESULTS_DIR, "combined_radar_charts.pdf"), bbox_inches='tight')
+    plt.close()
+
   
 ##############################################################################  
 # API cost budget  
@@ -1365,19 +1674,19 @@ def main():
     # Tables 1.1 / 1.2  
     test_succ_data = compute_success_rates_data(phase='test')  
     df_1_1 = construct_table_1(test_succ_data, phase='test')  
-    dev_succ_data = compute_success_rates_data(phase='dev')  
-    df_1_2 = construct_table_1(dev_succ_data, phase='dev')  
+    # dev_succ_data = compute_success_rates_data(phase='dev')  
+    # df_1_2 = construct_table_1(dev_succ_data, phase='dev')  
   
     t1_1_latex = df_1_1.to_latex(index=False, escape=False)  
-    t1_2_latex = df_1_2.to_latex(index=False, escape=False)  
+    # t1_2_latex = df_1_2.to_latex(index=False, escape=False)  
     with open(os.path.join(RESULTS_DIR,"table_1_1.tex"),"w") as f:  
         f.write(t1_1_latex)  
-    with open(os.path.join(RESULTS_DIR,"table_1_2.tex"),"w") as f:  
-        f.write(t1_2_latex)  
+    # with open(os.path.join(RESULTS_DIR,"table_1_2.tex"),"w") as f:  
+    #     f.write(t1_2_latex)  
     # with open(os.path.join(RESULTS_DIR,"table_1_1_caption.txt"),"w") as f:  
-    #     f.write(f"Table 1.1: Test success rate (improvement>{SUCCESS_THRESHOLD}%).\n")  
+    #     f.write(f"Table 1.1: Test success rate (improvement>{TASK_THRESHOLD[task]}%).\n")  
     # with open(os.path.join(RESULTS_DIR,"table_1_2_caption.txt"),"w") as f:  
-    #     f.write(f"Table 1.2: Dev success rate (best dev improvement>{SUCCESS_THRESHOLD}%).\n")  
+    #     f.write(f"Table 1.2: Dev success rate (best dev improvement>{TASK_THRESHOLD[task]}%).\n")  
   
     # Tables 2.1 / 2.2  
     data_2_1 = compute_average_metrics_data(phase='test', include_llm_eval=True)  
@@ -1400,7 +1709,8 @@ def main():
     # plot_radar_chart_for_table_2(df_2_1, df_2_2)  
   
     # (NEW) Radar chart per task (skip 'Average'), using absolute performance + baseline  
-    plot_radar_chart_for_each_task()  
+    # plot_radar_chart_for_each_task()  
+    plot_combined_radar_charts()
   
     # Figure 3  
     pass_data, pass_avg = compute_pass_at_k_data()  
