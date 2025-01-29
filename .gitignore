@@ -16,3 +16,4 @@ MLAgentBench/benchmarks_base_exp/
 MLAgentBench/benchmarks_base/perception_temporal_action_loc/
 tmp/
 scripts/
+.kaggle/
