@@ -77,3 +77,5 @@ for filename, file_id in test_files.items():
     download_and_extract(file_id, test_path, filename)
 
 print("All preparation steps completed successfully!")
+with open("prepared", 'w') as writer:
+    pass

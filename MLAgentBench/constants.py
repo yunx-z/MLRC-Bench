@@ -1,17 +1,19 @@
 import os
 
+# TODO: automatically read from base_exp idea_evals.json
+
 ALL_BASE_RUNTIME = {
         "base-competition" : {
             "dev" : 100,
             "test" : 100,
             },
         "llm-merging" : {
-            "dev" : 3447.39514565467,
-            "test" : 1811.927922,
+            "dev" : 3338.01,
+            "test" : 2428.07,
             },
         "backdoor-trigger-recovery" : {
-            "dev" : 481.1659276,
-            "test" : 429.746381,
+            "dev" : 597.55,
+            "test" : 498.13,
             "debug" : 400,
             },
         "perception_temporal_action_loc" : {
@@ -31,13 +33,13 @@ ALL_BASE_PERFORMANCE = {
             },
         "llm-merging" : {
             # range 0-1
-            "dev" : 0.73,
-            "test" : 0.49,
+            "dev" : 0.727,
+            "test" : 0.493,
             },
         "backdoor-trigger-recovery" : {
             # range 0-100
-            "dev" : 8.331147359458377,
-            "test" : 12.972998823683664,
+            "dev" : 3.758,
+            "test" : 9.369,
             "debug" : 2,
             },
         "perception_temporal_action_loc" : {

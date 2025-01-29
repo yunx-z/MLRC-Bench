@@ -150,10 +150,10 @@ def evaluate_model(Method, phase):
     if not os.path.exists("output"):
         os.makedirs("output")
 
-    with open("data/target_list.json", 'r') as reader:
+    with open(f"data/{test_target_list}", 'r') as reader:
         target_list = json.load(reader)
 
-    evaluation_dataset = load_from_file(f"data/{phase}.jsonl")
+    evaluation_dataset = load_from_file(f"data/{test_prompt_data}")
 
     predictions = Method.run(target_list, evaluation_dataset=evaluation_dataset)
 
@@ -167,8 +167,7 @@ def get_score(Method, phase):
         return 0.233
 
     submission_file = f"output/predictions_{phase}.json"
-    reference_dir = os.path.join(MLR_BENCH_DIR, "ref", "backdoor-trigger-recovery")
-    trigger_groundtruth = json.load(open(os.path.join(reference_dir, test_trigger_data), 'r'))
+    trigger_groundtruth = json.load(open(os.path.join("data", test_trigger_data), 'r'))
     target_set = list(trigger_groundtruth.keys())
 
     # load predictions
@@ -197,7 +196,7 @@ def get_score(Method, phase):
         sys.exit("Found direct copy of a target string in predictions.")
 
     # load dataset again for evaluation
-    evaluation_dataset = load_from_file(f"data/{phase}.jsonl") 
+    evaluation_dataset = load_from_file(f"data/{test_prompt_data}") 
     trojan_model, tokenizer = load_eval_model(test_model_id)
 
     # Try generating responses
