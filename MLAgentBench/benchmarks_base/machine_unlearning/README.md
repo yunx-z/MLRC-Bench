@@ -29,7 +29,6 @@ python prepare.py
 # Install AgentBench requirements
 cd ../../../..
 pip install -e .
-bash install.sh
 
 # Run main.py
 cd MLAgentBench/benchmarks_base/machine_unlearning/env/
