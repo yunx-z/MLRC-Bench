@@ -1,2 +1,0 @@
-from .attack_manager import WatermarkRemovalManager
-from .base_method import BaseWatermarkRemovalMethod 
