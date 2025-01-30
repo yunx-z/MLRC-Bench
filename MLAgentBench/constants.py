@@ -25,12 +25,12 @@ ALL_BASE_RUNTIME = {
             "dev": 517.7307,
             "test": 233, # random number, ignore
             "debug": 233,
-        }
+        },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
         "meta-learning": {
             "val" : 16.12773323059082,
             "test" : 27.63893985748291
-        }
+        },
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -60,13 +60,13 @@ ALL_BASE_PERFORMANCE = {
             "dev": 0.0542,
             "test": 0.0611,
             "debug": 233,
-        }
+        },
         # TODO: add the baseline performance of your new tasks here.
         "meta-learning": {
             # range 0-1
             "val" : 0.1886189034134081,
             "test" : 0.3657513612634356
-        }
+        },
     }
 
 
