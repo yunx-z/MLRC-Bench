@@ -1,0 +1,203 @@
+<html>
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 5;
+            font-family: sans-serif;
+        }
+        
+        .imgbox {
+            display: grid;
+            height: 100%;
+        }
+        
+        .center-fit {
+            max-width: 100%;
+            max-height: 100vh;
+            margin: auto;
+        }
+        
+        .bottom-30 {
+            margin-bottom: 30px;
+        }
+        
+        .bottom-20 {
+            margin-bottom: 20px;
+        }
+        
+        table,
+        td,
+        th {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        
+        td,
+        th {
+            padding: 10px;
+        }
+        
+        .page-break {
+            display: block;
+            clear: both;
+            page-break-after: always;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!--    Title    -->
+    <div class='bottom-30'>
+        <h1> {{title}} </h1>
+    </div>
+
+
+    <!--    Statistics    -->
+    <div class='bottom-30 '>
+        <h2>Overall Statistics</h2>
+        {% for score in scores_names %}
+        <p>Average {{score}}: {{overall_scores[score]['mean_score']}} &plusmn; {{overall_scores[score]['ci']}}</p>
+        {% endfor %}
+        <p>Evaluated tasks per dataset: {{tasks_per_dataset}}</p>
+        <p>Datasets available at testing time: {{total_datasets}}</p>
+    </div>
+
+    <!--    Overall Histograms    -->
+    <h2>Overall Frequency Histograms</h2>
+    {% for score in scores_names %}
+    <div class='bottom-20 page-break'>
+        <h3>{{score}}:</h3>
+        <img class="center-fit" src="data:image/png;base64, {{overall_scores[score]['histogram']}}" alt="Overall Frequency Histogram ({{score}})" />
+    </div>
+    {% endfor %}
+
+    <!--    Scores per dataset    -->
+    <div class='bottom-20'>
+        <h2>Scores per Dataset</h2>
+        <table>
+            <tr>
+                <th>Dataset</th>
+                {% for score in scores_names %}
+                <th>Average {{score}}</th>
+                {% endfor %}
+            </tr>
+            {% for info in scores_grouped_by_dataset %}
+            <tr>
+                <td>{{info['value']}}</td>
+                {% for i in range(scores_names|length) %}
+                <td>{{info['mean_score'][i]}} &plusmn; {{info['ci'][i]}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!--    Heatmaps per dataset    -->
+    <h2>Frequency Heatmaps per Dataset</h2>
+    {% for score in scores_names %}
+    <div class='bottom-20 page-break'>
+        <h3>{{score}}:</h3>
+        <img class="center-fit" src="data:image/png;base64, {{datasets_heatmaps[score]}}" alt="Frequency Heatmap per Dataset ({{score}})" />
+    </div>
+    {% endfor %}
+
+    <!--    Scores per number of ways    -->
+    <div class='bottom-20'>
+        <h4>Scores per Number of Ways</h4>
+        <table>
+            <tr>
+                <th>Number of Ways</th>
+                <th>Number of Tasks</th>
+                {% for score in scores_names %}
+                <th>Average {{score}}</th>
+                {% endfor %}
+            </tr>
+            {% for info in scores_grouped_by_ways %}
+            <tr>
+                <td>{{info['value']}}</td>
+                <td>{{info['tasks']}}</td>
+                {% for i in range(scores_names|length) %}
+                <td>{{info['mean_score'][i]}} &plusmn; {{info['ci'][i]}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!--    Heatmaps per ways    -->
+    <h2>Frequency Heatmaps per Number of Ways</h2>
+    {% for score in scores_names %}
+    <div class='bottom-20 page-break'>
+        <h3>{{score}}:</h3>
+        <img class="center-fit" src="data:image/png;base64, {{ways_heatmaps[score]}}" alt="Frequency Heatmap per Number of Ways ({{score}})" />
+    </div>
+    {% endfor %}
+
+    <!--    Scores per number of shots    -->
+    <div class='bottom-20'>
+        <h4>Scores per Number of Shots</h4>
+        <table>
+            <tr>
+                <th>Number of Shots</th>
+                <th>Number of Tasks</th>
+                {% for score in scores_names %}
+                <th>Average {{score}}</th>
+                {% endfor %}
+            </tr>
+            {% for info in scores_grouped_by_shots %}
+            <tr>
+                <td>{{info['value']}}</td>
+                <td>{{info['tasks']}}</td>
+                {% for i in range(scores_names|length) %}
+                <td>{{info['mean_score'][i]}} &plusmn; {{info['ci'][i]}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!--    Heatmaps per shots    -->
+    <h2>Frequency Heatmaps per Number of Shots</h2>
+    {% for score in scores_names %}
+    <div class='bottom-20 page-break'>
+        <h3>{{score}}:</h3>
+        <img class="center-fit" src="data:image/png;base64, {{shots_heatmaps[score]}}" alt="Frequency Heatmap per Number of Shots ({{score}})" />
+    </div>
+    {% endfor %}
+
+
+    <!--    Results per task    -->
+    <div class='bottom-20'>
+        <h2>Detailed Results per Task</h2>
+        <table>
+            <tr>
+                <th>Task</th>
+                <th>Dataset</th>
+                <th>Number of ways</th>
+                <th>Number of shots</th>
+                {% for score in scores_names %}
+                <th>{{score}}</th>
+                {% endfor %}
+            </tr>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ loop.index0 + 1 }}</td>
+                <td>{{task['dataset']}}</td>
+                <td>{{task['num_ways']}}</td>
+                <td>{{task['num_shots']}}</td>
+                {% for score_val in task['scores'] %}
+                <td>{{score_val}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+
+</body>
+
+</html>
