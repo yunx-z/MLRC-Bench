@@ -4,39 +4,30 @@ This task is based on the NeurIPS 2024 Competition "Erasing the Invisible: A Str
 
 ## Task Description
 
-This task implements the Black Box track of the competition, where participants must:
+This task implements both Black and Beige tracks of the competition, where participants must:
 1. Remove invisible watermarks from images without knowledge of the specific watermarking technique
 2. Preserve the visual quality of the images
 3. Develop robust methods that work across different watermarking techniques
 
+### Tracks
+- **Black Track**: Standard watermark removal challenge
+- **Beige Track**: Two sub-tracks with different watermarking methods
+  - StegaStamp: Steganographic watermarking
+  - TreeRing: Tree-ring watermarking
+
 ### Evaluation Metrics
-- Image Quality Metrics:
-  - PSNR (Peak Signal-to-Noise Ratio)
-  - SSIM (Structural Similarity Index)
-- Watermark Removal Effectiveness
-- Processing Time
+The evaluation combines multiple metrics to assess both watermark removal effectiveness and image quality:
 
-## Data
-The dataset consists of:
-- Development set: Watermarked images for training and validation
-- Test set: Hidden watermarked images for final evaluation
-- Each image is provided without knowledge of the underlying watermarking method
+1. **Quality Degradation (Q)**: Combines:
+   - PSNR (Peak Signal-to-Noise Ratio)
+   - SSIM (Structural Similarity Index)
+   - NMI (Normalized Mutual Information)
 
-## Baseline Method
-The baseline method implements a basic watermark removal approach using:
-1. Image preprocessing and analysis
-2. Adaptive filtering techniques
-3. Quality preservation mechanisms
+2. **Watermark Detection Score (A)**: Based on high-frequency analysis
 
-Expected baseline performance:
-- PSNR: ≥ 30.0 dB
-- SSIM: ≥ 0.95
+3. **Overall Score**: Calculated as sqrt(Q² + A²), where:
+   - Q is clipped to range [0.1, 0.9]
+   - A is clipped to range [0.1, 0.9]
 
-## Usage
-```bash
-# Evaluate on development set
-python main.py -m my_method -p dev
+Lower scores indicate better performance in both watermark removal and quality preservation.
 
-# Evaluate on test set
-python main.py -m my_method -p test
-``` 
