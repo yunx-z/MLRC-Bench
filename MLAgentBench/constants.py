@@ -31,6 +31,22 @@ ALL_BASE_RUNTIME = {
             "val" : 16.12773323059082,
             "test" : 27.63893985748291
         },
+        "erasing_invisible_watermarks": {
+            "beige": {
+                "stegastamp": {
+                    "dev": 27,     
+                    "test": 120    
+                },
+                "treering": {
+                    "dev": 29,     
+                    "test": 128    
+                }
+            },
+            "black": {
+                "dev": 56,         
+                "test": 223       
+            }
+        }
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -67,6 +83,22 @@ ALL_BASE_PERFORMANCE = {
             "val" : 0.1886189034134081,
             "test" : 0.3657513612634356
         },
+        "erasing_invisible_watermarks": {
+            "beige": {
+                "stegastamp": {
+                    "dev": 0.1700,   # Overall Score
+                    "test": 0.1774   # Overall Score
+                },
+                "treering": {
+                    "dev": 0.2494,   # Overall Score
+                    "test": 0.2486   # Overall Score
+                }
+            },
+            "black": {
+                "dev": 0.2061,     # Overall Score
+                "test": 0.1935     # Overall Score
+            }
+        }
     }
 
 
