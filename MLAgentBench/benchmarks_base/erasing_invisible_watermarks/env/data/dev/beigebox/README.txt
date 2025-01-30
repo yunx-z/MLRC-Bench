@@ -1,1 +1,0 @@
-/Users/monica/Downloads/Neurips24_ETI_BeigeBox/README.txt
