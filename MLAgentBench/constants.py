@@ -19,9 +19,11 @@ ALL_BASE_RUNTIME = {
         "perception_temporal_action_loc" : {
             "dev" : 1025.33,
             "test" : 313.69,
+            "debug" : 100,
         },
         "machine_unlearning":{
             "dev": 517.7307,
+            "test": 233, # random number, ignore
         }
         # TODO: add the runtime (unit in seconds) of your new tasks here.
     }
@@ -46,6 +48,7 @@ ALL_BASE_PERFORMANCE = {
             # range 0-1
             "dev" : 0.2359,
             "test" : 0.1234,
+            "debug" : 0.2
         },
          "machine_unlearning":{
              # range 0-1

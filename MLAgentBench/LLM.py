@@ -452,9 +452,8 @@ def complete_text_fast(prompt, **kwargs):
     return complete_text(prompt = prompt, model = FAST_MODEL, temperature =0.01, **kwargs)
 
 if __name__ == "__main__":
-    # for model in MODEL2PRICE:
-    for model in ["gemini-2.0-flash-thinking-exp-0121"]:
-        for i in range(20):
-            completion = complete_text("Classical math game, use all 4 numbers and + - × / to make 24! Number: 8, 4, 6, 7", "logs/tmp.log", model)
-            print(model)
-            print(completion)
+    os.makedirs("logs/env_log", exist_ok=True)
+    for model in ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]:
+        completion = complete_text("Hello", "logs/tmp.log", model)
+        print(model)
+        print(completion)

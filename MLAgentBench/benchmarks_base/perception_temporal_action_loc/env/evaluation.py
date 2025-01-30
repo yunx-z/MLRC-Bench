@@ -99,6 +99,9 @@ def evaluate_model(Method, phase):
         Method: Method instance with run() method
         phase: 'dev' or 'test' phase
     """
+    if phase == "debug":
+        print("debugging")
+        return
     # Get model and config from method - use "valid" or "test" mode
     model, cfg = Method.run("valid" if phase == "dev" else "test")
     pprint(cfg)
