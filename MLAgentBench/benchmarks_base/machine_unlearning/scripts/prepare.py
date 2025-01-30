@@ -30,3 +30,7 @@ if os.path.exists(script_kaggle_json):
     
     # Set correct permissions
     os.chmod(user_kaggle_json, 0o600)
+
+print("All preparation steps completed successfully!")
+with open("prepared", 'w') as writer:
+    pass

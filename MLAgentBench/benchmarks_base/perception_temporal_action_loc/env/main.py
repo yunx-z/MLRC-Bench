@@ -22,11 +22,6 @@ if __name__ == "__main__":
     loaded_methods = all_method_handlers()
     curr_method = loaded_methods[args.method](args.method)
 
-    if args.phase == "debug":
-        print(curr_method)
-        print("Breaking after debug info...")
-        breakpoint()
-
     #Start timing the evaluation
     start_time = time.time()
 
@@ -41,7 +36,6 @@ if __name__ == "__main__":
     #Get score (not counted in runtime)
     score = get_score(curr_method, args.phase)
 
-    Save evaluation results
     base_class = loaded_methods[DEFAULT_METHOD_NAME]
     method_class = loaded_methods[args.method]
     save_evals(
