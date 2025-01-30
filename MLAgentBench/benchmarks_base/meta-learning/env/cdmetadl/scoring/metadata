@@ -1,0 +1,1 @@
+command: python -m cdmetadl.scoring.scoring --results_dir=$input --output_dir_scoring=$output
