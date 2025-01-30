@@ -55,6 +55,8 @@ def evaluate_model(method, phase: str = "dev"):
         return _evaluate_dev(method)
     elif phase == "test":
         return _evaluate_test(method)
+    elif phase == "debug":
+        pass
     else:
         raise ValueError(f"Invalid phase: {phase}")
     
@@ -475,6 +477,8 @@ def _evaluate_test(method):
 
 def get_score(method, phase: str = "dev") -> float:
     """Get evaluation score."""
+    if phase == "debug":
+        return 0.1
     if phase == "dev":
         # Load cached results from file
         results_dir = "dev_results"

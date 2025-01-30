@@ -24,6 +24,7 @@ ALL_BASE_RUNTIME = {
         "machine_unlearning":{
             "dev": 517.7307,
             "test": 233, # random number, ignore
+            "debug": 233,
         }
         # TODO: add the runtime (unit in seconds) of your new tasks here.
     }
@@ -54,6 +55,7 @@ ALL_BASE_PERFORMANCE = {
              # range 0-1
             "dev": 0.0542,
             "test": 0.0611,
+            "debug": 233,
         }
         # TODO: add the baseline performance of your new tasks here.
     }

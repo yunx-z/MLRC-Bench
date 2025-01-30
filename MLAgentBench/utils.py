@@ -168,7 +168,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     else:
         idea = None
 
-    explanation = summarize_code(method_code) if phase == "test" and not is_debug else None
+    explanation = summarize_code(method_code) if phase in ["test", "debug"] and not is_debug else None
     llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name) if phase == "test" and not is_debug else None
 
     eval_file = "output/idea_evals.json"
