@@ -1,0 +1,9 @@
+data/*
+evaluation.py
+main.py
+constants.py
+scoring_output/*
+methods/protonet/api.py
+methods/protonet/metadata
+methods/random/api.py
+methods/random/metadata

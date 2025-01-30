@@ -1,0 +1,67 @@
+# Adventures in Backdoor Trigger Recovery: The Final Method
+
+In the Backdoor Detection Competition, our team developed a method to recover backdoor triggers (prefixes) given a model and a list of backdoor suffixes. The goal was to find prefixes that would force the model to output the given suffixes, while also being as close as possible to the "intended" prefixes inserted by the adversary. Here’s a concise breakdown of the successful method we used:
+
+---
+
+## Core Method: Token-Space Optimization with Greedy Coordinate Gradient (GCG)
+
+The final approach was based on **token-space optimization**, specifically using a modified version of the **Greedy Coordinate Gradient (GCG)** algorithm. The key idea was to optimize discrete token sequences (prefixes) to minimize a loss function that measures how well the prefix forces the target suffix, while also regularizing the prefix to stay within a plausible token space.
+
+### Key Components:
+
+1. **Candidate Prefix Pool**:
+   - We maintained a pool of candidate prefixes, represented as one-hot vectors over the token vocabulary.
+   - Each candidate prefix was iteratively mutated and optimized to improve its performance on the loss function.
+
+2. **Loss Function**:
+   - The primary loss function was designed to ensure the prefix forces the target suffix:
+     \[
+     L(p) = \text{mellowmax}(XE(M(p + s)_{(-\text{len}(s)-1):-1}, s)) + \sum_i R(p_i)
+     \]
+     - \( \text{mellowmax} \): A soft approximation of the \(\max\) function, ensuring that the worst-case token probability in the suffix is maximized.
+     - \( XE \): Per-token cross-entropy loss, measuring how well the model predicts the suffix given the prefix.
+     - \( R(p_i) \): A regularization term to constrain the prefix to plausible tokens (e.g., ASCII-only tokens).
+
+3. **Mutation and Optimization**:
+   - At each iteration, we mutated tokens in the candidate prefixes based on gradient information:
+     - For each token in the prefix, we computed the gradient of the loss with respect to the one-hot representation of the token.
+     - We then replaced the token with the top-k candidates from the vocabulary that minimized the loss.
+   - After mutation, we evaluated the loss on the mutated candidates and kept the top-performing ones for the next round.
+
+4. **Initialization Strategy**:
+   - We discovered that initializing the search with prefixes from other suffix pairs significantly sped up convergence.
+   - We maintained \( N \) initialization pools, pre-filled with training prefix-suffix pairs. When searching for a prefix for a new suffix, we initialized the search with prefixes from these pools.
+   - This strategy exploited the observation that prefixes for different suffixes often shared similar structures, making optimization faster and more effective.
+
+5. **Filtering and Post-Processing**:
+   - To ensure high REASR (reverse-engineered attack success rate), we filtered out prefixes that failed to force the suffix when evaluated in batch mode.
+   - To maximize recall, we used a diversity filter: for each suffix, we kept only the top 20 prefixes with the highest BLEU similarity to the training prefixes, while ensuring they were sufficiently diverse (e.g., Levenshtein distance > threshold).
+
+---
+
+## Why It Worked
+
+- **Efficient Token-Space Optimization**: By using gradient information to guide discrete token mutations, we were able to efficiently explore the space of possible prefixes.
+- **Initialization Pools**: Leveraging prefixes from other suffix pairs as initialization points significantly improved convergence speed and recall.
+- **Regularization**: Constraining the prefix to plausible tokens (e.g., ASCII-only) helped avoid degenerate solutions and improved the quality of the recovered prefixes.
+
+---
+
+## Results
+
+- **REASR**: Our method achieved nearly 100% REASR, meaning almost all recovered prefixes successfully forced the target suffixes.
+- **Recall**: While recall scores were low across the board (due to the inherent difficulty of the task), our method outperformed random baselines and other naive approaches.
+
+---
+
+## Key Insights
+
+- **Token-Space Optimization is Powerful**: Gradient-guided optimization in discrete token space is a highly effective tool for backdoor trigger recovery.
+- **Initialization Matters**: Starting the search from related prefixes can dramatically improve performance.
+- **Regularization is Crucial**: Constraining the search space to plausible tokens helps avoid overfitting and improves generalization.
+
+This method, while not perfect, provided a robust framework for backdoor trigger recovery and highlighted the potential of token-space optimization in interpretability and security tasks.
+
+## Reference
+[1] Zygimantas, K. “Adventures in Trojan Detection.” Zygi.me, https://zygi.me/blog/adventures-in-trojan-detection. Accessed 26 Jan. 2025.
