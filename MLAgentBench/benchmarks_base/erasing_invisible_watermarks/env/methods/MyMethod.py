@@ -80,6 +80,24 @@ class MyMethod(BaseMethod):
             return transforms.ToPILImage()(tensor)
         return tensor
 
+    def attack(self, image):
+        """
+        Remove watermark from the given image
+        
+        Args:
+            image: PIL Image
+            
+        Returns:
+            PIL Image: Processed image with watermark removed
+        """
+        try:
+            # For now, just return the input image as a placeholder
+            # This will be replaced with actual watermark removal logic
+            return image
+        except Exception as e:
+            print(f"Error in attack: {e}")
+            return image
+
     def remove_watermark(self, image):
         """Remove watermark from image"""
         # Preprocess
