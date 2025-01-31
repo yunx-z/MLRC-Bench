@@ -36,7 +36,7 @@ Here are the commands to test your newly added tasks:
 cd MLAgentBench/benchmarks_base/${TASK_NAME}/scripts/
 conda env create -f environment.yml
 conda activate ${TASK_NAME}
-# Yunxiang will install MLAgentBench and openai packages in the newly created conda environment
+# We will install MLAgentBench and openai packages in the newly created conda environment
 python prepare.py
 
 # evaluate baseline method on validation set
@@ -59,8 +59,7 @@ and then any code that could deal with evaluation metrics should be read_only an
 
 Others:
 - The LLM agent will be able to “see” all files under `env/` folder so make sure not to put any test-time information (including test data and model name used in test phases) there to avoid LLM agent “cheating”.
-- Remember to add labels of dev/test set to `ref/${TASK_NAME}`. Don't put them under `env/` folder otherwise LLM agents can "see" them.
-- Also specify `TEST_FILE_NAME="test_data_file_name_here"` in `scripts/config.sh` and put `test_data_file` under `scripts/`
+- Also put all test data under `scripts/test_data`
 
 # Pro tips
 

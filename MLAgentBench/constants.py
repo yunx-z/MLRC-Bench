@@ -1,28 +1,42 @@
 import os
 
+# TODO: automatically read from base_exp idea_evals.json
+
 ALL_BASE_RUNTIME = {
         "base-competition" : {
             "dev" : 100,
             "test" : 100,
             },
         "llm-merging" : {
-            "dev" : 3447.39514565467,
-            "test" : 1811.927922,
+            "dev" : 3338.01,
+            "test" : 2428.07,
             },
         "backdoor-trigger-recovery" : {
-            "dev" : 481.1659276,
-            "test" : 429.746381,
+            "dev" : 597.55,
+            "test" : 498.13,
             "debug" : 400,
             },
         "perception_temporal_action_loc" : {
             "dev" : 1025.33,
             "test" : 313.69,
+            "debug" : 100,
+        },
+        "machine_unlearning":{
+            "dev": 517.7307,
+            "test": 233, # random number, ignore
+            "debug": 233,
         },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
         "meta-learning": {
+<<<<<<< HEAD
             "val" : 1720.0941224098206,
             "test" : 1783.7426211833954
         }
+=======
+            "val" : 16.12773323059082,
+            "test" : 27.63893985748291
+        },
+>>>>>>> upstream/main
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -32,26 +46,39 @@ ALL_BASE_PERFORMANCE = {
             },
         "llm-merging" : {
             # range 0-1
-            "dev" : 0.73,
-            "test" : 0.49,
+            "dev" : 0.727,
+            "test" : 0.493,
             },
         "backdoor-trigger-recovery" : {
             # range 0-100
-            "dev" : 8.331147359458377,
-            "test" : 12.972998823683664,
+            "dev" : 3.758,
+            "test" : 9.369,
             "debug" : 2,
             },
         "perception_temporal_action_loc" : {
             # range 0-1
             "dev" : 0.2359,
             "test" : 0.1234,
+            "debug" : 0.2
+        },
+         "machine_unlearning":{
+             # range 0-1
+            "dev": 0.0542,
+            "test": 0.0611,
+            "debug": 233,
         },
         # TODO: add the baseline performance of your new tasks here.
         "meta-learning" : {
             # range 0-1
+<<<<<<< HEAD
             "val" : 0.21006902462067517,
             "test" : 0.15242809189567028
         }
+=======
+            "val" : 0.1886189034134081,
+            "test" : 0.3657513612634356
+        },
+>>>>>>> upstream/main
     }
 
 

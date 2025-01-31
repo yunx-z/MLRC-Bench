@@ -1,0 +1,16 @@
+torch
+torchvision
+torchaudio
+numpy
+pandas
+scikit-learn
+jupyter
+nbformat
+requests
+kaggle
+absl-py
+tensorboard
+tqdm
+matplotlib
+nbformat
+papermill
