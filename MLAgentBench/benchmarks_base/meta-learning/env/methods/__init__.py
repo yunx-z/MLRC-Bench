@@ -4,7 +4,9 @@ def all_method_handlers():
     
     loaded_method_dirs = {
             "my_method" : "protonet",
-            "random" : "random"
+            "random" : "random",
+            "meta_beyond" : "meta_beyond",
+            "Emmanuel_Pintelas" : "Emmanuel_Pintelas"
             }
  
 

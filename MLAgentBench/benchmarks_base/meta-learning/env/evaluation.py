@@ -24,7 +24,7 @@ def evaluate_model(method_dir, phase):
 
     input_data_dir = os.path.join(os.getcwd(), "data")
     
-    if phase == 'dev':
+    if phase == 'test':
         config_path = os.path.join(directory, "config.json")
 
         # Check if config.json exists
@@ -35,8 +35,8 @@ def evaluate_model(method_dir, phase):
             # Extract 'validation_datasets'
             if "validation_datasets" in config_data:
                 num_val_datasets = config_data["validation_datasets"]
-                # Multiply by 0.6 and round
-                config_data["validation_datasets"] = round(num_val_datasets * 0.6)
+                # Multiply by 2
+                config_data["validation_datasets"] = num_val_datasets * 2
 
                 # Write back the updated config
                 with open(config_path, 'w', encoding='utf-8') as f:
@@ -49,7 +49,7 @@ def evaluate_model(method_dir, phase):
         "--output_dir_ingestion=output",
         "--verbose=True",
         "--overwrite_previous_results=True",
-        "--test_tasks_per_dataset=10"
+        "--test_tasks_per_dataset=600"
     ]
 
     # subprocess.run executes the command in a new process.
@@ -60,7 +60,7 @@ def evaluate_model(method_dir, phase):
     
     
     # correct validation_datasets if changed for validation phase
-    if phase == 'dev':
+    if phase == 'test':
         config_path = os.path.join(directory, "config.json")
         if os.path.isfile(config_path):
             with open(config_path, 'r', encoding='utf-8') as f:
@@ -87,7 +87,7 @@ def get_score(method_dir, phase):
         "--output_dir_scoring=scoring_output",
         "--verbose=True",
         "--overwrite_previous_results=True",
-        "--test_tasks_per_dataset=10"
+        "--test_tasks_per_dataset=600"
     ]
 
     # subprocess.run executes the command in a new process.
