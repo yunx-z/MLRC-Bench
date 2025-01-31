@@ -27,10 +27,11 @@ rouge-score
 peft
 accelerate
 evaluate
-vertaxai
+vertexai
 
 
 #others
 cchardet
 pytest
 dacite
+boto3
