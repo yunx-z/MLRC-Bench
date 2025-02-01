@@ -3,6 +3,11 @@ import json
 import os
 import shutil
 
+os.makedirs('openml_cache_dir', exist_ok=True)
+os.makedirs('test_data', exist_ok=True)
+os.makedirs('test_data/info', exist_ok=True)
+os.makedirs("../env/data", exist_ok=True)
+os.makedirs("../env/data/info", exist_ok=True)
 
 # Set the cache dir
 openml.config.set_root_cache_directory(os.path.expanduser('openml_cache_dir'))
