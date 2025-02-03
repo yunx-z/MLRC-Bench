@@ -15,8 +15,8 @@ ALL_BASE_RUNTIME = {
             "debug" : 400,
             },
         "perception_temporal_action_loc" : {
-            "dev" : 1025.33,
-            "test" : 313.69,
+            "dev" : 1238.63,
+            "test" : 361.45,
         },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
         "meta-learning": {
@@ -43,8 +43,8 @@ ALL_BASE_PERFORMANCE = {
             },
         "perception_temporal_action_loc" : {
             # range 0-1
-            "dev" : 0.2359,
-            "test" : 0.1234,
+            "dev" : 0.237,
+            "test" : 0.126,
         },
         # TODO: add the baseline performance of your new tasks here.
         "meta-learning" : {
