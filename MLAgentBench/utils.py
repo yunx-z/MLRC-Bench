@@ -161,13 +161,6 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     method_code = open(method_code_file, 'r').read()
     base_method_code = open(base_method_code_file, 'r').read()
 
-    idea_file = "idea.txt"
-    if os.path.exists(idea_file):
-        with open(idea_file, 'r') as reader:
-            idea = reader.read()
-    else:
-        idea = None
-
     explanation = summarize_code(method_code) if phase in ["test", "debug"] and not is_debug else None
     llm_as_a_judge_eval_result = llm_evaluate_method(explanation, method_code, task_name) if phase == "test" and not is_debug else None
 
@@ -176,7 +169,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
         with open(eval_file, 'r') as reader:
             all_evals = json.load(reader)
     else:
-        all_evals = {"idea" : idea, "implementations" : []}
+        all_evals = {"implementations" : []}
 
     method_complexity = calculate_complexity(method_code)
     base_complexity = calculate_complexity(base_method_code)

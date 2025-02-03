@@ -444,7 +444,7 @@ def complete_text(prompt, log_file, model, **kwargs):
             error_msg = e
             time.sleep(WAIT_TIME)
 
-    raise LLMError(error_msg)
+    raise LLMError(str(error_msg))
 
 # specify fast models for summarization etc
 def complete_text_fast(prompt, **kwargs):
