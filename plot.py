@@ -54,10 +54,19 @@ PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]
   
 # LMs  
 LMS = ["claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct", "o1-mini", "gpt-4o"]  
-colors = ['#0173b2', '#de8f05', '#029e73', '#d55e00', '#cc78bc', '#ca9161', '#fbafe4', '#949494', '#ece133', '#56b4e9']
+colors = ['#0173b2', '#029e73', '#cc78bc', '#ca9161', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
-# Tasks  
-TASKS = ["llm-merging", "backdoor-trigger-recovery"]  
+# Tasks 
+task_name_mapping = {
+        "llm-merging" : "llm-merging",
+        "backdoor-trigger" : "backdoor-trigger-recovery",
+        "temporal-action-loc" : "perception_temporal_action_loc",
+        }
+TASKS = list(task_name_mapping.keys())
+for k in TASKS:
+    v = task_name_mapping[k]
+    task_name_mapping[v] = v
+
   
 # Idea indices  
 IDEA_IDXS = [0, 1, 2, 3]  
@@ -80,12 +89,13 @@ PIPELINE_LINESTYLES = {
 HUMAN_PERFORMANCE = {
     # only for test
     "llm-merging": {"performance" : 0.83}, 
-    "backdoor-trigger-recovery": {"performance" : 67.5732}, 
+    "backdoor-trigger": {"performance" : 67.5732}, 
+    "temporal-action-loc": {"performance" : 0.4859}, 
 } 
 all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:
     human_perf = HUMAN_PERFORMANCE[task]["performance"] 
-    base_perf = ALL_BASE_PERFORMANCE[task]["test"]
+    base_perf = ALL_BASE_PERFORMANCE[task_name_mapping[task]]["test"]
     task_improvement_perc = 100 * (human_perf - base_perf) / base_perf 
     HUMAN_PERFORMANCE[task]["improvement_perc"] = task_improvement_perc 
     all_task_improvement_perc.append(task_improvement_perc)
@@ -107,7 +117,10 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 # Utility functions  
 ##############################################################################  
   
-def extract_timestamp_from_dirname(dirname):  
+def extract_timestamp_from_dirname(_dirname):  
+    # Remove `_PID` if present
+    dirname = _dirname.split('_')[0]  # Keep only the timestamp part
+
     pattern = r'^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$'  
     m = re.match(pattern, dirname)  
     if m:  
@@ -127,12 +140,13 @@ def load_json_safely(path):
     except:  
         return None  
   
-def find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx=None):  
+def find_most_recent_8_runs_for_pipeline(_task, lm, pipeline, idea_idx=None):  
     """  
     Collect run dirs from workspace and logs, unify, then keep the last 8 by ascending time.  
     """  
 
     log_runs = []  
+    task = task_name_mapping[_task] 
     if pipeline == SINGLE_AGENT:  
         base_pattern_logs = f"logs/{task}/{lm}/*"  
     elif pipeline == MULTI_AGENT:  
@@ -161,7 +175,8 @@ def find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idea_idx=None):
 # Dev/Test result helpers  
 ##############################################################################  
   
-def get_dev_results(task, lm, pipeline, run_id, idea_idx=None):  
+def get_dev_results(_task, lm, pipeline, run_id, idea_idx=None):  
+    task = task_name_mapping[_task]
     if pipeline == SINGLE_AGENT:  
         dev_file =f"logs/{task}/{lm}/{run_id}/env_log/idea_evals.json" 
     elif pipeline == MULTI_AGENT:  
@@ -189,7 +204,8 @@ def get_dev_results(task, lm, pipeline, run_id, idea_idx=None):
             )  
     return out  
   
-def get_test_result(task, lm, pipeline, run_id, idea_idx=None):  
+def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):  
+    task = task_name_mapping[_task]
     if pipeline == SINGLE_AGENT:  
         test_file = f"logs/{task}/{lm}/{run_id}/env_log/test_idea_evals.json"  
     elif pipeline == MULTI_AGENT:  
@@ -214,7 +230,8 @@ def get_test_result(task, lm, pipeline, run_id, idea_idx=None):
             )  
     return None  
   
-def load_api_cost(task, lm, pipeline, run_id, idea_idx=None):  
+def load_api_cost(_task, lm, pipeline, run_id, idea_idx=None):  
+    task = task_name_mapping[_task]
     if pipeline == SINGLE_AGENT:  
         cost_file = f"logs/{task}/{lm}/{run_id}/env_log/api_cost.json"  
     elif pipeline == MULTI_AGENT:  
@@ -391,10 +408,11 @@ def construct_table_1(success_data, phase='test'):
 # Table 2.x average metrics (still uses improvement & relative values)  
 ##############################################################################  
   
-def compute_test_llm_eval_metrics(task, lm, pipeline, run_id, idea_idx=None):  
+def compute_test_llm_eval_metrics(_task, lm, pipeline, run_id, idea_idx=None):  
     """  
     Return the "with_code" portion of llm_eval if any.  
     """  
+    task = task_name_mapping[_task]
     if pipeline == SINGLE_AGENT:  
         test_file = f"logs/{task}/{lm}/{run_id}/env_log/test_idea_evals.json"  
     elif pipeline == MULTI_AGENT:  
@@ -892,7 +910,8 @@ def plot_figure_4(fig4_data):
 # Scatter: cost vs success  
 ##############################################################################  
 
-def load_idea_cost(task,lm):
+def load_idea_cost(_task,lm):
+    task = task_name_mapping[_task]
     idea_costs = []
     for i in IDEA_IDXS:
         coi_idea_file = f"../CoI-Agent/results/{task}/{lm}/{i}/result.json"
@@ -917,7 +936,7 @@ def compute_api_cost_and_success_for_scatter():
                         rids = find_most_recent_8_runs_for_pipeline(task, lm, pipeline, idx)  
                         for rid in rids:  
                             c_=load_api_cost(task,lm,pipeline,rid,idx)  
-                            idea_cost=load_idea_cost(task,lm)
+                            idea_cost=load_idea_cost(task,IDEA_PROPOSAL_MODEL)
                             costs.append(c_+idea_cost)  
                             res=get_test_result(task,lm,pipeline,rid,idx)  
                             s=1 if (res and res[0]>TASK_THRESHOLD[task]) else 0  
@@ -1226,12 +1245,13 @@ def plot_radar_chart_for_table_2(df_21, df_22):
 # NEW Radar chart with absolute performance + baseline  
 ##############################################################################  
   
-def load_baseline_data_for_task(task):  
+def load_baseline_data_for_task(_task):  
     """  
     Read from MLAgentBench/benchmarks_base_exp/{task}/env/output/idea_evals.json  
     Return (perf, runtime, complexity) as the baseline (test).  
     If there's multiple test items, average them. If none, return None.  
     """  
+    task = task_name_mapping[_task]
     path = f"MLAgentBench/benchmarks_base_exp/{task}/env/output/idea_evals.json"  
     data = load_json_safely(path)  
     if not data:  
@@ -1281,7 +1301,7 @@ def load_baseline_data_for_task(task):
         np.mean(gen_list)
     )  
   
-def gather_test_absolute_data_for_task(task):  
+def gather_test_absolute_data_for_task(_task):  
     """  
     For each pipeline, LM, gather the average (performance, runtime, method_complexity, clarity, validity, rigorousness, innov, gener).  
     We'll parse logs from up to 8 runs. Each run has test_idea_evals.json with a single 'test' item if valid.  
@@ -1289,6 +1309,7 @@ def gather_test_absolute_data_for_task(task):
     Subjective scores are scaled from [1..5] to [20..100].  
     If no data, 0.  
     """  
+    task = task_name_mapping[_task]
     out = {}  
     for pipeline in PIPELINES:  
         for lm in LMS:  
@@ -1531,7 +1552,7 @@ def plot_combined_radar_charts():
     # Determine grid layout (example: 2 rows, 3 cols for 6 tasks)
     n_rows = 1
     n_cols = len(tasks) # (len(tasks) + 1) // 2  # Adjust as needed
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(10, n_rows*6), subplot_kw={'polar': True})
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols*5, n_rows*6), subplot_kw={'polar': True})
     axes = axes.flatten()  # Flatten to iterate easily
 
     legend_elements = {}
