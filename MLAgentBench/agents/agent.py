@@ -79,9 +79,9 @@ class Agent:
     def run(self, env):
         """ Run the agent on the environment. """
         # A simple baseline that always executes train.py and reports final answer
-        env.execute(Action("Execute Script", {"script_name_and_args": "python main.py -m my_method"}))
-        env.execute(Action("Execute Script", {"script_name_and_args": "python main.py -m my_method"}))
-        env.execute(Action("Execute Script", {"script_name_and_args": "python main.py -m my_method"}))
+        env.execute(Action("Execute Script", {"script_name_and_args": "python main.py -m my_method -p debug"}))
+        # env.execute(Action("Execute Script", {"script_name_and_args": "python main.py -m my_method -p dev"}))
+        # env.execute(Action("Execute Script", {"script_name_and_args": "python main.py -m my_method -p test"}))
         env.execute(Action("Final Answer", {"final_solution": "simple baseline", "best_score": 0.5}))
 
 
