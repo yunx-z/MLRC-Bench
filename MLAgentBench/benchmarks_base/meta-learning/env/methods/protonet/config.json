@@ -9,7 +9,7 @@
         "max_k": null,
         "query_images_per_class": 20
     },
-    "validation_datasets": 2,
+    "validation_datasets": 3,
     "valid_config": {
         "N": 5,
         "min_N": null,
