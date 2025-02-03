@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     score = get_score(curr_dir, args.phase) # time for running evaluation should not be counted in runtime of method
 
-    base_class = f"methods/{curr_dir}/api.py"
+    base_class = f"api.py"
     method_class = f"methods/{curr_dir}/model.py"
     save_evals(
             task_name=TASK_NAME,

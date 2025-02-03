@@ -10,17 +10,7 @@ def evaluate_model(method_dir, phase):
     # 2. apply the method / model on the whole dev / test data depending on the spcified phase
     # 3. save the results to a file under `./output`
 
-    # wrap up necessary files for submission
-    # The file path to 'metadata' (no extension)
-
     directory = os.path.join(os.getcwd(), "methods", method_dir)
-    metadata_path = os.path.join(directory, "metadata")
-
-    # Check if 'metadata' already exists
-    if not os.path.isfile(metadata_path):
-        # Create an empty file by opening in write mode and closing immediately
-        with open(metadata_path, 'w'):
-            pass  # Just create and close the file
 
     input_data_dir = os.path.join(os.getcwd(), "data")
     
