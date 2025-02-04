@@ -71,6 +71,10 @@ MODEL2PRICE = {
             "input" : 0.00072 / 1000,
             "output" : 0.00072 / 1000,
             },
+        "DeepSeek-R1" : {
+            "input" : 0,
+            "output" : 0,
+            },
         }
 
 
@@ -119,6 +123,19 @@ try:
             api_key=openai_api_key,
             api_version="2024-12-01-preview",
             )
+except Exception as e:
+    pass
+
+try:
+    from azure.ai.inference import ChatCompletionsClient
+    from azure.core.credentials import AzureKeyCredential
+    from azure.ai.inference.models import SystemMessage, UserMessage
+
+    azure_ai_client = ChatCompletionsClient(
+	endpoint=os.environ["AZUREAI_ENDPOINT_URL"],
+	credential=AzureKeyCredential(os.environ["AZUREAI_ENDPOINT_KEY"]),
+        api_version="2024-05-01-preview",
+    )
 except Exception as e:
     pass
 
@@ -402,6 +419,7 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     completion = response.choices[0].message.content
     usage = response.usage
 
+    
     completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
 
     # Since o1-series model does not support stop_sequences, we need to truncate observation by ourselves
@@ -411,6 +429,41 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     if log_file is not None:
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
     return completion
+
+def separate_thought_completion(text):
+    match = re.search(r'<think>(.*?)</think>(.*)', text, re.DOTALL)
+    if match:
+        thought = match.group(1).strip()
+        completion = match.group(2).strip()
+        return thought, completion
+    return None, None
+
+def complete_text_deepseek(prompt, stop_sequences=[], model="DeepSeek-R1", max_tokens_to_sample=4000, temperature=0.5, log_file=None, **kwargs):
+    """ Call the OpenAI API to complete a prompt."""
+    raw_request = {
+          "temperature": temperature,
+          "max_tokens": max_tokens_to_sample,
+          "stop": stop_sequences or None,  # API doesn't like empty list
+          **kwargs
+    }
+
+    response = azure_ai_client.complete(
+        model=model,
+	messages=[
+	    UserMessage(content=prompt),
+	],
+	model_extras=raw_request,
+    )
+    thought_and_completion = response.choices[0].message.content
+    usage = response.usage
+    thought, completion = separate_thought_completion(thought_and_completion)
+
+    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
+
+    if log_file is not None:
+        log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens, thought=thought)
+    return completion
+
 
 MAX_RETRIES=10
 WAIT_TIME=60
@@ -435,6 +488,8 @@ def complete_text(prompt, log_file, model, **kwargs):
             elif "/" in model:
                 # use CRFM API since this specifies organization like "openai/..."
                 completion = complete_text_crfm(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+            elif model.startswith("DeepSeek"):
+                completion = complete_text_deepseek(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
             else:
                 # use OpenAI API
                 completion = complete_text_openai(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
@@ -453,7 +508,8 @@ def complete_text_fast(prompt, **kwargs):
 
 if __name__ == "__main__":
     os.makedirs("logs/env_log", exist_ok=True)
-    for model in ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]:
-        completion = complete_text("Hello", "logs/tmp.log", model)
+    # for model in ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]:
+    for model in ["DeepSeek-R1"]:
+        completion = complete_text("12+32=?", "logs/tmp.log", model)
         print(model)
         print(completion)
