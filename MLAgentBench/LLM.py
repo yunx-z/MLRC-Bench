@@ -23,6 +23,10 @@ MODEL2PRICE = {
             "input" : 3 / 1e6,
             "output" : 12 / 1e6,
             },
+        "o3-mini" : {
+            "input" : 1.1 / 1e6,
+            "output" : 4.4 / 1e6,
+            },
         "o1-preview" : {
             "input" : 15 / 1e6,
             "output" : 60 / 1e6,
@@ -72,8 +76,8 @@ MODEL2PRICE = {
             "output" : 0.00072 / 1000,
             },
         "DeepSeek-R1" : {
-            "input" : 0,
-            "output" : 0,
+            "input" : 0.55 / 1e6,
+            "output" : 2.19 / 1e6,
             },
         }
 
@@ -398,11 +402,11 @@ def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314"
 
 def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tokens_to_sample=4000, temperature=0.5, log_file=None, **kwargs):
     """ Call the OpenAI API to complete a prompt."""
-    if "o1" in model.lower():
+    if "o1" in model.lower() or "o3" in model.lower():
         raw_request = {
               "model": model,
               "temperature": 1,
-              "max_completion_tokens": 64000 if model.lower() == "o1-mini" else 32000,
+              "max_completion_tokens": 64000 if model.lower() == "o1-mini" or model.lower() == "o3-mini" else 32000,
               **kwargs
         }
     else:
@@ -509,7 +513,7 @@ def complete_text_fast(prompt, **kwargs):
 if __name__ == "__main__":
     os.makedirs("logs/env_log", exist_ok=True)
     # for model in ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]:
-    for model in ["DeepSeek-R1"]:
+    for model in ["o3-mini", "DeepSeek-R1"]:
         completion = complete_text("12+32=?", "logs/tmp.log", model)
         print(model)
         print(completion)
