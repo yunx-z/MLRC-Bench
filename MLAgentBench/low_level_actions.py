@@ -123,7 +123,10 @@ def read_file(file_name, work_dir = '.', **kwargs):
 @record_low_level_step
 def write_file(file_name, content, work_dir = ".", **kwargs):
     try:
-        with open(safe_path_join(work_dir,file_name), "w") as f:
+        # create dest dir if not exists
+        dst = safe_path_join(work_dir,file_name)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        with open(dst, "w") as f:
             f.write(content)
         observation = f"File {file_name} written successfully."
         return observation
