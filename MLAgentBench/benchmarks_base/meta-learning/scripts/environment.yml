@@ -41,7 +41,7 @@ dependencies:
       - huggingface-hub==0.27.1
       - idna==3.10
       - jax==0.4.6
-      - jaxlib==0.4.6+cuda11.cudnn86
+      - jaxlib==0.4.6
       - jinja2==3.1.5
       - joblib==1.4.2
       - kiwisolver==1.4.8
@@ -75,7 +75,6 @@ dependencies:
       - pycryptodome==3.21.0
       - pydantic==2.10.5
       - pydantic-core==2.27.2
-      - pyg-lib==0.4.0+pt20cu117
       - pyparsing==3.2.1
       - python-dateutil==2.9.0.post0
       - pytz==2024.2
@@ -90,10 +89,9 @@ dependencies:
       - sympy==1.13.1
       - threadpoolctl==3.5.0
       - tokenizers==0.21.0
-      - torch==2.5.1
-      - torch-cluster==1.6.3+pt20cu117
-      - torch-scatter==2.1.2+pt20cu117
-      - torch-sparse==0.6.18+pt20cu117
+      - torch-cluster==1.6.3
+      - torch-scatter==2.1.2
+      - torch-sparse==0.6.18
       - torchaudio==2.5.1
       - torchvision==0.20.1
       - tqdm==4.67.1
@@ -104,4 +102,3 @@ dependencies:
       - tzdata==2025.1
       - urllib3==2.3.0
       - xmltodict==0.14.2
-prefix: /data2/gdmurphy/miniconda3/envs/meta_learning
