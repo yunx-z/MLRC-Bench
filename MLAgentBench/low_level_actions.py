@@ -279,7 +279,12 @@ def final_answer(final_solution, best_score, work_dir = ".", **kwargs):
         raise EnvException(f"You haven't made any valid submission to the leaderboard yet")
     with open(eval_file, 'r') as reader:
         all_scores = [eval_result['performance'] for eval_result in json.load(reader)["implementations"]]
-    if score_float not in all_scores:
+    score_float_in_all_scores = False
+    for s in all_scores:
+        if abs(score_float - s) < 1e-3:
+            score_float_in_all_scores = True
+            break
+    if not score_float_in_all_scores:
         raise EnvException(f"Your submission didn't achieve a score of {best_score} according to the leaderboard records. Please double check and resubmit a valid final answer.")
     return ""
 
