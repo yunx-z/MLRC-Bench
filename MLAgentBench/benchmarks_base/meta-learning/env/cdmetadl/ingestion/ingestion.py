@@ -117,14 +117,14 @@ def ingestion(argv) -> None:
     submission_dir = os.path.abspath(FLAGS.submission_dir)
 
     # Show python version and directory structure
-    print(f"\nPython version: {version}")
-    print("\n\n")
-    os.system("nvidia-smi")
-    print("\n\n")
-    os.system("nvcc --version")
-    print("\n\n")
-    os.system("pip list")
-    print("\n\n")
+    # print(f"\nPython version: {version}")
+    # print("\n\n")
+    # os.system("nvidia-smi")
+    # print("\n\n")
+    # os.system("nvcc --version")
+    # print("\n\n")
+    # os.system("pip list")
+    # print("\n\n")
     
     if DEBUG_MODE >= 2: 
         print(f"Using input_dir: {input_dir}")
