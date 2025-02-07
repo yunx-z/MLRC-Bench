@@ -2,9 +2,11 @@
 
 import os
 import time
+import random
 import inspect
 import nbformat
 import requests
+import subprocess
 from copy import deepcopy
 from typing import Callable
 from tqdm import tqdm
@@ -458,19 +460,27 @@ def _evaluate_test(method):
     with open(output_notebook, 'w') as f:
         nbformat.write(nb, f)
 
-    # Initialize kernel metadata
     os.system(f'kaggle kernels init -p "{output_dir}"')
 
     update_metadata(os.path.join(output_dir, 'kernel-metadata.json'), f"submission_{timestamp}")
 
-    try:
-        result = os.system(f'kaggle kernels push -p "{output_dir}"')
-        if result != 0:
-            print(f"Error pushing kernel: exit code {result}")
-            raise Exception(f"Kernel push failed with exit code {result}")
-    except Exception as e:
-        print(f"Exception occurred while pushing kernel: {str(e)}")
-        raise
+    for retry in range(10):
+        try:
+            result = subprocess.run(['kaggle', 'kernels', 'push', '-p', output_dir], capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Error pushing kernel: {result.stderr}")
+                raise Exception(f"Kernel push failed: {result.stderr}")
+            else:
+                break
+        except Exception as e:
+            print(f"Exception occurred while pushing kernel: {str(e)}")
+            if retry < 9:
+                wait_time = random.randint(30, 90)
+                print(f"Retry {retry + 1}/10. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                print("Max retries reached. Exiting.")
+                raise
     print(f"Kernel pushed successfully. Notebook ID: {timestamp} \n Please submit by going to the competition page and clicking on late submission. \n this notebook with version 1 and submission.zip should be visible.")
 
 ###### GET SCORE ######
