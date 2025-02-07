@@ -6,6 +6,7 @@ Create a conda enviroment with your TASK_NAME.
 Then install the MLAgentBench package with
 ```
 pip install -e .
+pip install openai
 ```
 
 Install dependencies with python 3.10 by running 

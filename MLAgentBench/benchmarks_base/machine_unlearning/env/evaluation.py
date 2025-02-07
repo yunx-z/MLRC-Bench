@@ -453,7 +453,7 @@ def _evaluate_test(method):
             break
             
     # Save modified notebook
-    timestamp = int(time.time())
+    timestamp = int(time.time_ns())
     output_notebook = os.path.join(output_dir, f"submission_{timestamp}.ipynb")
     with open(output_notebook, 'w') as f:
         nbformat.write(nb, f)
