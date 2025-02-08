@@ -93,17 +93,35 @@ def check_file_in_work_dir(arg_names, **kwargs):
         return wrapper
     return inner
 
-
 @check_file_in_work_dir(["dir_path"])
 @record_low_level_step
-def list_files( dir_path, work_dir = ".", **kwargs):
+def list_files(dir_path, work_dir=".", max_length=10000, **kwargs):
+    """
+    List files in a directory with truncation for long outputs.
+    
+    Args:
+        dir_path (str): Path to the directory to list
+        work_dir (str): Working directory (defaults to ".")
+        max_length (int): Maximum length of output before truncation (defaults to 10000)
+        **kwargs: Additional keyword arguments
+        
+    Returns:
+        str: Directory listing, truncated if exceeds max_length
+        
+    Raises:
+        EnvException: If directory listing fails
+    """
     try:
         # avoid "\\"
         observation = subprocess.check_output(["ls", "-F", safe_path_join(work_dir, dir_path)]).decode("utf-8")
+        
+        # Truncate if observation exceeds max_length
+        if len(observation) > max_length:
+            return observation[:max_length] + "...TRUNCATED"
+        
         return observation
     except:
         raise EnvException(f"Cannot list file in the {dir_path} directory")
-
     
 
 
@@ -385,7 +403,7 @@ LOW_LEVEL_ACTIONS = [
     ),
     ActionInfo(
         name="Final Answer",
-        description="Use this to provide the best solution and the corresponding evaluation score for the current task.",
+        description="Use this to provide the best solution and the corresponding evaluation score for the current task. You should not use this tool unless it has exhausted all avenues for improving their solution",
         usage={
             "final_solution": "a detailed description on the best solution you developed",
             "best_score": "the evaluation score for the best solution, number only"

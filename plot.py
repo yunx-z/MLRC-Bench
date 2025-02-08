@@ -53,7 +53,7 @@ HUMAN_SINGLE_AGENT = "Human Idea + MLAB"
 PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]  
   
 # LMs  
-LMS = ["claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct", "o1-mini", "gpt-4o"]  
+LMS = ["claude-3-5-sonnet-v2", "DeepSeek-R1", "gemini-exp-1206", "llama3-1-405b-instruct", "o1-mini", "gpt-4o"]  
 colors = ['#0173b2', '#029e73', '#cc78bc', '#ca9161', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
 # Tasks 
@@ -61,6 +61,7 @@ task_name_mapping = {
         "llm-merging" : "llm-merging",
         "backdoor-trigger" : "backdoor-trigger-recovery",
         "temporal-action-loc" : "perception_temporal_action_loc",
+        # "machine-unlearning" : "machine_unlearning",
         }
 TASKS = list(task_name_mapping.keys())
 for k in TASKS:
@@ -91,6 +92,7 @@ HUMAN_PERFORMANCE = {
     "llm-merging": {"performance" : 0.83}, 
     "backdoor-trigger": {"performance" : 67.5732}, 
     "temporal-action-loc": {"performance" : 0.4859}, 
+    # "machine-unlearning": {"performance" : 0.0984971060},
 } 
 all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:
@@ -194,7 +196,7 @@ def get_dev_results(_task, lm, pipeline, run_id, idea_idx=None):
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["dev"]
 
     for imp in data.get("implementations", []):  
-        if imp.get("phase") == "dev":  
+        if imp.get("phase") == "dev" and imp["performance"] is not None: # performance should not be None  
             out.append(  
                 (  
                     100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
@@ -222,7 +224,7 @@ def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
 
     for imp in data.get("implementations", []):  
-        if imp.get("phase") == "test":  
+        if imp.get("phase") == "test" and imp["performance"] is not None : # performance should not be None 
             return (  
                 100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
                 100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
@@ -426,7 +428,7 @@ def compute_test_llm_eval_metrics(_task, lm, pipeline, run_id, idea_idx=None):
     if not data:  
         return {}  
     for imp in data.get("implementations", []):  
-        if imp.get("phase")=="test":  
+        if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None  
             llm_eval = imp.get("llm_eval", {})  
             return llm_eval.get("with_code", {})  
     return {}  
@@ -884,9 +886,10 @@ def plot_figure_4(fig4_data):
                     plt.plot(xvals, arr, marker='o', linestyle=style_, color=color_, label=lab)
             
             # Add horizontal dashed line for human performance
-            if task in HUMAN_PERFORMANCE and met in HUMAN_PERFORMANCE[task]:
-                human_perf = HUMAN_PERFORMANCE[task][met]
-                plt.axhline(y=human_perf, color='black', linestyle='--', label='human', linewidth=2)
+            # Deprecated: no human performance on dev
+            # if task in HUMAN_PERFORMANCE and met in HUMAN_PERFORMANCE[task]:
+            #     human_perf = HUMAN_PERFORMANCE[task][met]
+            #     plt.axhline(y=human_perf, color='black', linestyle='--', label='human', linewidth=2)
             
             tt = f"{task}" if task != "Average" else "Average over all tasks"
             plt.title(tt)
@@ -1092,7 +1095,7 @@ def gather_test_correlation_data():
                             dat=load_json_safely(test_file)  
                             if dat and "implementations" in dat:  
                                 for imp in dat["implementations"]:  
-                                    if imp.get("phase")=="test":  
+                                    if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None  
                                         process_imp(imp)  
             elif pipeline==SINGLE_AGENT:  
                 for lm in LMS:  
@@ -1102,7 +1105,7 @@ def gather_test_correlation_data():
                         dat=load_json_safely(test_file)  
                         if dat and "implementations" in dat:  
                             for imp in dat["implementations"]:  
-                                if imp.get("phase")=="test":  
+                                if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
                                     process_imp(imp)  
             else:  
                 for lm in LMS:  
@@ -1112,7 +1115,7 @@ def gather_test_correlation_data():
                         dat=load_json_safely(test_file)  
                         if dat and "implementations" in dat:  
                             for imp in dat["implementations"]:  
-                                if imp.get("phase")=="test":  
+                                if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
                                     process_imp(imp)  
   
     df_with=pd.DataFrame(records_with)  
@@ -1329,7 +1332,7 @@ def gather_test_absolute_data_for_task(_task):
                         d=load_json_safely(fpath)  
                         if d and "implementations" in d:  
                             for imp in d["implementations"]:  
-                                if imp.get("phase")=="test":  
+                                if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
                                     p=imp.get("performance",0.0)  
                                     r=imp.get("runtime",0.0)  
                                     c=imp.get("method_complexity",0.0)  
@@ -1355,7 +1358,7 @@ def gather_test_absolute_data_for_task(_task):
                     d=load_json_safely(fpath)  
                     if d and "implementations" in d:  
                         for imp in d["implementations"]:  
-                            if imp.get("phase")=="test":  
+                            if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None 
                                 p=imp.get("performance",0.0)  
                                 r=imp.get("runtime",0.0)  
                                 c=imp.get("method_complexity",0.0)  
@@ -1380,7 +1383,7 @@ def gather_test_absolute_data_for_task(_task):
                     d=load_json_safely(fpath)  
                     if d and "implementations" in d:  
                         for imp in d["implementations"]:  
-                            if imp.get("phase")=="test":  
+                            if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
                                 p=imp.get("performance",0.0)  
                                 r=imp.get("runtime",0.0)  
                                 c=imp.get("method_complexity",0.0)  

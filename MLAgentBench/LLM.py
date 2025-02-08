@@ -405,10 +405,11 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     if "o1" in model.lower() or "o3" in model.lower():
         raw_request = {
               "model": model,
-              "temperature": 1,
-              "max_completion_tokens": 64000 if model.lower() == "o1-mini" or model.lower() == "o3-mini" else 32000,
+              "max_completion_tokens": 64000 if model.lower() == "o1-mini" else 100000,
               **kwargs
         }
+        if model.lower() in ["o1", "o3-mini"]:
+            raw_request["reasoning_effort"] = "high"
     else:
         raw_request = {
               "model": model,
@@ -426,8 +427,8 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     
     completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
 
-    # Since o1-series model does not support stop_sequences, we need to truncate observation by ourselves
-    if "o1" in model.lower():
+    # Since o-series model does not support stop_sequences, we need to truncate observation by ourselves
+    if "o1" in model.lower() or "o3" in model.lower():
         completion = re.sub(r"^Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
 
     if log_file is not None:

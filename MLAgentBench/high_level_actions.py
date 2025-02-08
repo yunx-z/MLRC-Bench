@@ -24,9 +24,21 @@ def reflection( things_to_reflect_on, work_dir = ".", research_problem = "", **k
     return f"Reflection: {reflection}\n"
 
 
-def understand_file( file_name, things_to_look_for, work_dir = ".", **kwargs):
-
-    lines = read_file(file_name, work_dir = work_dir, **kwargs).split("\n")
+def understand_file(file_name, things_to_look_for, work_dir=".", max_blocks=10, **kwargs):
+    """
+    Understand file contents by analyzing blocks of text with a maximum block limit.
+    
+    Args:
+        file_name (str): Name of file to analyze
+        things_to_look_for (str): Description of what to analyze in the file
+        work_dir (str): Working directory (defaults to ".")
+        max_blocks (int): Maximum number of blocks to process (defaults to 10)
+        **kwargs: Additional keyword arguments
+        
+    Returns:
+        str: Analysis of file contents, truncated if exceeds max_blocks
+    """
+    lines = read_file(file_name, work_dir=work_dir, **kwargs).split("\n")
     # group lines to blocks so that each block has at most 10000 characters
     counter = 0
     blocks = []
@@ -37,7 +49,7 @@ def understand_file( file_name, things_to_look_for, work_dir = ".", **kwargs):
             block.append(lines[counter])
             counter += 1
         if len(block) > 0:
-            end_line_number = counter 
+            end_line_number = counter
             blocks.append(("\n".join(block), start_line_number, end_line_number))
         else:
             end_line_number = start_line_number
@@ -45,8 +57,13 @@ def understand_file( file_name, things_to_look_for, work_dir = ".", **kwargs):
             for i in range(0, len(lines[counter]), 10000):
                 blocks.append((lines[counter][i:i+10000], start_line_number, end_line_number))
             counter += 1
+            
+        # Check if we've exceeded max_blocks
+        if len(blocks) > max_blocks:
+            blocks = blocks[:max_blocks]
+            break
 
-    descriptions  = []
+    descriptions = []
     for idx, (b, start_line_number, end_line_number) in enumerate(blocks):
         start_char_number = sum([len(b) for b in blocks[:idx]])
         end_char_number = start_line_number + len(b)
@@ -57,19 +74,21 @@ def understand_file( file_name, things_to_look_for, work_dir = ".", **kwargs):
     Here is a detailed description on what to look for and what should returned: {things_to_look_for}
     The description should short and also reference crtical lines in the script relevant to what is being looked for. Only describe what is objectively confirmed by the file content. Do not include guessed numbers. If you cannot find the answer to certain parts of the request, you should say "In this segment, I cannot find ...".
     """
-
         completion = complete_text_fast(prompt, log_file=kwargs["log_file"]+f"_{idx}")
         descriptions.append(completion)
+
+    # Add truncation message if blocks were limited
+    if counter < len(lines):
+        descriptions.append("File too large, only showing the first 10 blocks.")
+
     if len(descriptions) == 1:
         return descriptions[0]
     else:
-        descriptions = "\n\n".join(["Segment {idx}: \n\n" + s for s in descriptions])
+        descriptions = "\n\n".join([f"Segment {idx}: \n\n{s}" for idx, s in enumerate(descriptions)])
         prompt = f"""Given the relevant observations for each segments of a file, summarize to get a cohesive description of the entire file on what to look for and what should returned: {things_to_look_for}
     {descriptions}
     """
-
         completion = complete_text_fast(prompt, log_file=kwargs["log_file"])
-
         return completion
 
 EDIT_SCRIPT_MODEL = "gpt-4o-mini"
