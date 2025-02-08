@@ -14,6 +14,7 @@ MLAgentBench/benchmarks_base_exp/
 **/.DS_Store
 .DS_Store
 MLAgentBench/benchmarks_base/perception_temporal_action_loc/
+MLAgentBench/benchmarks_base/meta-learning/env/data/
 tmp/
 scripts/
 .kaggle/

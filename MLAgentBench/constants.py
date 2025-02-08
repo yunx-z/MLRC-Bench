@@ -26,7 +26,7 @@ ALL_BASE_RUNTIME = {
         },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
         "meta-learning": {
-            "val" : 1720.0941224098206,
+            "dev" : 1720.0941224098206,
             "test" : 1783.7426211833954
         },
         "erasing_invisible_watermarks": {
@@ -71,14 +71,14 @@ ALL_BASE_PERFORMANCE = {
         },
          "machine_unlearning":{
              # range 0-1
-            "dev": 0.0542,
-            "test": 0.0611,
+            "dev": 0.05389313916,
+            "test": 0.06085605833,
             "debug": 233,
         },
         # TODO: add the baseline performance of your new tasks here.
         "meta-learning" : {
             # range 0-1
-            "val" : 0.21006902462067517,
+            "dev" : 0.21006902462067517,
             "test" : 0.15242809189567028
         },
         "erasing_invisible_watermarks": {
