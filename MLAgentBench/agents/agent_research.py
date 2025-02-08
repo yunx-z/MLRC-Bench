@@ -220,53 +220,64 @@ class ResearchAgent(Agent):
 
 
     ################### Helper functions #####################
-
-    def summarize_observation(self, action, observation, log_file, bs = 10000):
-        """ Summarize the observation if it is too long with a sliding window of size bs """
-
-        bs = 10000
-        blocks = [observation[i:i+bs] for i in range(0, len(observation), bs)]
-        descriptions = []
-        for idx, b in enumerate(blocks):
-            start_line_number = bs*idx+1
-            end_line_number = bs*idx+1 + len(b)
-            prompt = f"""
+def summarize_observation(self, action, observation, log_file, bs=10000, max_chunks=100):
+    """ 
+    Summarize the observation if it is too long with a sliding window of size bs
+    
+    Args:
+        action: The action that generated the observation
+        observation: The observation to summarize
+        log_file: File to log completions
+        bs: Block size for chunking (default: 10000)
+        max_chunks: Maximum number of chunks to process (default: 100)
+    """
+    bs = 10000
+    blocks = [observation[i:i+bs] for i in range(0, len(observation), bs)]
+    
+    # Truncate blocks if they exceed max_chunks
+    truncated = len(blocks) > max_chunks
+    if truncated:
+        blocks = blocks[:max_chunks]
+    
+    descriptions = []
+    for idx, b in enumerate(blocks):
+        start_line_number = bs*idx+1
+        end_line_number = bs*idx+1 + len(b)
+        prompt = f"""
 {action}
-
 The full observation is too long. Given this (partial) observation from character {start_line_number} to character {end_line_number}: 
 ``` 
 {b}
 ```
 Summarize the observation concisely in this format:
 [Observation]: Summarize all relevant details in the observation objectively
-
 Do not include any result that is guessed rather than directly confirmed by the observation. Do not include additional information or suggestions.
 """
+        completion = complete_text_fast(prompt, log_file=log_file+f"_{idx}")
+        descriptions.append(completion)
 
-            completion = complete_text_fast(prompt, log_file=log_file +f"_{idx}")
-            descriptions.append(completion)
-        if len(descriptions) == 1:
-            completion = descriptions[0]
-        else:
-            descriptions = "\n\n".join(["Segment {idx}: \n\n" + s for s in descriptions])
-            prompt = f"""
+    if truncated:
+        descriptions.append("[Observation]: WARNING: Reached maximum number of chunks (100), this summary of the observation will be incomplete. Please consider trimming down your action request to avoid overloading the observation response.")
+
+    if len(descriptions) == 1:
+        completion = descriptions[0]
+    else:
+        descriptions = "\n\n".join([f"Segment {idx}: \n\n{s}" for idx, s in enumerate(descriptions)])
+        prompt = f"""
 {action}
-
 The full observation is too long. 
 Given summaries for each segments of the whole observation, summarize to get a cohesive description of the entire observation.
 {descriptions}
-
 Summarize the observation concisely in this format:
 [Observation]: Summarize all relevant details in the observation objectively
-
 Do not include any result that is guessed rather than directly confirmed by the observation. Do not include additional information or suggestions.
 """
+        completion = complete_text_fast(prompt, log_file=log_file)
 
-            completion = complete_text_fast(prompt, log_file=log_file)
-        try:
-            return completion.split("[Observation]:")[1]
-        except:
-            return completion
+    try:
+        return completion.split("[Observation]:")[1]
+    except:
+        return completion
 
     @staticmethod
     def summarize_action_and_observation(action, observation, **kwargs):

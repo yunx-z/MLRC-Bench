@@ -175,7 +175,7 @@ def get_submission_result(competition, idx=0):
     else:
         error_msg = latest_submission["errorDescription"] 
         print(f"\nYour merged model may generate something invalid so the submission does not have a score. Here is the error message from the Kaggle leaderboard:\n\n{error_msg}")
-        score = 0
+        score = None
     return score
 
 def get_score(merge_method, phase):
@@ -185,7 +185,7 @@ def get_score(merge_method, phase):
         submission_path = os.path.join(output_dir, "test.csv")
         competition_name = "llm-merging-competition"
         lock_file = os.path.expanduser("~/submission.lock")
-        score = 0
+        score = None
         while os.path.exists(lock_file):
             print("Another submission is in progress. Waiting...")
             time.sleep(30)  # Wait before checking again
@@ -208,10 +208,15 @@ def get_score(merge_method, phase):
         scores = []
         for bench in result:
             bench_result = result[bench]
+            _task_score = None
             if 'acc_norm,none' in bench_result:
-                scores.append(bench_result['acc_norm,none'])
-            elif 'exact_match,flexible-extract' in bench_result:
-                scores.append(bench_result['exact_match,flexible-extract'])
+                _task_score = bench_result['acc_norm,none']
+            elif _task_score is None or 'exact_match,flexible-extract' in bench_result:
+                _task_score = bench_result['exact_match,flexible-extract']
+            if _task_score is None:
+                return None
+            else:
+                scores.append(_task_score)
         score = sum(scores) / len(scores)
         print(f"\nYour merged model scores {score} out of 1.00 on the dev set!")
     else:
