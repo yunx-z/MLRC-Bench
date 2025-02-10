@@ -36,8 +36,8 @@ def evaluate_model(method_dir, phase):
         "python", "-m", "cdmetadl.run_eval",
         f"--input_data_dir={input_data_dir}",
         f"--submission_dir={directory}",
-        "--output_dir_ingestion=output",
-        "--verbose=True",
+        "--output_dir_ingestion=ingestion_output",
+        "--verbose=False",
         "--overwrite_previous_results=True",
         "--test_tasks_per_dataset=600"
     ]
@@ -73,9 +73,9 @@ def get_score(method_dir, phase):
     cmd = [
         "python", "-m", "cdmetadl.run_scoring",
         f"--input_data_dir={input_data_dir}",
-        "--output_dir_ingestion=output",
+        "--output_dir_ingestion=ingestion_output",
         "--output_dir_scoring=scoring_output",
-        "--verbose=True",
+        "--verbose=False",
         "--overwrite_previous_results=True",
         "--test_tasks_per_dataset=600"
     ]
