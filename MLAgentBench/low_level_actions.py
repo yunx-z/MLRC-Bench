@@ -403,7 +403,7 @@ LOW_LEVEL_ACTIONS = [
     ),
     ActionInfo(
         name="Final Answer",
-        description="Use this to provide the best solution and the corresponding evaluation score for the current task. You should not use this tool unless it has exhausted all avenues for improving their solution",
+        description="Use this to provide the best solution and the corresponding evaluation score for the current task. You should not use this tool unless you have exhausted all avenues for improving your solution.",
         usage={
             "final_solution": "a detailed description on the best solution you developed",
             "best_score": "the evaluation score for the best solution, number only"
