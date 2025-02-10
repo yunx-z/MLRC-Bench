@@ -208,15 +208,10 @@ def get_score(merge_method, phase):
         scores = []
         for bench in result:
             bench_result = result[bench]
-            _task_score = None
             if 'acc_norm,none' in bench_result:
-                _task_score = bench_result['acc_norm,none']
-            elif _task_score is None or 'exact_match,flexible-extract' in bench_result:
-                _task_score = bench_result['exact_match,flexible-extract']
-            if _task_score is None:
-                return None
-            else:
-                scores.append(_task_score)
+                scores.append(bench_result['acc_norm,none'])
+            elif 'exact_match,flexible-extract' in bench_result:
+                scores.append(bench_result['exact_match,flexible-extract'])
         score = sum(scores) / len(scores)
         print(f"\nYour merged model scores {score} out of 1.00 on the dev set!")
     else:
