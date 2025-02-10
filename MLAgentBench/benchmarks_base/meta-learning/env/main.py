@@ -16,6 +16,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     os.makedirs("output", exist_ok=True) # `save_evals` assume that `output/` folder exists
+    os.makedirs("ingestion_output", exist_ok=True)
     os.makedirs("scoring_output", exist_ok=True)
 
     loaded_method_dirs = all_method_handlers()

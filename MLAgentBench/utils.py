@@ -200,7 +200,6 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     with open(eval_file, 'w') as writer:
         json.dump(all_evals, writer, indent=2)
 
-
 # Example Usage
 if __name__ == "__main__":
     from pprint import pprint
