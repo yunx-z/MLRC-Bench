@@ -4,6 +4,7 @@ import subprocess
 import json
 
 # define or import any evaluation util functions here 
+TEST_TASKS = {'dev' : 100, 'test' : 600, 'debug' : 1}
 
 def evaluate_model(method_dir, phase):
     # 1. load test input data from dataset_filepath
@@ -39,7 +40,7 @@ def evaluate_model(method_dir, phase):
         "--output_dir_ingestion=ingestion_output",
         "--verbose=False",
         "--overwrite_previous_results=True",
-        "--test_tasks_per_dataset=600"
+        f"--test_tasks_per_dataset={TEST_TASKS[phase]}"
     ]
 
     # subprocess.run executes the command in a new process.
@@ -77,7 +78,7 @@ def get_score(method_dir, phase):
         "--output_dir_scoring=scoring_output",
         "--verbose=False",
         "--overwrite_previous_results=True",
-        "--test_tasks_per_dataset=600"
+        f"--test_tasks_per_dataset={TEST_TASKS[phase]}"
     ]
 
     # subprocess.run executes the command in a new process.
