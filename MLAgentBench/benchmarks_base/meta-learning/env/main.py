@@ -12,7 +12,7 @@ DEFAULT_METHOD_NAME = "my_method"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--method", type=str)
-    parser.add_argument("-p", "--phase", type=str, default="dev", choices=["dev", "test"])
+    parser.add_argument("-p", "--phase", type=str, default="dev", choices=["dev", "test", "debug"])
     args = parser.parse_args()
 
     os.makedirs("output", exist_ok=True) # `save_evals` assume that `output/` folder exists

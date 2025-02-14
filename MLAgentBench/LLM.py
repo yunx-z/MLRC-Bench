@@ -244,7 +244,8 @@ def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/Cod
 def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample = 8000, temperature=0.5, log_file=None, **kwargs):
     """ Call the gemini API to complete a prompt."""
     # Load the model
-    gemini_model = GenerativeModel(model)
+    _model = "gemini-2.0-pro-exp-02-05" if model == "gemini-exp-1206" else model
+    gemini_model = GenerativeModel(_model)
     # Query the model
     parameters = {
             "temperature": temperature,
@@ -514,7 +515,7 @@ def complete_text_fast(prompt, **kwargs):
 if __name__ == "__main__":
     os.makedirs("logs/env_log", exist_ok=True)
     # for model in ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]:
-    for model in ["o3-mini", "DeepSeek-R1"]:
+    for model in ["gemini-exp-1206"]:
         completion = complete_text("12+32=?", "logs/tmp.log", model)
         print(model)
         print(completion)

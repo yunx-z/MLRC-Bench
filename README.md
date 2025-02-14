@@ -61,6 +61,7 @@ and then any code that could deal with evaluation metrics should be read_only an
 Others:
 - The LLM agent will be able to “see” all files under `env/` folder so make sure not to put any test-time information (including test data and model name used in test phases) there to avoid LLM agent “cheating”.
 - Also put all test data under `scripts/test_data`
+- Your code should not attempt to access internet. Any pretrained models, datasets should be downloaded beforehand by `prepare.py`.
 
 # Pro tips
 
