@@ -53,7 +53,7 @@ HUMAN_SINGLE_AGENT = "Human Idea + MLAB"
 PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]  
   
 # LMs  
-LMS = ["claude-3-5-sonnet-v2", "DeepSeek-R1", "gemini-exp-1206", "llama3-1-405b-instruct", "o1-mini", "gpt-4o"]  
+LMS = ["claude-3-5-sonnet-v2", "DeepSeek-R1", "gemini-exp-1206", "llama3-1-405b-instruct", "o3-mini", "gpt-4o"]  
 colors = ['#0173b2', '#029e73', '#cc78bc', '#ca9161', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
 # Tasks 
@@ -61,7 +61,8 @@ task_name_mapping = {
         "llm-merging" : "llm-merging",
         "backdoor-trigger" : "backdoor-trigger-recovery",
         "temporal-action-loc" : "perception_temporal_action_loc",
-        # "machine-unlearning" : "machine_unlearning",
+        "machine-unlearning" : "machine_unlearning",
+        "meta-learning" : "meta-learning",
         }
 TASKS = list(task_name_mapping.keys())
 for k in TASKS:
@@ -92,7 +93,8 @@ HUMAN_PERFORMANCE = {
     "llm-merging": {"performance" : 0.83}, 
     "backdoor-trigger": {"performance" : 67.5732}, 
     "temporal-action-loc": {"performance" : 0.4859}, 
-    # "machine-unlearning": {"performance" : 0.0984971060},
+    "machine-unlearning": {"performance" : 0.0984971060},
+    "meta-learning": {"performance" : 0.699},
 } 
 all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:
@@ -541,9 +543,8 @@ def compute_average_metrics_data(phase='test', include_llm_eval=False):
                 def mean_std(arr):  
                     if not arr:  
                         return (0.0, 0.0)  
-                    if np.isnan(np.std(arr, ddof=1)):
-                        print(arr)
-                        exit(0)
+                    if len(arr) < 3:
+                        return (np.mean(arr), 0.0)
                     return (np.mean(arr), np.std(arr, ddof=1))  
   
                 imp_m, imp_s = mean_std(imp_vals)  
@@ -1145,6 +1146,7 @@ def plot_correlation_heatmaps():
             continue
         subcorr = corr_.loc[rAvail, cAvail]
         plt.figure(figsize=(4, 3))
+        # print(nm, subcorr)
         ax = sns.heatmap(
             subcorr, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, 
             xticklabels=[obj_label_map.get(x, x) for x in subcorr.columns], 
@@ -1553,8 +1555,8 @@ def plot_combined_radar_charts():
     tasks = [t for t in TASKS if t != 'Average']  # Exclude 'Average' task
     
     # Determine grid layout (example: 2 rows, 3 cols for 6 tasks)
-    n_rows = 1
-    n_cols = len(tasks) # (len(tasks) + 1) // 2  # Adjust as needed
+    n_rows = 2
+    n_cols = 3 # (len(tasks) + 1) // 2  # Adjust as needed
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols*5, n_rows*6), subplot_kw={'polar': True})
     axes = axes.flatten()  # Flatten to iterate easily
 
