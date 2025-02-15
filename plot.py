@@ -33,6 +33,7 @@ import re
 import numpy as np  
 import pandas as pd  
 import matplotlib.pyplot as plt  
+import matplotlib.ticker as ticker
 import seaborn as sns  
 from collections import defaultdict  
 from math import comb  
@@ -227,12 +228,20 @@ def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):
 
     for imp in data.get("implementations", []):  
         if imp.get("phase") == "test" and imp["performance"] is not None : # performance should not be None 
-            return (  
+            if task == "machine_unlearning":
+                # substitute with best dev's runtime
+                dev_results = get_dev_results(_task, lm, pipeline, run_id, idea_idx)
+                dev_results.sort(key=lambda x: x[0])
+                best_dev_result = dev_results[-1]
+                best_dev_runtime = best_dev_result[1] 
+
+            ret = (  
                 100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
-                100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
+                best_dev_runtime if task == "machine_unlearning" else 100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
                 imp.get("relative_complexity", 0.0),  
             )  
-    return None  
+            return ret
+    return None
   
 def load_api_cost(_task, lm, pipeline, run_id, idea_idx=None):  
     task = task_name_mapping[_task]
@@ -860,19 +869,27 @@ def compute_figure_4_data():
                     "relative_complexity": comp_means,  
                 }  
     return fig4_data  
-  
+
 def plot_figure_4(fig4_data):
     plt.rcParams['font.size'] = 18
     metrics = ["improvement_perc", "relative_runtime", "relative_complexity"]
-    titles = ["Performance Improvement (%)", "Increased Runtime (%)", "Increased Lines of Code (%)"] 
+    titles = ["Performance Improvement (%, \u2191)", "Increased Runtime (%, \u2193)", "Increased Lines of Code (%, \u2193)"]
     nums = [1, 2, 3]
-    
-    # Assuming HUMAN_PERFORMANCE is a predefined dictionary mapping tasks and metrics to human performance values
 
-    
-    for i, met in enumerate(metrics):
-        for task in TASKS + ["Average"]:
-            plt.figure(figsize=(8, 6))
+    if not os.path.exists(RESULTS_DIR):
+        os.makedirs(RESULTS_DIR)
+
+    for task in TASKS + ["Average"]:
+        fig, axes = plt.subplots(1, 3, figsize=(24, 6))  # Create figure and subplots, adjust figsize as needed
+        fig.suptitle(f"{task}" if task != "Average" else "Average over all tasks", fontsize=20, y=1.0) # Lower suptitle closer to plots
+
+        handles, labels_for_legend = [], [] # To collect handles and labels for the centralized legend
+
+        for i, met in enumerate(metrics):
+            ax = axes[i] # Current subplot axis
+            metric_handles = [] # Handles for this metric subplot
+            metric_labels = [] # Labels for this metric subplot
+
             for lm in LMS:
                 for pipeline in PIPELINES:
                     if pipeline != SINGLE_AGENT:
@@ -884,32 +901,54 @@ def plot_figure_4(fig4_data):
                     style_ = PIPELINE_LINESTYLES.get(pipeline, 'solid')
                     color_ = LM_COLORS.get(lm, 'black')
                     lab = f"{lm}"
-                    plt.plot(xvals, arr, marker='o', linestyle=style_, color=color_, label=lab)
-            
-            # Add horizontal dashed line for human performance
-            # Deprecated: no human performance on dev
-            # if task in HUMAN_PERFORMANCE and met in HUMAN_PERFORMANCE[task]:
-            #     human_perf = HUMAN_PERFORMANCE[task][met]
-            #     plt.axhline(y=human_perf, color='black', linestyle='--', label='human', linewidth=2)
-            
-            tt = f"{task}" if task != "Average" else "Average over all tasks"
-            plt.title(tt)
-            plt.xlabel("i-th implementation in a trial") 
-            plt.ylabel(titles[i])
-            plt.grid(True)
-            plt.legend()  # Ensure the legend includes the new line
-            outfn = os.path.join(RESULTS_DIR, f"figure_4_{nums[i]}_{task.replace(' ', '_')}.pdf")
-            plt.savefig(outfn, bbox_inches='tight')
-            plt.close()
-            cap = (
-                f"Figure 4.{nums[i]} for {task}. "
-                f"Plots {met} vs implementation index. Different line styles for pipeline, different colors for LM. "
-                f"A dashed line indicates human performance for the task."
-            )
-            capfn = os.path.join(RESULTS_DIR, f"figure_4_{nums[i]}_{task.replace(' ', '_')}_caption.txt")
-            # with open(capfn, "w") as f:
-            #     f.write(cap)
-  
+                    line, = ax.plot(xvals, arr, marker='o', linestyle=style_, color=color_, label=lab) # Get line object
+
+                    metric_handles.append(line) # Collect handles for legend
+                    metric_labels.append(lab) # Collect labels for legend
+
+
+            ax.set_title(titles[i]) # Set subplot title from titles list
+            ax.set_xlabel("i-th implementation in a trial")
+            # ax.set_ylabel(titles[i]) # Removed y-axis label in subplots
+            ax.grid(True)
+            ax.yaxis.label.set_visible(False) # alternative way to hide y label
+
+            # Set x-axis ticks to integers only
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+
+        # Centralized legend below the subplots
+        # Get unique handles and labels to avoid duplicates in legend
+        unique_labels = []
+        unique_handles = []
+        label_set = set()
+        for h, l in zip(metric_handles, metric_labels):
+            if l not in label_set:
+                unique_handles.append(h)
+                unique_labels.append(l)
+                label_set.add(l)
+
+
+        fig.legend(unique_handles, unique_labels, loc='lower center', ncol=len(unique_labels), bbox_to_anchor=(0.5, -0.05)) # Adjust bbox_to_anchor and ncol for best position
+
+        plt.tight_layout(rect=[0, 0.05, 1, 0.95]) # Adjust layout to make space for suptitle and legend
+        # Manually adjust subplot params to move subplots up if necessary
+        plt.subplots_adjust(top=0.88) # Adjust top to move subplots down relative to suptitle
+
+        outfn = os.path.join(RESULTS_DIR, f"figure_4_all_{task.replace(' ', '_')}.pdf") # Save single figure
+        fig.savefig(outfn, bbox_inches='tight')
+        plt.close(fig) # Close the figure
+
+        cap = (
+            f"Figure 4 for {task}. "
+            f"Plots improvement_perc, relative_runtime, and relative_complexity (from left to right) vs implementation index. "
+            f"Different colors represent different LMs."
+        )
+        capfn = os.path.join(RESULTS_DIR, f"figure_4_all_{task.replace(' ', '_')}_caption.txt")
+        # with open(capfn, "w") as f:
+        #     f.write(cap)
+ 
+ 
 ##############################################################################  
 # Scatter: cost vs success  
 ##############################################################################  
@@ -1270,7 +1309,7 @@ def load_baseline_data_for_task(_task):
     rig_list=[]  
     inn_list=[]  
     gen_list=[]  
-    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] 
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] if task != "machine_unlearning" else ALL_BASE_RUNTIME[task]["dev"] 
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
 
 
@@ -1469,15 +1508,6 @@ def plot_radar_chart_for_each_task():
         # We'll store lines as (label, [8 values], style, color)  
         lines=[]  
   
-        # baseline line  
-        bperf_ = normf(base_perf, pmin, pmax)  
-        brun_  = normf(-base_run , rmin, rmax)  
-        bcomp_ = normf(-base_comp, cmin, cmax)  
-        # print("baseline")
-        # print(bperf_, brun_, bcomp_)
-        bline = [bperf_, brun_, bcomp_, bcl_, bva_, bri_, binn_, bge_]  
-        lines.append(("Baseline", bline, '--', 'black'))  
-  
         # pipeline-lm lines  
         for (lm,pipeline), vals in pipeline_lm_data.items():  
             if pipeline != SINGLE_AGENT:
@@ -1496,6 +1526,15 @@ def plot_radar_chart_for_each_task():
             color_ = LM_COLORS.get(lm, 'black')  
             label_ = f"{lm}" 
             lines.append((label_, linevals, style_, color_))  
+
+        # baseline line should appear on top 
+        bperf_ = normf(base_perf, pmin, pmax)  
+        brun_  = normf(-base_run , rmin, rmax)  
+        bcomp_ = normf(-base_comp, cmin, cmax)  
+        # print("baseline")
+        # print(bperf_, brun_, bcomp_)
+        bline = [bperf_, brun_, bcomp_, bcl_, bva_, bri_, binn_, bge_]  
+        lines.append(("Baseline", bline, '--', 'black'))  
   
         # Now plot  
         fig = plt.figure(figsize=(6, 6))
