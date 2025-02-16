@@ -42,7 +42,7 @@ def get_cifar10_data(rng: int = 42) -> dict[str, DataLoader]:
         response = requests.get(
             "https://storage.googleapis.com/unlearning-challenge/" + local_path)
         open(local_path, "wb").write(response.content)
-    forget_idx = np.load(local_path)
+    forget_idx = np.load(local_path, allow_pickle=True)
 
     # construct indices of retain from those of the forget set
     forget_mask = np.zeros(len(train_set.targets), dtype=bool)
