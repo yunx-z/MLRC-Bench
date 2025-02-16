@@ -6,12 +6,12 @@ ALL_BASE_RUNTIME = {
             "test" : 100,
             },
         "llm-merging" : {
-            "dev" : 3447.39514565467,
-            "test" : 1811.927922,
+            "dev" : 3338.013678,
+            "test" : 2428.072219,
             },
         "backdoor-trigger-recovery" : {
-            "dev" : 481.1659276,
-            "test" : 429.746381,
+            "dev" : 597.5532175,
+            "test" : 498.1251627,
             "debug" : 400,
             },
         "perception_temporal_action_loc" : {
@@ -20,8 +20,8 @@ ALL_BASE_RUNTIME = {
             "debug" : 100,
         },
         "machine_unlearning":{
-            "dev": 517.7307,
-            "test": 233, # random number, ignore
+            "dev": 353.8617296,
+            "test": None, # random number, ignore
             "debug": 233,
         },
         # TODO: add the runtime (unit in seconds) of your new tasks here.
@@ -55,19 +55,19 @@ ALL_BASE_PERFORMANCE = {
             },
         "llm-merging" : {
             # range 0-1
-            "dev" : 0.73,
-            "test" : 0.49,
+            "dev" : 0.727136371,
+            "test" : 0.4933333333,
             },
         "backdoor-trigger-recovery" : {
             # range 0-100
-            "dev" : 8.331147359458377,
-            "test" : 12.972998823683664,
+            "dev" : 3.758409347,
+            "test" : 9.368725447,
             "debug" : 2,
             },
         "perception_temporal_action_loc" : {
             # range 0-1
-            "dev" : 0.237,
-            "test" : 0.126,
+            "dev" : 0.2370039379,
+            "test" : 0.1263531695,
             "debug" : 0.2
         },
          "machine_unlearning":{
