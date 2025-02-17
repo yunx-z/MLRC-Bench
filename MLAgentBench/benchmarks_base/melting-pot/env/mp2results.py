@@ -6,12 +6,12 @@ EXCLUDE_LIST = ['clean_up_0', 'clean_up_1']
 
 def get_normalization_scores():
 
-    if not os.path.exists('meltingpot-results-2.1.1.feather'):
+    if not os.path.exists('meltingpot-results-2.3.0.feather'):
         print("Please download the mp2.0 results first")
-        print("> wget https://storage.googleapis.com/dm-meltingpot/meltingpot-results-2.1.1.feather")
+        print("> wget https://storage.googleapis.com/dm-meltingpot/meltingpot-results-2.3.0.feather")
         import sys; sys.exit(0)
 
-    mp2res = pd.read_feather('meltingpot-results-2.1.1.feather') # Might require installing pyarrow==12.0.1
+    mp2res = pd.read_feather('meltingpot-results-2.3.0.feather') # Might require installing pyarrow==12.0.1
 
     substrate_names = [
         'clean_up',
