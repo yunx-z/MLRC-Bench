@@ -157,8 +157,7 @@ class WavesRemover(nn.Module):
                 'ssim': float(ssim),
                 'nmi': float(nmi),
                 'mse': float(mse)
-            }
-            
+            } 
         except Exception as e:
             print(f"Error in evaluation: {e}")
             return {

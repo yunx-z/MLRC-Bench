@@ -1,0 +1,56 @@
+# Beige-Box Track: Watermark Removal Challenge
+NeurIPS 2024 Competition - Erasing the Invisible
+
+## Description
+The NeurIPS 2024 "Erasing the Invisible" competition challenges participants to develop robust watermark removal methods. The beige-box track provides participants with watermarked images and information about two specific watermarking algorithms: StegaStamp (deep learning-based) and TreeRing (frequency-domain based).
+
+The dataset contains 300 watermarked images (0-149: StegaStamp, 150-299: TreeRing), split into development (80%) and test (20%) sets. The development set is available in env/data/, while the test set is kept separate in scripts/test_data/.
+
+Evaluation uses a comprehensive scoring formula: Q² + A², where:
+- Q: Quality preservation score combining 8 metrics (PSNR, SSIM, NMI, FID, CLIPFID, LPIPS, Delta Aesthetics, Delta Artifacts)
+- A: Watermark removal effectiveness (TPR@0.1%FPR)
+
+## Developing New Methods
+You have been provided with a starter kit that includes the WavesRemover baseline method in env/baseline/WavesRemover.py. This baseline uses frequency domain filtering techniques to remove watermarks while attempting to preserve image quality.
+
+1. To develop a new method, create a class that implements:
+   - `__init__()`: Initialize your watermark removal model
+   - `attack(image)`: Process an input image to remove watermarks
+   - `evaluate(original_tensor, processed_tensor)`: Evaluate removal quality
+
+2. Your implementation should be placed in a new file following the baseline structure.
+
+3. The method should focus on:
+   - Effective watermark removal for both StegaStamp and TreeRing
+   - Minimal image quality degradation
+   - Computational efficiency
+
+## Test Method
+To evaluate your method, use the provided pipeline:
+```bash
+python main.py -p dev -s <strength>
+```
+
+This will:
+1. Load images from the development set
+2. Apply your watermark removal method
+3. Compute quality metrics (Q score)
+4. Assess watermark removal effectiveness (A score)
+5. Calculate the final Q² + A² score
+6. Provide detailed metrics for both StegaStamp and TreeRing methods
+
+## Competition Rules
+Focus on developing novel algorithmic approaches that advance the state of watermark removal technology.
+
+Technical Requirements:
+1. Must work effectively on both StegaStamp and TreeRing watermarks
+2. Maintain reasonable computational efficiency
+3. Preserve essential image content and quality
+4. Handle varying watermark parameters
+
+Prohibited Behaviors:
+1. Using test set data during development
+2. Modifying evaluation metrics
+3. Hardcoding solutions specific to test cases
+4. Using external watermark detection tools
+5. Relying on simple prompt engineering
