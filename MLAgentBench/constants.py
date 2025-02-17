@@ -41,10 +41,7 @@ ALL_BASE_RUNTIME = {
                     "test": 128    
                 }
             },
-            "black": {
-                "dev": 56,         
-                "test": 223       
-            }
+
         },
     }
 
@@ -94,10 +91,6 @@ ALL_BASE_PERFORMANCE = {
                     "test": 0.2486   # Overall Score
                 }
             },
-            "black": {
-                "dev": 0.2061,     # Overall Score
-                "test": 0.1935     # Overall Score
-            }
         },
     }
 
