@@ -1,56 +1,62 @@
-# Beige-Box Track: Watermark Removal Challenge
-NeurIPS 2024 Competition - Erasing the Invisible
+Research Problem: Invisible Watermark Removal
 
-## Description
-The NeurIPS 2024 "Erasing the Invisible" competition challenges participants to develop robust watermark removal methods. The beige-box track provides participants with watermarked images and information about two specific watermarking algorithms: StegaStamp (deep learning-based) and TreeRing (frequency-domain based).
+Your task is to implement a watermark removal method by completing the template in BaseMethod.py. The dataset contains images watermarked with two different algorithms: StegaStamp and TreeRing.
 
-The dataset contains 300 watermarked images (0-149: StegaStamp, 150-299: TreeRing), split into development (80%) and test (20%) sets. The development set is available in env/data/, while the test set is kept separate in scripts/test_data/.
+Implementation Instructions:
 
-Evaluation uses a comprehensive scoring formula: Q² + A², where:
-- Q: Quality preservation score combining 8 metrics (PSNR, SSIM, NMI, FID, CLIPFID, LPIPS, Delta Aesthetics, Delta Artifacts)
-- A: Watermark removal effectiveness (TPR@0.1%FPR)
+1. Modify the BaseMethod class in `env/methods/BaseMethod.py`:
+   You need to implement the following methods that are currently incomplete:
 
-## Developing New Methods
-You have been provided with a starter kit that includes the WavesRemover baseline method in env/baseline/WavesRemover.py. This baseline uses frequency domain filtering techniques to remove watermarks while attempting to preserve image quality.
+   a. `_build_model(self)`:
+      - Define your model architecture for watermark removal
+      - The model should inherit from nn.Module
+      - Return an instance of your model moved to self.device
 
-1. To develop a new method, create a class that implements:
-   - `__init__()`: Initialize your watermark removal model
-   - `attack(image)`: Process an input image to remove watermarks
-   - `evaluate(original_tensor, processed_tensor)`: Evaluate removal quality
+   b. `attack(self, image)`:
+      - Input: PIL Image with watermark
+      - Output: PIL Image with watermark removed
+      - Use self.preprocess() and self.postprocess() for image conversion
+      - Use self.model() for inference
 
-2. Your implementation should be placed in a new file following the baseline structure.
+   c. `evaluate_advanced_metrics(self, original_img, processed_img)`:
+      - Add custom evaluation metrics
+      - Return a dictionary of metric names and values
 
-3. The method should focus on:
-   - Effective watermark removal for both StegaStamp and TreeRing
-   - Minimal image quality degradation
-   - Computational efficiency
+2. The template already provides:
+   - Image preprocessing/postprocessing
+   - Basic evaluation metrics (PSNR, SSIM)
+   - Model saving/loading
+   - Training infrastructure
+   - GPU support
 
-## Test Method
-To evaluate your method, use the provided pipeline:
-```bash
-python main.py -p dev -s <strength>
+Example Usage After Implementation:
+```python
+method = BaseMethod(name="watermark_remover")
+
+# Remove watermark
+clean_image = method.remove_watermark(watermarked_image)
+
+# Evaluate results
+metrics = method.evaluate(original_image, clean_image)
 ```
 
-This will:
-1. Load images from the development set
-2. Apply your watermark removal method
-3. Compute quality metrics (Q score)
-4. Assess watermark removal effectiveness (A score)
-5. Calculate the final Q² + A² score
-6. Provide detailed metrics for both StegaStamp and TreeRing methods
+Evaluation:
+Your implementation will be evaluated on:
+1. Watermark removal effectiveness
+2. Image quality preservation
+3. Computational efficiency
 
-## Competition Rules
-Focus on developing novel algorithmic approaches that advance the state of watermark removal technology.
+File to Modify:
+```
+env/
+└── methods/
+    └── BaseMethod.py    # Add your implementation here
+```
 
-Technical Requirements:
-1. Must work effectively on both StegaStamp and TreeRing watermarks
-2. Maintain reasonable computational efficiency
-3. Preserve essential image content and quality
-4. Handle varying watermark parameters
+Getting Started:
+1. Open `env/methods/BaseMethod.py`
+2. Implement the required methods marked with `raise NotImplementedError`
+3. Test using the development dataset in `env/data/`
+4. Submit your completed BaseMethod.py
 
-Prohibited Behaviors:
-1. Using test set data during development
-2. Modifying evaluation metrics
-3. Hardcoding solutions specific to test cases
-4. Using external watermark detection tools
-5. Relying on simple prompt engineering
+Note: Focus on implementing the core watermark removal algorithm in the _build_model() and attack() methods. The template handles all other functionality.
