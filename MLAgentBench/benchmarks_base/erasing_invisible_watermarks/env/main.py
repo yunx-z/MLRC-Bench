@@ -5,6 +5,7 @@ from pathlib import Path
 
 from evaluation import evaluate_method, get_scores
 from methods import all_method_handlers
+from MLAgentBench.utils import save_evals
 
 from MLAgentBench.constants import ALL_BASE_RUNTIME, ALL_BASE_PERFORMANCE, MLR_BENCH_DIR
 
@@ -26,11 +27,10 @@ if __name__ == "__main__":
                        help="Which watermark algorithm to evaluate against")
     args = parser.parse_args()
 
-    # Set up paths using MLR_BENCH_DIR
-    mlr_bench_dir = os.path.expanduser(MLR_BENCH_DIR)
-    base_dir = os.path.join(mlr_bench_dir, "MLAgentBench", "benchmarks_base", "erasing_invisible_watermarks", "env")
-    data_dir = os.path.join(base_dir, "data")
-    output_dir = os.path.join(base_dir, "output")
+    # Set up paths relative to env directory
+    base_dir = './'
+    data_dir = os.path.join(base_dir, 'data')
+    output_dir = os.path.join(base_dir, 'output')
     os.makedirs(output_dir, exist_ok=True)
 
     # Load methods
@@ -55,20 +55,10 @@ if __name__ == "__main__":
         score = get_scores(curr_method, args.phase, f"beige_{track_type}")
         overall_scores[track_type] = score["overall_score"]
         
-        # Get base runtime and performance for the current track
-        try:
-            base_runtime = ALL_BASE_RUNTIME[TASK_NAME][args.phase]
-            base_performance = ALL_BASE_PERFORMANCE[TASK_NAME][args.phase]
-            
-            # Print individual track results with comparisons
-            print(f"\n{track_type} Results:")
-            print(f"Score: {score['overall_score']:.4f} (Base: {base_performance:.4f})")
-            print(f"Runtime: {runtime:.2f}s (Base: {base_runtime:.2f}s)")
-        except KeyError as e:
-            print(f"\n{track_type} Results:")
-            print(f"Score: {score['overall_score']:.4f}")
-            print(f"Runtime: {runtime:.2f}s")
-            print(f"Warning: Could not find baseline metrics for comparison: {e}")
+        # Print individual track results
+        print(f"\n{track_type} Results:")
+        print(f"Score: {score['overall_score']:.4f}")
+        print(f"Runtime: {runtime:.2f}s")
     
     # Calculate and print combined score if both tracks were evaluated
     if args.track == "both":
@@ -81,3 +71,17 @@ if __name__ == "__main__":
     print("\nIndividual Track Results:")
     for track_type, score in overall_scores.items():
         print(f"{track_type}: {score:.4f}")
+
+    # Save evaluation results
+    base_class = loaded_methods[DEFAULT_METHOD_NAME]
+    method_class = loaded_methods[args.method]
+    save_evals(
+        task_name=TASK_NAME,
+        method_name=args.method,
+        method_class=method_class,
+        base_class=base_class,
+        score=combined_score if args.track == "both" else overall_scores[args.track],
+        phase=args.phase,
+        runtime=overall_runtime,
+        is_debug=True
+    )
