@@ -1,62 +1,80 @@
 Research Problem: Invisible Watermark Removal
 
-Your task is to implement a watermark removal method by completing the template in BaseMethod.py. The dataset contains images watermarked with two different algorithms: StegaStamp and TreeRing.
+Task Description:
+This task is based on the NeurIPS 2024 Competition "Erasing the Invisible: A Stress-Test Challenge for Image Watermarks". Your goal is to develop methods to remove invisible watermarks from images while maintaining image quality.
 
-Implementation Instructions:
+The task implements the Beige track with two watermarking methods:
+- StegaStamp: Steganographic watermarking (images 0-149)
+- TreeRing: Tree-ring watermarking (images 150-299)
 
-1. Modify the BaseMethod class in `env/methods/BaseMethod.py`:
-   You need to implement the following methods that are currently incomplete:
-
-   a. `_build_model(self)`:
-      - Define your model architecture for watermark removal
-      - The model should inherit from nn.Module
-      - Return an instance of your model moved to self.device
-
-   b. `attack(self, image)`:
-      - Input: PIL Image with watermark
-      - Output: PIL Image with watermark removed
-      - Use self.preprocess() and self.postprocess() for image conversion
-      - Use self.model() for inference
-
-   c. `evaluate_advanced_metrics(self, original_img, processed_img)`:
-      - Add custom evaluation metrics
-      - Return a dictionary of metric names and values
-
-2. The template already provides:
-   - Image preprocessing/postprocessing
-   - Basic evaluation metrics (PSNR, SSIM)
-   - Model saving/loading
-   - Training infrastructure
-   - GPU support
-
-Example Usage After Implementation:
-```python
-method = BaseMethod(name="watermark_remover")
-
-# Remove watermark
-clean_image = method.remove_watermark(watermarked_image)
-
-# Evaluate results
-metrics = method.evaluate(original_image, clean_image)
+Dataset Structure:
+```
+data/
+├── dev/                    # Development set (20%)
+│   └── beige/             
+│       ├── stegastamp/    # StegaStamp watermarked images (0-149)
+│       └── treering/      # TreeRing watermarked images (150-299)
+└── test/                  # Test set (80%, same structure as dev)
 ```
 
-Evaluation:
-Your implementation will be evaluated on:
-1. Watermark removal effectiveness
-2. Image quality preservation
-3. Computational efficiency
+Implementation Steps:
+1. Review MyMethod.py for the baseline implementation and understanding the approach
+2. Complete the template in BaseMethod.py by implementing:
+   ```python
+   def _build_model(self):
+       # Define your model architecture
+       pass
 
-File to Modify:
+   def remove_watermark(self, image):
+       # Implement watermark removal logic
+       pass
+   ```
+3. Save your implementation as a new file (e.g., 'MyNewMethod.py') that extends BaseMethod
+
+4. Test your implementation:
+   ```bash
+   python main.py -m my_method -p dev
+   ```
+
+5. Once satisfied, evaluate against both watermark types:
+   ```bash
+   python main.py -m my_method -p test
+   ```
+
+Note: The baseline implementation in MyMethod.py provides a reference for how to structure your solution. Focus on improving the watermark removal while maintaining image quality.
+
+Evaluation Metrics:
+1. Quality Degradation (Q): Combines:
+   - PSNR (Peak Signal-to-Noise Ratio)
+   - SSIM (Structural Similarity Index)
+   - NMI (Normalized Mutual Information)
+
+2. Watermark Detection Score (A): Based on high-frequency analysis
+
+3. Overall Score: Calculated as sqrt(Q² + A²), where:
+   - Q is clipped to range [0.1, 0.9]
+   - A is clipped to range [0.1, 0.9]
+
+Lower scores indicate better performance in both watermark removal and quality preservation.
+
+Output Structure:
 ```
-env/
-└── methods/
-    └── BaseMethod.py    # Add your implementation here
+output/
+└── <method_name>/
+    ├── dev/
+    │   └── beige/
+    │       ├── stegastamp/    # Processed images for StegaStamp
+    │       └── treering/      # Processed images for TreeRing
+    └── test/                  # Same structure as dev
 ```
 
 Getting Started:
-1. Open `env/methods/BaseMethod.py`
-2. Implement the required methods marked with `raise NotImplementedError`
-3. Test using the development dataset in `env/data/`
-4. Submit your completed BaseMethod.py
+1. Review the baseline implementation in MyMethod.py for reference
+2. Modify BaseMethod.py with your implementation
+3. Test your implementation using the development dataset by running:
+   python main.py -m my_method -p dev
 
-Note: Focus on implementing the core watermark removal algorithm in the _build_model() and attack() methods. The template handles all other functionality.
+4. Once you're satisfied with the results, test against both watermark types:
+   python main.py -m my_method -p test 
+
+Note: Focus on implementing an effective watermark removal algorithm while maintaining image quality. The template handles all other functionality.
