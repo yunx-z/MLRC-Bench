@@ -7,6 +7,12 @@ The task implements the Beige track with two watermarking methods:
 - StegaStamp: Steganographic watermarking (images 0-149)
 - TreeRing: Tree-ring watermarking (images 150-299)
 
+The beige-box attack track provides participants with watermarked images along with information about the watermarking methodology used. Specifically, this track focuses on two state-of-the-art watermarking algorithms: StegaStamp and Tree-Ring Watermarks. According to An et al. (2024), this transparent approach with known watermarking methods enables the development of specialized attack strategies tailored to each specific watermarking technique, fostering a deeper understanding of watermark vulnerabilities and robustness characteristics.
+
+StegaStamp is a deep learning-based watermarking method that embeds information through a neural network encoder, while Tree-Ring Watermark uses a frequency-domain approach inspired by natural tree ring patterns. Each method has distinct characteristics and potential vulnerabilities that can be specifically targeted in the beige-box setting.
+
+In the beige-box setting, the primary challenge shifts from watermark detection to optimal attack strategy development. With knowledge of the watermarking methodology, participants must design attacks that exploit known characteristics of specific watermarking techniques while maintaining image quality. This requires deep understanding of various watermarking algorithms and their potential vulnerabilities. The challenge lies in developing attacks that can effectively leverage this knowledge while still operating within practical computational constraints.
+
 Dataset Structure:
 ```
 data/
@@ -19,6 +25,7 @@ data/
 
 Implementation Steps:
 1. Review MyMethod.py for the baseline implementation and understanding the approach
+
 2. Complete the template in BaseMethod.py by implementing:
    ```python
    def _build_model(self):
@@ -29,19 +36,21 @@ Implementation Steps:
        # Implement watermark removal logic
        pass
    ```
-3. Save your implementation as a new file (e.g., 'MyNewMethod.py') that extends BaseMethod
+3. Save your implementation as a new file under `methods/` that extends BaseMethod
 
-4. Test your implementation:
-   ```bash
-   python main.py -m my_method -p dev
-   ```
+4. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`.
 
-5. Once satisfied, evaluate against both watermark types:
-   ```bash
-   python main.py -m my_method -p test
-   ```
+5. Add the new module to `methods/__init__.py`.
 
-Note: The baseline implementation in MyMethod.py provides a reference for how to structure your solution. Focus on improving the watermark removal while maintaining image quality.
+6. Test your implementation: Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`.
+
+Evaluation Framework:
+The competition employs a sophisticated evaluation metric that combines image quality and watermark removal effectiveness. The scoring formula Q² + A² represents this dual objective, where:
+
+Quality Score (Q) synthesizes multiple image quality metrics through a carefully calibrated weighting scheme:
+Q = +1.53×10⁻³ FID + 5.07×10⁻³ CLIP FID - 2.22×10⁻³ PSNR - 1.13×10⁻¹ SSIM - 9.88×10⁻² NMI + 3.41×10⁻¹ LPIPS + 4.50×10⁻² ΔAesthetics - 1.44×10⁻¹ ΔArtifacts
+
+The Accuracy Score (A) measures watermark removal effectiveness through TPR@0.1%FPR, evaluated against a comprehensive corpus of unwatermarked images. In the beige-box context, this metric evaluates how effectively solutions can exploit known watermark characteristics while maintaining image quality.
 
 Evaluation Metrics:
 1. Quality Degradation (Q): Combines:
@@ -68,13 +77,4 @@ output/
     └── test/                  # Same structure as dev
 ```
 
-Getting Started:
-1. Review the baseline implementation in MyMethod.py for reference
-2. Modify BaseMethod.py with your implementation
-3. Test your implementation using the development dataset by running:
-   python main.py -m my_method -p dev
-
-4. Once you're satisfied with the results, test against both watermark types:
-   python main.py -m my_method -p test 
-
-Note: Focus on implementing an effective watermark removal algorithm while maintaining image quality. The template handles all other functionality.
+Note: The baseline implementation in MyMethod.py provides a reference for how to structure your solution. Focus on implementing an effective watermark removal algorithm while maintaining image quality. 
