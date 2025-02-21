@@ -11,13 +11,12 @@ from datetime import datetime
 import time
 import numpy as np
 from torchvision import transforms
+import pickle
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ... (keep the imports and other parts the same) ...
-
-def run_experiment(strength, data_dir, results_dir, phase):
+def run_experiment(strength, phase):
     """Run watermark removal experiments"""
     logger.info(f"Running waves evaluation on {phase} set with strength {strength}")
     
@@ -25,87 +24,93 @@ def run_experiment(strength, data_dir, results_dir, phase):
     method = WavesRemover(strength=strength).to(device)
     logger.info(f"Using device: {device}")
     
-    to_tensor = transforms.ToTensor()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_dir = Path("results") / f"evaluation_{timestamp}"
+    results_dir.mkdir(exist_ok=True, parents=True)
     
-    # Initialize separate metrics for each track/method
+    # Initialize separate metrics for each method
     metrics_dict = {
-        'black': {'overall_score': [], 'watermark_detection': [], 'quality_degradation': []},
-        'beige_stegastamp': {'overall_score': [], 'watermark_detection': [], 'quality_degradation': []},
-        'beige_treering': {'overall_score': [], 'watermark_detection': [], 'quality_degradation': []}
+        'stegastamp': {'overall_score': [], 'watermark_detection': [], 'quality_degradation': []},
+        'treering': {'overall_score': [], 'watermark_detection': [], 'quality_degradation': []}
     }
     
-    # Process each track
-    for track in ['black', 'beige']:
-        track_dir = data_dir / track
-        if not track_dir.exists():
+    # Set data paths based on phase
+    if phase == 'dev':
+        data_dir = Path("env/data")
+        file_prefix = "dev_images"
+    else:
+        data_dir = Path("scripts/test_data")
+        file_prefix = "test_images"
+    
+    # Process each watermark type
+    for watermark_type in ['stegastamp', 'treering']:
+        # Load data from pickle file
+        data_path = data_dir / f"{file_prefix}_{watermark_type}.pkl"
+        if not data_path.exists():
+            logger.warning(f"No data found for {watermark_type} at {data_path}")
             continue
             
-        methods = ['stegastamp', 'treering'] if track == 'beige' else ['']
+        logger.info(f"Processing {watermark_type} images from {data_path}")
+        with open(data_path, 'rb') as f:
+            data = pickle.load(f)
+            images = data[watermark_type]
         
-        for method_type in methods:
-            method_dir = track_dir / method_type if method_type else track_dir
-            if not method_dir.exists():
+        # Process each image
+        for idx, img_tensor in enumerate(tqdm(images, desc=f"Processing {watermark_type}")):
+            try:
+                # Convert tensor to PIL for attack
+                original_img = transforms.ToPILImage()(img_tensor)
+                
+                # Process image
+                processed_img = method.attack(original_img)
+                processed_tensor = transforms.ToTensor()(processed_img).unsqueeze(0).to(device)
+                
+                # Evaluate
+                metrics = method.evaluate(img_tensor.unsqueeze(0).to(device), processed_tensor)
+                
+                # Save processed image
+                output_path = results_dir / watermark_type / f"processed_{idx}.png"
+                output_path.parent.mkdir(exist_ok=True, parents=True)
+                processed_img.save(output_path)
+                
+                # Accumulate metrics
+                for key in ['overall_score', 'watermark_detection', 'quality_degradation']:
+                    metrics_dict[watermark_type][key].append(metrics[key])
+                
+            except Exception as e:
+                logger.error(f"Error processing image {idx} for {watermark_type}: {e}")
                 continue
             
-            # Determine which metrics list to use
-            current_key = track if track == 'black' else f'beige_{method_type}'
-            
-            image_files = sorted(list(method_dir.glob('*.png')))
-            for image_path in tqdm(image_files, desc=f"Processing {track}/{method_type if method_type else ''}"):
-                try:
-                    original_img = Image.open(str(image_path))
-                    original_tensor = to_tensor(original_img).unsqueeze(0).to(device)
-                    
-                    processed_img = method.attack(original_img)
-                    processed_tensor = to_tensor(processed_img).unsqueeze(0).to(device)
-                    metrics = method.evaluate(original_tensor, processed_tensor)
-                    
-                    # Save processed image
-                    output_subdir = method_type if method_type else ''
-                    output_path = results_dir / track / output_subdir / image_path.name
-                    output_path.parent.mkdir(exist_ok=True, parents=True)
-                    processed_img.save(output_path)
-                    
-                    # Accumulate metrics
-                    for key in ['overall_score', 'watermark_detection', 'quality_degradation']:
-                        metrics_dict[current_key][key].append(metrics[key])
-                    
-                except Exception as e:
-                    logger.error(f"Error processing {image_path}: {e}")
-                    continue
-                
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
     
-    # Print results for each track/method
-    print("\nResults by Track/Method:")
+    # Print and save results
+    print(f"\nResults for {phase} set:")
     print("=" * 60)
     
-    for track_key, track_metrics in metrics_dict.items():
-        if any(track_metrics.values()):  # Only print if we have results
-            print(f"\n{track_key.upper()}:")
+    for watermark_type, metrics in metrics_dict.items():
+        if any(metrics.values()):  # Only print if we have results
+            print(f"\n{watermark_type.upper()}:")
             print("-" * 50)
-            print(f"Overall Score: {np.mean(track_metrics['overall_score']):.4f}")
-            print(f"Watermark Detection: {np.mean(track_metrics['watermark_detection']):.4f}")
-            print(f"Quality Degradation: {np.mean(track_metrics['quality_degradation']):.4f}")
+            mean_metrics = {
+                key: float(np.mean(values)) if values else 0.0
+                for key, values in metrics.items()
+            }
+            print(f"Overall Score: {mean_metrics['overall_score']:.4f}")
+            print(f"Watermark Detection: {mean_metrics['watermark_detection']:.4f}")
+            print(f"Quality Degradation: {mean_metrics['quality_degradation']:.4f}")
             
-            # Save to separate JSON files
-            result_file = results_dir / f"{track_key}_results_{timestamp}.json"
+            # Save to JSON
+            result_file = results_dir / f"{watermark_type}_results_{timestamp}.json"
             with open(result_file, 'w') as f:
                 json.dump({
                     'phase': phase,
-                    'track': track_key,
-                    'metrics': {
-                        'overall_score': float(np.mean(track_metrics['overall_score'])),
-                        'watermark_detection': float(np.mean(track_metrics['watermark_detection'])),
-                        'quality_degradation': float(np.mean(track_metrics['quality_degradation']))
-                    }
+                    'watermark_type': watermark_type,
+                    'metrics': mean_metrics,
+                    'num_images': len(metrics['overall_score'])
                 }, f, indent=2)
     
     print("=" * 60)
-
-# ... (keep the main function the same) ...
 
 def main():
     parser = argparse.ArgumentParser(description='Run watermark removal experiments')
@@ -115,15 +120,8 @@ def main():
     parser.add_argument('-s', '--strength', type=float, default=1.0,
                        help='Strength of watermark removal (affects frequency threshold)')
     args = parser.parse_args()
-
-    base_path = Path("/data2/monmonli/MLAgentBench/MLAgentBench/benchmarks_base/erasing_invisible_watermarks/env")
-    data_dir = base_path / f"data/{args.phase}"
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_dir = Path("results") / f"evaluation_{timestamp}"
-    results_dir.mkdir(exist_ok=True, parents=True)
-
-    run_experiment(args.strength, data_dir, results_dir, args.phase)
+    run_experiment(args.strength, args.phase)
 
 if __name__ == "__main__":
     main()
