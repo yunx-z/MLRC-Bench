@@ -7,8 +7,6 @@ from evaluation import evaluate_method, get_scores
 from methods import all_method_handlers
 from MLAgentBench.utils import save_evals
 
-from MLAgentBench.constants import ALL_BASE_RUNTIME, ALL_BASE_PERFORMANCE, MLR_BENCH_DIR
-
 TASK_NAME = "erasing_invisible_watermarks"
 DEFAULT_METHOD_NAME = "my_method"
 TRACK_TYPES = ["stegastamp", "treering"]
