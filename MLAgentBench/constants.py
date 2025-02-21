@@ -31,20 +31,9 @@ ALL_BASE_RUNTIME = {
             "debug" : 233,
         },
         "erasing_invisible_watermarks": {
-            "beige": {
-                "stegastamp": {
-                    "dev": 27,     
-                    "test": 120    
-                },
-                "treering": {
-                    "dev": 29,     
-                    "test": 128    
-                }
-            },
-            "black": {
-                "dev": 56,         
-                "test": 223       
-            }
+            "dev": 49.10,
+            "test": 13.69,
+
         },
     }
 
@@ -84,20 +73,9 @@ ALL_BASE_PERFORMANCE = {
             "debug" : 0.15,
         },
         "erasing_invisible_watermarks": {
-            "beige": {
-                "stegastamp": {
-                    "dev": 0.1700,   # Overall Score
-                    "test": 0.1774   # Overall Score
-                },
-                "treering": {
-                    "dev": 0.2494,   # Overall Score
-                    "test": 0.2486   # Overall Score
-                }
-            },
-            "black": {
-                "dev": 0.2061,     # Overall Score
-                "test": 0.1935     # Overall Score
-            }
+            "dev": 0.2130,
+            "test": 0.2097,
+            
         },
     }
 

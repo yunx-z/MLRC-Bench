@@ -1,0 +1,62 @@
+Research Problem: Invisible Watermark Removal
+
+Your task is to implement a watermark removal method by completing the template in BaseMethod.py. The dataset contains images watermarked with two different algorithms: StegaStamp and TreeRing.
+
+Implementation Instructions:
+
+1. Modify the BaseMethod class in `env/methods/BaseMethod.py`:
+   You need to implement the following methods that are currently incomplete:
+
+   a. `_build_model(self)`:
+      - Define your model architecture for watermark removal
+      - The model should inherit from nn.Module
+      - Return an instance of your model moved to self.device
+
+   b. `attack(self, image)`:
+      - Input: PIL Image with watermark
+      - Output: PIL Image with watermark removed
+      - Use self.preprocess() and self.postprocess() for image conversion
+      - Use self.model() for inference
+
+   c. `evaluate_advanced_metrics(self, original_img, processed_img)`:
+      - Add custom evaluation metrics
+      - Return a dictionary of metric names and values
+
+2. The template already provides:
+   - Image preprocessing/postprocessing
+   - Basic evaluation metrics (PSNR, SSIM)
+   - Model saving/loading
+   - Training infrastructure
+   - GPU support
+
+Example Usage After Implementation:
+```python
+method = BaseMethod(name="watermark_remover")
+
+# Remove watermark
+clean_image = method.remove_watermark(watermarked_image)
+
+# Evaluate results
+metrics = method.evaluate(original_image, clean_image)
+```
+
+Evaluation:
+Your implementation will be evaluated on:
+1. Watermark removal effectiveness
+2. Image quality preservation
+3. Computational efficiency
+
+File to Modify:
+```
+env/
+└── methods/
+    └── BaseMethod.py    # Add your implementation here
+```
+
+Getting Started:
+1. Open `env/methods/BaseMethod.py`
+2. Implement the required methods marked with `raise NotImplementedError`
+3. Test using the development dataset in `env/data/`
+4. Submit your completed BaseMethod.py
+
+Note: Focus on implementing the core watermark removal algorithm in the _build_model() and attack() methods. The template handles all other functionality.
