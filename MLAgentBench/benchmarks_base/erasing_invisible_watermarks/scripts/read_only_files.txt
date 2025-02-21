@@ -1,12 +1,3 @@
-env/data/dev_images_stegastamp.pkl
-env/data/dev_images_treering.pkl
-scripts/test_data/test_images_stegastamp.pkl
-scripts/test_data/test_images_treering.pkl
-env/evaluation.py
-env/utils.py
+data/*
+evaluation.py
 main.py
-model/*
-env/baseline/WavesRemover.py
-env/baseline/main.py
-env/config/*
-scripts/test_constants.py

@@ -81,5 +81,4 @@ if __name__ == "__main__":
         score=combined_score if args.track == "both" else overall_scores[args.track],
         phase=args.phase,
         runtime=overall_runtime,
-        is_debug=True
     )
