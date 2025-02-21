@@ -11,7 +11,7 @@ The beige-box attack track provides participants with watermarked images along w
 
 StegaStamp is a deep learning-based watermarking method that embeds information through a neural network encoder, while Tree-Ring Watermark uses a frequency-domain approach inspired by natural tree ring patterns. Each method has distinct characteristics and potential vulnerabilities that can be specifically targeted in the beige-box setting.
 
-In the beige-box setting, the primary challenge shifts from watermark detection to optimal attack strategy development. With knowledge of the watermarking methodology, participants must design attacks that exploit known characteristics of specific watermarking techniques while maintaining image quality. This requires deep understanding of various watermarking algorithms and their potential vulnerabilities. The challenge lies in developing attacks that can effectively leverage this knowledge while still operating within practical computational constraints.
+In the beige-box setting, the primary challenge is optimal attack strategy development. With knowledge of the watermarking methodology, participants must design attacks that exploit known characteristics of specific watermarking techniques while maintaining image quality. This requires deep understanding of various watermarking algorithms and their potential vulnerabilities. The challenge lies in developing attacks that can effectively leverage this knowledge while still operating within practical computational constraints.
 
 Dataset Structure:
 ```
