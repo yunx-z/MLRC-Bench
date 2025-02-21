@@ -138,16 +138,13 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         dict: Average metrics across all processed images
     """
     if base_dir is None:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = './'
     
     # Load data from pickle files - different paths for dev and test
-    mlr_bench_dir = os.path.expanduser(MLR_BENCH_DIR)
-    print(f"MLR_BENCH_DIR: {mlr_bench_dir}")
-    
     if phase == 'dev':
-        data_dir = os.path.join(mlr_bench_dir, "MLAgentBench", "benchmarks_base", "erasing_invisible_watermarks", "env", "data")
+        data_dir = os.path.join(base_dir, "data")
     else:  # test phase
-        data_dir = os.path.join(mlr_bench_dir, "MLAgentBench", "benchmarks_base", "erasing_invisible_watermarks", "scripts", "test_data")
+        data_dir = os.path.join(base_dir, "..", "scripts", "test_data")
     print(f"Data directory: {data_dir}")
     
     if track == "beige":
