@@ -24,7 +24,7 @@ if __name__ == "__main__":
     evaluate_model(curr_method, args.phase)
     end_time = time.time()
     runtime = end_time - start_time
-    print(f"Runtime {runtime}")
+    print(f"Runtime: {runtime}")
 
     score = get_score(curr_method, args.phase) # time for running evaluation should not be counted in runtime of method
 
