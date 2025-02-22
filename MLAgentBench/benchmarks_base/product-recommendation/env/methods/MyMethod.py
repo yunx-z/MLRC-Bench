@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-import gc
-import re
 from collections import defaultdict, Counter
 from tqdm.auto import tqdm
 

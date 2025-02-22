@@ -39,10 +39,11 @@ dependencies:
       - attrs==25.1.0
       - bleach==6.2.0
       - blis==1.2.0
-      - boto3==1.36.25
-      - botocore==1.36.25
+      - boto3==1.36.26
+      - botocore==1.36.26
       - cachetools==5.5.2
       - catalogue==2.0.10
+      - catboost==1.2.7
       - cchardet==2.1.7
       - certifi==2025.1.31
       - charset-normalizer==3.1.0
@@ -76,6 +77,7 @@ dependencies:
       - google-crc32c==1.6.0
       - google-resumable-media==2.7.2
       - googleapis-common-protos==1.68.0
+      - graphviz==0.20.3
       - greenlet==3.1.1
       - grpc-google-iam-v1==0.14.0
       - grpcio==1.70.0
@@ -100,8 +102,9 @@ dependencies:
       - langchain-core==0.3.37
       - langchain-text-splitters==0.3.6
       - langcodes==3.5.0
-      - langsmith==0.3.9
+      - langsmith==0.3.10
       - language-data==1.3.0
+      - lightgbm==4.6.0
       - lxml==5.3.1
       - marisa-trie==1.2.1
       - markdown-it-py==3.0.0
@@ -115,9 +118,10 @@ dependencies:
       - murmurhash==1.0.12
       - mypy-extensions==1.0.0
       - namex==0.0.8
+      - narwhals==1.27.1
       - networkx==3.4.2
       - nltk==3.9.1
-      - numpy==2.2.3
+      - numpy==1.26.4
       - nvidia-cublas-cu12==12.4.5.8
       - nvidia-cuda-cupti-cu12==12.4.127
       - nvidia-cuda-nvrtc-cu12==12.4.127
@@ -131,13 +135,14 @@ dependencies:
       - nvidia-nccl-cu12==2.21.5
       - nvidia-nvjitlink-cu12==12.4.127
       - nvidia-nvtx-cu12==12.4.127
-      - openai==1.63.2
+      - openai==1.64.0
       - optree==0.14.0
       - orjson==3.10.15
       - packaging==24.2
       - pandas==2.2.3
       - peft==0.14.0
       - pillow==11.1.0
+      - plotly==6.0.0
       - pluggy==1.5.0
       - portalocker==3.1.1
       - preshed==3.0.9

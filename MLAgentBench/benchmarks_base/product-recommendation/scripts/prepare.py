@@ -3,9 +3,17 @@ import zipfile
 import shutil
 import os
 
-cmd = ["aicrowd", "dataset", "download", "--challenge", "task-1-next-product-recommendation", "0", "3", "6", "7", "8"]
+print("You must first login to the AIcrowd platform to download the data:")
 
-subprocess.run(cmd, capture_output=True, text=True)
+login_cmd = ["aicrowd", "login"]
+
+login_msg = subprocess.run(login_cmd, capture_output=True, text=True)
+
+print(login_msg)
+
+download = ["aicrowd", "dataset", "download", "--challenge", "task-1-next-product-recommendation", "0", "3", "6", "7", "8"]
+
+subprocess.run(download, capture_output=True, text=True)
 
 with zipfile.ZipFile('19dd45a8-5f0c-4c95-bf60-506398327251_kdd-2023-ground-truth.zip', 'r') as zip_ref:
     zip_ref.extractall('test_data')
