@@ -46,6 +46,10 @@ ALL_BASE_RUNTIME = {
                 "test": 223       
             }
         },
+        "product-recommendation": {
+            "dev" : 1631.955898,
+            "test" : 193.56818890571594,
+        },
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -98,6 +102,11 @@ ALL_BASE_PERFORMANCE = {
                 "dev": 0.2061,     # Overall Score
                 "test": 0.1935     # Overall Score
             }
+        },
+        "product-recommendation" : {
+            # range 0-1
+            "dev" : 0.1821651453,
+            "test" : 0.08039049208856465,
         },
     }
 
