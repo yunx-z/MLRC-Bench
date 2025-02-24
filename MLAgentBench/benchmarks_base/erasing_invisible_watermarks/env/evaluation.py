@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 from skimage.metrics import structural_similarity, normalized_mutual_information
+import pickle
 
 def evaluate_image(original_path, processed_path):
     """
@@ -121,55 +122,89 @@ def evaluate_dataset(original_dir, processed_dir):
     metrics_sum['processed_images'] = count
     return metrics_sum
 
-def evaluate_method(method, phase, track_type, track_subtype=None, base_dir=None):
+def evaluate_method(method, phase, track, track_type=None, base_dir=None):
     """
-    Evaluate a watermark removal method on a dataset
+    Evaluate a watermark removal method
     
     Args:
-        method: The watermark removal method to evaluate
-        phase (str): Either 'dev' or 'test'
-        track_type (str): Either 'black' or 'beige'
-        track_subtype (str, optional): For beige track, either 'stegastamp' or 'treering'
-        base_dir (str): Base directory path
+        method: The method to evaluate
+        phase: 'dev' or 'test'
+        track: 'beige' or 'black'
+        track_type: 'stegastamp' or 'treering' (only for beige track)
+        base_dir: Base directory path
         
     Returns:
-        dict: Evaluation results
+        dict: Average metrics across all processed images
     """
-    if base_dir is None:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = "data/"
+    print(f"Data directory: {data_dir}")
     
-    # Set up paths based on phase and track
-    if track_subtype:
-        input_dir = os.path.join(base_dir, 'data', phase, 'beige', track_subtype)
+    if track == "beige":
+        data_file = os.path.join(data_dir, f"{phase}_images_{track_type}.pkl")
+        print(f"Looking for data file: {data_file}")
+        with open(data_file, 'rb') as f:
+            data = pickle.load(f)
+            images = data[track_type]  # List of tensors
     else:
-        input_dir = os.path.join(base_dir, 'data', phase, track_type)
+        raise ValueError(f"Unsupported track: {track}")
     
-    # Create output directory for processed images
-    output_dir = os.path.join(base_dir, 'output', method.__class__.__name__, phase, track_type)
-    if track_subtype:
-        output_dir = os.path.join(output_dir, track_subtype)
+    # Create output directory
+    output_dir = os.path.join(base_dir, "output", phase, track)
+    if track_type:
+        output_dir = os.path.join(output_dir, track_type)
     os.makedirs(output_dir, exist_ok=True)
     
-    # Process each image
-    for img_name in os.listdir(input_dir):
-        if img_name.endswith('.png'):
-            input_path = os.path.join(input_dir, img_name)
-            output_path = os.path.join(output_dir, img_name)
-            
-            # Skip if already processed
-            if os.path.exists(output_path):
-                continue
-                
-            try:
-                # Load and process image
-                img = Image.open(input_path)
-                processed_img = method.attack(img)
-                processed_img.save(output_path)
-            except Exception as e:
-                print(f"Error processing {img_name}: {e}")
+    # Initialize metrics accumulator
+    total_metrics = {
+        'overall_score': 0.0,
+        'watermark_detection': 0.0,
+        'quality_degradation': 0.0,
+        'psnr': 0.0,
+        'ssim': 0.0,
+        'nmi': 0.0,
+        'mse': 0.0
+    }
+    valid_count = 0
     
-    # Evaluate results
-    return evaluate_dataset(input_dir, output_dir)
+    # Process each image
+    for idx, img_tensor in enumerate(images):
+        try:
+            # Convert tensor to PIL Image
+            img = transforms.ToPILImage()(img_tensor)
+            
+            # Process image with method
+            processed_img = method.remove_watermark(img, track_type=track_type)
+            
+            # Save processed image
+            output_path = os.path.join(output_dir, f"{idx}.png")
+            processed_img.save(output_path)
+            
+            # Convert processed image back to tensor for evaluation
+            processed_tensor = transforms.ToTensor()(processed_img).unsqueeze(0)
+            
+            # Evaluate and save metrics
+            metrics = method.evaluate(img_tensor.unsqueeze(0), processed_tensor)
+            metrics_path = os.path.join(output_dir, f"{idx}_metrics.pkl")
+            with open(metrics_path, 'wb') as f:
+                pickle.dump(metrics, f)
+            
+            # Accumulate metrics if no error
+            if 'error' not in metrics:
+                for key in total_metrics:
+                    if key in metrics:
+                        total_metrics[key] += metrics[key]
+                valid_count += 1
+                
+        except Exception as e:
+            print(f"Error processing image {idx}: {e}")
+            continue
+    
+    # Calculate averages
+    if valid_count > 0:
+        for key in total_metrics:
+            total_metrics[key] /= valid_count
+    
+    return total_metrics
 
 def get_scores(method, phase, track):
     """
@@ -194,14 +229,12 @@ def get_scores(method, phase, track):
     # Get evaluation results
     results = evaluate_method(method, phase, track_type, track_subtype)
     
-    # Format scores as required
-    scores = {
+    # Return the required metrics
+    return {
         'overall_score': results['overall_score'],
         'watermark_detection': results['watermark_detection'],
         'quality_degradation': results['quality_degradation']
     }
-    
-    return scores
 
 if __name__ == "__main__":
     import argparse
