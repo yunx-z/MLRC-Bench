@@ -1,0 +1,43 @@
+Co-visitation / Statistical Recall
+
+Many teams rely on co-visitation statistics as a fast way to retrieve items with high co-click frequency. When a user clicks an item i, the system recommends items j that commonly appear near i in past sessions, adjusting for session length or positional proximity.
+This approach is lightweight, interpretable, and produces recall sets that feed into more advanced ranking models.
+
+Graph-Based Item-to-Item (I2I) Retrieval
+
+Item interactions are modeled as a graph where edges indicate frequent co-occurrence in sessions. A similarity score (e.g., based on edge weights or personalized PageRank) is used to retrieve candidates.
+Some solutions augment this with positional weighting (favoring items clicked closer together in a session).
+
+Embedding-Based Retrieval
+
+Product embeddings are learned via either contrastive learning, matrix factorization, or pre-trained language models that encode textual attributes.
+Sessions are also embedded, and nearest-neighbor searches against the product space yield candidate items.
+This leverages product titles, descriptions, brand, etc., converted into numerical vectors.
+
+BPR-Based User-to-Item (U2I)
+
+Some pipelines apply Bayesian Personalized Ranking (BPR) to train user–item interaction embeddings directly from implicit feedback.
+While session-based, this approach can also integrate session IDs or short-term user embeddings to capture context.
+
+Two-Stage Pipeline (Recall + Ranking)
+
+Most leading solutions adopt a two-stage paradigm:
+Recall: Generate a shortlist (e.g., 50–200 items) using fast, broad methods (co-visitation, graph-based, or embedding-based).
+Ranking: Apply a more complex model (often tree-based or deep) that refines the shortlist into a final top-K list. This balances computational efficiency with predictive accuracy.
+
+
+Gradient Boosting Re-rankers
+
+Ensembles of decision trees (e.g., XGBoost, CatBoost) are popular for the final ranking step.
+After retrieving candidates, systems compute diverse features (session length, item popularity, embedding similarities, positional info, etc.) and learn a ranking model to maximize MRR or related metrics.
+
+Leveraging Textual Features
+
+Beyond numeric or categorical attributes (brand, price, etc.), solutions use product titles or descriptions to generate embeddings.
+Some methods concatenate text embeddings with item ID embeddings, or initialize item embeddings from large language models.
+Incorporating textual clues can help capture multilingual nuances.
+ 
+Model Ensembling
+
+Finally, many top entries combine recall or rank outputs from multiple models (covisitation-based, embedding-based, etc.) by averaging scores or stacking predictions.
+This typically yields more robust final recommendations.
