@@ -1,6 +1,5 @@
 import pandas as pd
 from collections import defaultdict, Counter
-from tqdm.auto import tqdm
 
 from constants import PREDS_PER_SESSION
 from methods.BaseMethod import BaseMethod
@@ -20,7 +19,7 @@ class MyMethod(BaseMethod):
 
         next_item_dict = defaultdict(list)
 
-        for _, row in tqdm(df_sess.iterrows(), total=len(df_sess)):
+        for _, row in df_sess.iterrows():
             prev_items = self.str2list(row['prev_items'])
             next_item = row['next_item']
             prev_items_length = len(prev_items)
@@ -31,7 +30,7 @@ class MyMethod(BaseMethod):
                     next_item_dict[item].append(prev_items[i+1])
                 next_item_dict[prev_items[-1]].append(next_item)
 
-        for _, row in tqdm(df_test.iterrows(), total=len(df_test)):
+        for _, row in df_test.iterrows():
             prev_items = self.str2list(row['prev_items'])
             prev_items_length = len(prev_items)
             if prev_items_length <= 1:
@@ -42,7 +41,7 @@ class MyMethod(BaseMethod):
         
         next_item_map = {}
 
-        for item in tqdm(next_item_dict):
+        for item in next_item_dict:
             counter = Counter(next_item_dict[item])
             next_item_map[item] = [i[0] for i in counter.most_common(100)]
 
@@ -63,7 +62,7 @@ class MyMethod(BaseMethod):
 
         preds = []
 
-        for _, row in tqdm(df_test.iterrows(), total=len(df_test)):
+        for _, row in df_test.iterrows():
             pred_orig = row['next_item_prediction']
             pred = pred_orig
             prev_items = self.str2list(row['prev_items'])

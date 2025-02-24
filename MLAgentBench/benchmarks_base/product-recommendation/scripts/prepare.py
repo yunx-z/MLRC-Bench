@@ -5,11 +5,17 @@ import os
 
 print("You must first login to the AIcrowd platform to download the data:")
 
-login_cmd = ["aicrowd", "login"]
+process = subprocess.Popen(
+    ["aicrowd", "login"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    text=True
+)
+for line in process.stdout:
+    print(line, end="")
 
-login_msg = subprocess.run(login_cmd, capture_output=True, text=True)
-
-print(login_msg)
+# Wait for the process to complete
+process.wait()
 
 download = ["aicrowd", "dataset", "download", "--challenge", "task-1-next-product-recommendation", "0", "3", "6", "7", "8"]
 
@@ -28,3 +34,5 @@ shutil.move('sessions_train.csv', '../env/data/train.csv')
 shutil.move('products_train.csv', '../env/data/products.csv')
 
 os.remove('19dd45a8-5f0c-4c95-bf60-506398327251_kdd-2023-ground-truth.zip')
+with open("prepared", 'w') as writer:
+    pass
