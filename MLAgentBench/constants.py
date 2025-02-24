@@ -31,9 +31,8 @@ ALL_BASE_RUNTIME = {
             "debug" : 233,
         },
         "erasing_invisible_watermarks": {
-            "dev": 49.10,
-            "test": 13.69,
-
+            "dev": 66.40938814,
+            "test": 17.44162552,
         },
     }
 
@@ -73,9 +72,8 @@ ALL_BASE_PERFORMANCE = {
             "debug" : 0.15,
         },
         "erasing_invisible_watermarks": {
-            "dev": 0.2130,
-            "test": 0.2097,
-            
+            "dev": 0.2129997074,
+            "test": 0.2097184418,
         },
     }
 

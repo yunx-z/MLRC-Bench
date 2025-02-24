@@ -122,7 +122,7 @@ def evaluate_dataset(original_dir, processed_dir):
     metrics_sum['processed_images'] = count
     return metrics_sum
 
-def evaluate_method(method, phase, track, track_type=None, base_dir=None):
+def evaluate_method(method, phase, track, track_type=None):
     """
     Evaluate a watermark removal method
     
@@ -131,7 +131,6 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         phase: 'dev' or 'test'
         track: 'beige' or 'black'
         track_type: 'stegastamp' or 'treering' (only for beige track)
-        base_dir: Base directory path
         
     Returns:
         dict: Average metrics across all processed images
@@ -149,7 +148,7 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         raise ValueError(f"Unsupported track: {track}")
     
     # Create output directory
-    output_dir = os.path.join(base_dir, "output", phase, track)
+    output_dir = os.path.join("output", phase, track)
     if track_type:
         output_dir = os.path.join(output_dir, track_type)
     os.makedirs(output_dir, exist_ok=True)
