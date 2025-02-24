@@ -19,6 +19,7 @@ MLAgentBench/benchmarks_base/machine_unlearning/env/data/
 MLAgentBench/benchmarks_base/machine_unlearning/env/forget_idx.npy
 MLAgentBench/benchmarks_base/machine_unlearning/env/retrain_weights_resnet18_cifar10.pth
 MLAgentBench/benchmarks_base/machine_unlearning/env/weights_resnet18_cifar10.pth
+MLAgentBench/benchmarks_base/erasing_invisible_watermarks/env/data/
 tmp/
 scripts/
 .kaggle/
