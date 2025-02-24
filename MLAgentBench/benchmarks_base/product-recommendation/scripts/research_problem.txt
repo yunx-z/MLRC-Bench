@@ -1,0 +1,25 @@
+This task focuses on next product recommendation by predicting the most likely product a customer will engage with based on session data and product attributes, using test data from English, German, and Japanese locales.
+
+## Description
+[goal, data, evaluation of the competition, often can be found on competition's website]
+For each session, the participant should predict 100 product IDs (ASINs) that are most likely to be engaged with. The product IDs should be stored in a list and are listed in decreasing order of confidence, with the most confident prediction at index 0 and least confident prediction at index 99. Evaluation is performed using mean reciprocal rank where the rank in your list of the ground truth next item is being assessed. For each session, you will be provided with the locale of the user and a list of products already viewed in that session. A separate file has metadata about each product.
+
+## Developing New Methods
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. The strategy is to first record every transition between items in a session in both the training and testing data as a dict from previous item to all subsequent items. Then convert this dict so that it maps from preceding items to the most common subsequent items. Additionally, create a list of the most common subsequent items independent of what the previous item is. For each session in the test set, look at the last item in the session and use it as a key in the dict to get your prediction. If the value from the dict is <100 items, fill out the prediction with values from the list. If the value from the list is >100 items, take the top 100.
+
+
+1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`. Feel free to use the other functions defined in BaseMethod as they are useful to you.
+
+2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+
+3. Add the new module to `methods/__init__.py`.
+
+## Test Method
+
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. The `run()` function of your method will run and mean reciprocal rank will be calculated with respect to ground truth labels.
+
+## Competition Rules
+
+Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
+
+The `run()` function in your final method must return a pandas DataFrame with a column entitled 'next_item_prediction'.
