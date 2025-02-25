@@ -53,13 +53,14 @@ def record_low_level_step(func):
                     input_args = a.usage.keys()
                     break
             new_kwargs = {k: v for k, v in new_kwargs.items() if k in input_args}
-            try:
-                observation = func(*args, **kwargs)
-                append_to_low_level_steps(trace, name, new_kwargs, observation)
-                return observation
-            except EnvironmentError as e:
-                append_to_low_level_steps(trace, name, new_kwargs, e)
-                raise EnvException(e)
+            append_to_low_level_steps(trace, name, new_kwargs, observation=None)
+            # try:
+            #     observation = func(*args, **kwargs)
+            #     append_to_low_level_steps(trace, name, new_kwargs, observation)
+            #     return observation
+            # except EnvironmentError as e:
+            #     append_to_low_level_steps(trace, name, new_kwargs, e)
+            #     raise EnvException(e)
     return wrapper
 
 
