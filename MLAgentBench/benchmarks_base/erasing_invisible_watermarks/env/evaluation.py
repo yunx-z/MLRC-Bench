@@ -7,73 +7,10 @@ from skimage.metrics import structural_similarity, normalized_mutual_information
 import pickle
 from MLAgentBench.constants import MLR_BENCH_DIR
 
-def evaluate_image(original_path, processed_path):
-    """
-    Evaluate the quality between original and processed images
-    
-    Args:
-        original_path (str): Path to original image
-        processed_path (str): Path to processed image
-            
-    Returns:
-        dict: Dictionary containing evaluation metrics
-    """
-    # Load and convert images to tensors
-    transform = transforms.ToTensor()
-    original_img = Image.open(original_path).convert('RGB')
-    processed_img = Image.open(processed_path).convert('RGB')
-    
-    original_tensor = transform(original_img).unsqueeze(0)
-    processed_tensor = transform(processed_img).unsqueeze(0)
-    
-    # Convert tensors to numpy arrays
-    original_np = original_tensor.squeeze(0).permute(1, 2, 0).numpy()
-    processed_np = processed_tensor.squeeze(0).permute(1, 2, 0).numpy()
-    
-    # Basic metrics
-    mse = np.mean((original_np - processed_np) ** 2)
-    psnr = 20 * np.log10(1.0 / np.sqrt(mse)) if mse > 0 else float('inf')
-    ssim = structural_similarity(original_np, processed_np, channel_axis=2, data_range=1.0)
-    nmi = normalized_mutual_information(
-        (original_np * 255).astype(np.uint8),
-        (processed_np * 255).astype(np.uint8)
-    )
-    
-    # Quality score (Q) based on basic metrics
-    Q = 0.5 * (1 - ssim) + 0.3 * (1 - psnr/50) + 0.2 * (1 - nmi)
-    Q = np.clip(Q, 0.1, 0.9)  # Ensure Q is in [0.1, 0.9] range
-    
-    # Watermark detection score (A) based on high frequency differences
-    def high_freq_diff(img):
-        gray = np.mean(img, axis=2)
-        freq = np.fft.fft2(gray)
-        freq_shift = np.fft.fftshift(freq)
-        h, w = gray.shape
-        center_h, center_w = h//2, w//2
-        high_freq = np.abs(freq_shift[center_h-10:center_h+10, center_w-10:center_w+10])
-        return np.mean(high_freq)
-    
-    orig_hf = high_freq_diff(original_np)
-    proc_hf = high_freq_diff(processed_np)
-    A = np.clip(abs(orig_hf - proc_hf) / orig_hf, 0.1, 0.9)
-    
-    # Overall score
-    overall_score = np.sqrt(Q**2 + A**2)
-    
-    return {
-        'overall_score': float(overall_score),
-        'watermark_detection': float(A),
-        'quality_degradation': float(Q),
-        'psnr': float(psnr),
-        'ssim': float(ssim),
-        'nmi': float(nmi),
-        'mse': float(mse)
-    }
-
 
 def evaluate_method(method, phase, track, track_type=None, base_dir=None):
     """
-    Evaluate a watermark removal method
+    Process images with the watermark removal method and save results
     
     Args:
         method: The method to evaluate
@@ -81,9 +18,6 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         track: 'beige' or 'black'
         track_type: 'stegastamp' or 'treering' (only for beige track)
         base_dir: Base directory path
-        
-    Returns:
-        dict: Average metrics across all processed images
     """
     if base_dir is None:
         base_dir = './'
@@ -110,18 +44,6 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         output_dir = os.path.join(output_dir, track_type)
     os.makedirs(output_dir, exist_ok=True)
     
-    # Initialize metrics accumulator
-    total_metrics = {
-        'overall_score': 0.0,
-        'watermark_detection': 0.0,
-        'quality_degradation': 0.0,
-        'psnr': 0.0,
-        'ssim': 0.0,
-        'nmi': 0.0,
-        'mse': 0.0
-    }
-    valid_count = 0
-    
     # Process each image
     for idx, img_tensor in enumerate(images):
         try:
@@ -141,23 +63,68 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
             # Save processed image
             output_path = os.path.join(output_dir, f"{idx}.png")
             processed_img.save(output_path)
-            
-            # Convert processed image back to tensor for evaluation (no resize)
-            processed_tensor = transforms.ToTensor()(processed_img).unsqueeze(0)
-            
-            # Calculate metrics directly
-            metrics = {
-                'overall_score': 0.0,
-                'watermark_detection': 0.0,
-                'quality_degradation': 0.0,
-                'psnr': 0.0,
-                'ssim': 0.0,
-                'nmi': 0.0,
-                'mse': 0.0
-            }
-            
-            # Convert tensors to numpy arrays for metric calculation
+                
+        except Exception as e:
+            print(f"Error processing image {idx}: {e}")
+            continue
+
+def get_scores(method, phase, track):
+    """
+    Calculate evaluation scores for processed images
+    
+    Args:
+        method: The method to evaluate
+        phase (str): Either 'dev' or 'test'
+        track (str): Track name (e.g., 'beige_stegastamp', 'beige_treering')
+        
+    Returns:
+        dict: Dictionary containing evaluation scores
+    """
+    # Parse track information
+    track_type = "beige"
+    track_subtype = track.split("_")[1]
+    
+    # First ensure images are processed
+    evaluate_method(method, phase, track_type, track_subtype)
+    
+    # Initialize metrics accumulator
+    total_metrics = {
+        'overall_score': 0.0,
+        'watermark_detection': 0.0,
+        'quality_degradation': 0.0,
+        'psnr': 0.0,
+        'ssim': 0.0,
+        'nmi': 0.0,
+        'mse': 0.0
+    }
+    valid_count = 0
+    
+    # Load original images
+    if phase == 'dev':
+        data_dir = "data"
+    else:  # test phase
+        data_dir = os.path.join("..", "scripts", "test_data")
+    
+    data_file = os.path.join(data_dir, f"{phase}_images_{track_subtype}.pkl")
+    with open(data_file, 'rb') as f:
+        data = pickle.load(f)
+        images = data[track_subtype]
+    
+    # Calculate metrics for each image
+    output_dir = os.path.join("output", phase, track_type, track_subtype)
+    
+    for idx, img_tensor in enumerate(images):
+        try:
+            processed_path = os.path.join(output_dir, f"{idx}.png")
+            if not os.path.exists(processed_path):
+                continue
+                
+            # Convert original tensor to numpy
             img_np = img_tensor.squeeze(0).permute(1, 2, 0).numpy()
+            
+            # Load and convert processed image
+            processed_img = Image.open(processed_path).convert('RGB')
+            processed_tensor = transforms.ToTensor()(processed_img).unsqueeze(0)
             proc_np = processed_tensor.squeeze(0).permute(1, 2, 0).numpy()
             
             # Calculate basic metrics
@@ -174,7 +141,7 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
             Q = 0.5 * (1 - ssim) + 0.3 * (1 - psnr/50) + 0.2 * (1 - nmi) + similarity_penalty
             Q = np.clip(Q, 0.1, 0.9)
             
-            # Watermark detection score (A) - penalize if frequency content is too similar
+            # Watermark detection score (A)
             def high_freq_diff(img):
                 gray = np.mean(img, axis=2)
                 freq = np.fft.fft2(gray)
@@ -187,15 +154,13 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
             orig_hf = high_freq_diff(img_np)
             proc_hf = high_freq_diff(proc_np)
             freq_diff = abs(orig_hf - proc_hf) / orig_hf
-            
-            # Add penalty if frequency content is too similar
             freq_penalty = 0.9 if freq_diff < 0.05 else 0.0
             A = np.clip(freq_diff + freq_penalty, 0.1, 0.9)
             
             # Overall score
             overall_score = np.sqrt(Q**2 + A**2)
             
-            metrics.update({
+            metrics = {
                 'overall_score': float(overall_score),
                 'watermark_detection': float(A),
                 'quality_degradation': float(Q),
@@ -203,22 +168,20 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
                 'ssim': float(ssim),
                 'nmi': float(nmi),
                 'mse': float(mse)
-            })
+            }
             
             # Save metrics
             metrics_path = os.path.join(output_dir, f"{idx}_metrics.pkl")
             with open(metrics_path, 'wb') as f:
                 pickle.dump(metrics, f)
             
-            # Accumulate metrics if no error
-            if 'error' not in metrics:
-                for key in total_metrics:
-                    if key in metrics:
-                        total_metrics[key] += metrics[key]
-                valid_count += 1
+            # Accumulate metrics
+            for key in total_metrics:
+                total_metrics[key] += metrics[key]
+            valid_count += 1
                 
         except Exception as e:
-            print(f"Error processing image {idx}: {e}")
+            print(f"Error calculating metrics for image {idx}: {e}")
             continue
     
     # Calculate averages
@@ -226,32 +189,11 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         for key in total_metrics:
             total_metrics[key] /= valid_count
     
-    return total_metrics
-
-def get_scores(method, phase, track):
-    """
-    Get evaluation scores for a method
-    
-    Args:
-        method: The watermark removal method
-        phase (str): Either 'dev' or 'test'
-        track (str): Track name (e.g., 'black', 'beige_stegastamp', 'beige_treering')
-        
-    Returns:
-        dict: Dictionary containing evaluation scores
-    """
-    # Parse track information
-    track_type = "beige"
-    track_subtype = track.split("_")[1]
-    
-    # Get evaluation results
-    results = evaluate_method(method, phase, track_type, track_subtype)
-    
     # Return the required metrics
     return {
-        'overall_score': results['overall_score'],
-        'watermark_detection': results['watermark_detection'],
-        'quality_degradation': results['quality_degradation']
+        'overall_score': total_metrics['overall_score'],
+        'watermark_detection': total_metrics['watermark_detection'],
+        'quality_degradation': total_metrics['quality_degradation']
     }
 
 if __name__ == "__main__":
