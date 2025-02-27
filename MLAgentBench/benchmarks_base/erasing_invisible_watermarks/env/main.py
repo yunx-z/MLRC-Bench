@@ -7,18 +7,14 @@ from evaluation import get_scores
 from methods import all_method_handlers
 from MLAgentBench.utils import save_evals
 
-from MLAgentBench.constants import ALL_BASE_RUNTIME, ALL_BASE_PERFORMANCE, MLR_BENCH_DIR
-
 TASK_NAME = "erasing_invisible_watermarks"
 DEFAULT_METHOD_NAME = "my_method"
 TRACK_TYPES = ["stegastamp", "treering"]
-METHOD_TYPES = ["base_method", "my_method"]  # Available method implementations
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate watermark removal methods")
     parser.add_argument("-m", "--method", type=str, default=DEFAULT_METHOD_NAME,
-                       choices=METHOD_TYPES,
-                       help="Which method to evaluate (base_method: baseline implementation, my_method: your implementation)")
+                       help="Which method to evaluate")
     parser.add_argument("-p", "--phase", type=str, default="dev", 
                        choices=["dev", "test"],
                        help="Evaluation phase (dev: development set, test: test set)")
@@ -28,9 +24,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set up paths relative to env directory
-    base_dir = './'
-    data_dir = os.path.join(base_dir, 'data')
-    output_dir = os.path.join(base_dir, 'output')
+    data_dir = 'data/'
+    output_dir = 'output/'
     os.makedirs(output_dir, exist_ok=True)
 
     # Load methods
@@ -81,5 +76,4 @@ if __name__ == "__main__":
         score=combined_score if args.track == "both" else overall_scores[args.track],
         phase=args.phase,
         runtime=overall_runtime,
-        is_debug=True
     )

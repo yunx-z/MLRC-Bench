@@ -104,8 +104,8 @@ def download_and_prepare_dataset(temp_dir):
 def create_directories():
     """Create necessary directories for storing split datasets"""
     directories = [
-        'scripts/test_data',  # For test set (hidden from AI agents)
-        'env/data'           # For development set
+        './test_data',  # For test set (hidden from AI agents)
+        '../env/data'           # For development set
     ]
     for dir_path in directories:
         os.makedirs(dir_path, exist_ok=True)
@@ -147,14 +147,14 @@ def prepare_dataset(data_dir, test_ratio=0.2, seed=42):
         
         # Save test images (hidden from AI agents)
         test_data = {watermark_type: test_images}
-        test_save_path = Path("scripts/test_data") / f"test_images_{watermark_type}.pkl"
+        test_save_path = Path("./test_data") / f"test_images_{watermark_type}.pkl"
         with open(test_save_path, 'wb') as f:
             pickle.dump(test_data, f)
         print(f"- Saved {watermark_type} test data to: {test_save_path}")
         
         # Save development images
         dev_data = {watermark_type: dev_images}
-        dev_save_path = Path("env/data") / f"dev_images_{watermark_type}.pkl"
+        dev_save_path = Path("../env/data") / f"dev_images_{watermark_type}.pkl"
         with open(dev_save_path, 'wb') as f:
             pickle.dump(dev_data, f)
         print(f"- Saved {watermark_type} development data to: {dev_save_path}")
@@ -212,7 +212,7 @@ def main():
     create_directories()
     
     # Set up paths
-    scripts_dir = Path("scripts")
+    scripts_dir = Path("./")
     temp_dir = scripts_dir / "temp_data"
     
     # Download and prepare dataset
@@ -232,3 +232,5 @@ def main():
 
 if __name__ == "__main__":
     main() 
+    with open("prepared", 'w') as writer:
+        pass

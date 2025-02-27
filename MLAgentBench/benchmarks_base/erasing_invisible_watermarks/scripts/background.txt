@@ -1,14 +1,3 @@
-Technical Background for Invisible Watermark Removal
-
-From NeurIPS 2024 Competition - Erasing the Invisible:
-
-The beige-box attack track provides participants with watermarked images along with information about the watermarking methodology used. Specifically, this track focuses on two state-of-the-art watermarking algorithms: StegaStamp and Tree-Ring Watermarks. According to An et al. (2024), this transparent approach with known watermarking methods enables the development of specialized attack strategies tailored to each specific watermarking technique, fostering a deeper understanding of watermark vulnerabilities and robustness characteristics.
-
-StegaStamp is a deep learning-based watermarking method that embeds information through a neural network encoder, while Tree-Ring Watermark uses a frequency-domain approach inspired by natural tree ring patterns. Each method has distinct characteristics and potential vulnerabilities that can be specifically targeted in the beige-box setting.
-
-Core Technical Challenges:
-In the beige-box setting, the primary challenge shifts from watermark detection to optimal attack strategy development. With knowledge of the watermarking methodology, participants must design attacks that exploit known characteristics of specific watermarking techniques while maintaining image quality. This requires deep understanding of various watermarking algorithms and their potential vulnerabilities. The challenge lies in developing attacks that can effectively leverage this knowledge while still operating within practical computational constraints.
-
 Technical Approaches and Methodologies:
 The availability of watermarking methodology information enables more targeted approaches to watermark removal. An et al. (2024) demonstrate that different watermarking techniques exhibit distinct vulnerabilities that can be specifically targeted. For instance:
 
@@ -17,14 +6,6 @@ Frequency Domain Analysis: When the watermarking method's frequency characterist
 Neural Network Architectures: The WAVES benchmark (An et al., 2024) shows that specialized neural networks can be designed for specific watermarking methods. Autoencoders can be trained to recognize and remove specific watermark patterns, while GANs can be configured to generate clean images that specifically counter known watermarking techniques. Model architecture and training strategies can be optimized based on the watermarking method's characteristics.
 
 Model Merging Strategies: Knowledge of watermarking techniques enables the development of specialized expert models for each method. These models can then be merged using advanced techniques like TIES and Dare merging, creating robust solutions that maintain effectiveness across multiple known watermarking approaches. The merging process can be optimized based on known watermark characteristics.
-
-Evaluation Framework:
-The competition employs a sophisticated evaluation metric that combines image quality and watermark removal effectiveness. The scoring formula Q² + A² represents this dual objective, where:
-
-Quality Score (Q) synthesizes multiple image quality metrics through a carefully calibrated weighting scheme:
-Q = +1.53×10⁻³ FID + 5.07×10⁻³ CLIP FID - 2.22×10⁻³ PSNR - 1.13×10⁻¹ SSIM - 9.88×10⁻² NMI + 3.41×10⁻¹ LPIPS + 4.50×10⁻² ΔAesthetics - 1.44×10⁻¹ ΔArtifacts
-
-The Accuracy Score (A) measures watermark removal effectiveness through TPR@0.1%FPR, evaluated against a comprehensive corpus of unwatermarked images. In the beige-box context, this metric evaluates how effectively solutions can exploit known watermark characteristics while maintaining image quality.
 
 Advanced Research Directions:
 Recent work by An et al. (2024) has revealed that knowledge of watermarking techniques enables more sophisticated attack strategies. Their research shows that different watermarking methods have distinct vulnerabilities that can be specifically targeted. The key innovation in the beige-box context lies in developing specialized attack vectors for each known watermarking technique while maintaining the ability to generalize across similar methods.
