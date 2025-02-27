@@ -6,7 +6,7 @@ from evaluation import *
 from methods import *
 from MLAgentBench.utils import save_evals
 
-TASK_NAME = "base-competition"
+TASK_NAME = "product-recommendation"
 DEFAULT_METHOD_NAME = "my_method"
 
 if __name__ == "__main__":

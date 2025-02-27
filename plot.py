@@ -64,6 +64,7 @@ task_name_mapping = {
         "temporal-action-loc" : "perception_temporal_action_loc",
         "machine-unlearning" : "machine_unlearning",
         "meta-learning" : "meta-learning",
+        "product-rec" : "product-recommendation",
         }
 TASKS = list(task_name_mapping.keys())
 for k in TASKS:
@@ -96,6 +97,7 @@ HUMAN_PERFORMANCE = {
     "temporal-action-loc": {"performance" : 0.4859}, 
     "machine-unlearning": {"performance" : 0.0984971060},
     "meta-learning": {"performance" : 0.699},
+    "product-rec": {"performance" : 0.41208},
 } 
 all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:

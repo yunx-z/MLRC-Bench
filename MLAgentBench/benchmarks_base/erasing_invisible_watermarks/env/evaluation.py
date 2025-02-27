@@ -5,10 +5,9 @@ from PIL import Image
 from torchvision import transforms
 from skimage.metrics import structural_similarity, normalized_mutual_information
 import pickle
-from MLAgentBench.constants import MLR_BENCH_DIR
 
 
-def evaluate_method(method, phase, track, track_type=None, base_dir=None):
+def evaluate_method(method, phase, track, track_type=None):
     """
     Process images with the watermark removal method and save results
     
@@ -17,16 +16,11 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         phase: 'dev' or 'test'
         track: 'beige' or 'black'
         track_type: 'stegastamp' or 'treering' (only for beige track)
-        base_dir: Base directory path
+
+    Returns:
+        dict: Average metrics across all processed images
     """
-    if base_dir is None:
-        base_dir = './'
-    
-    # Load data from pickle files - different paths for dev and test
-    if phase == 'dev':
-        data_dir = os.path.join(base_dir, "data")
-    else:  # test phase
-        data_dir = os.path.join(base_dir, "..", "scripts", "test_data")
+    data_dir = "data/"
     print(f"Data directory: {data_dir}")
     
     if track == "beige":
@@ -39,7 +33,7 @@ def evaluate_method(method, phase, track, track_type=None, base_dir=None):
         raise ValueError(f"Unsupported track: {track}")
     
     # Create output directory
-    output_dir = os.path.join(base_dir, "output", phase, track)
+    output_dir = os.path.join("output", phase, track)
     if track_type:
         output_dir = os.path.join(output_dir, track_type)
     os.makedirs(output_dir, exist_ok=True)

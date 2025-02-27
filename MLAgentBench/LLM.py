@@ -235,7 +235,6 @@ def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/Cod
     sequences = [sequence[len(encoded_input.input_ids[0]) :] for sequence in sequences]
     all_decoded_text = tokenizer.batch_decode(sequences)
     completion = all_decoded_text[0]
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     if log_file is not None:
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
     return completion
@@ -265,7 +264,6 @@ def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_toke
     else:
         thought = None
         completion = response.text
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     num_prompt_tokens = response.usage_metadata.prompt_token_count
     num_sample_tokens = response.usage_metadata.candidates_token_count
     if log_file is not None:
@@ -305,7 +303,6 @@ def complete_text_claude(prompt, stop_sequences=None, model="claude-v1", max_tok
 
     # Extract and print the response text.
     completion = model_response["content"][0]["text"]
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     num_prompt_tokens = model_response["usage"]["input_tokens"]
     num_sample_tokens = model_response["usage"]["output_tokens"]
     
@@ -340,9 +337,8 @@ def complete_text_llama(prompt, stop_sequences=None, model="llama3-3-70b-instruc
 
     # Extract and print the response text.
     completion = model_response["generation"]
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     # Since bedrock's llama-series model does not support stop_sequences, we need to truncate observation by ourselves
-    completion = re.sub(r"^Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
+    completion = re.sub(r"Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
 
     num_prompt_tokens = model_response["prompt_token_count"]
     num_sample_tokens = model_response["generation_token_count"]
@@ -395,7 +391,6 @@ def complete_text_crfm(prompt="", stop_sequences = [], model="openai/gpt-4-0314"
         print(request.error)
         raise LLMError(request.error)
     completion = request_result.completions[0].text
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
     if log_file is not None:
         log_to_file(log_file, prompt if not messages else str(messages), completion, model, max_tokens_to_sample)
     return completion
@@ -425,12 +420,9 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-4o-mini", max_tok
     completion = response.choices[0].message.content
     usage = response.usage
 
-    
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
-
     # Since o-series model does not support stop_sequences, we need to truncate observation by ourselves
     if "o1" in model.lower() or "o3" in model.lower():
-        completion = re.sub(r"^Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
+        completion = re.sub(r"Observation:.*", "", completion, flags=re.DOTALL | re.MULTILINE)
 
     if log_file is not None:
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens)
@@ -463,8 +455,6 @@ def complete_text_deepseek(prompt, stop_sequences=[], model="DeepSeek-R1", max_t
     thought_and_completion = response.choices[0].message.content
     usage = response.usage
     thought, completion = separate_thought_completion(thought_and_completion)
-
-    completion = re.sub(r'\*\*(.*?)\*\*', r'\1', completion)
 
     if log_file is not None:
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample, num_prompt_tokens=usage.prompt_tokens, num_sample_tokens=usage.completion_tokens, thought=thought)
