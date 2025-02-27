@@ -106,47 +106,4 @@ class MyMethod(BaseMethod):
         result = self.postprocess(output)
         return result
 
-    def evaluate_advanced_metrics(self, original_img, processed_img):
-        """Compute additional evaluation metrics"""
-        # Convert images to numpy arrays
-        original_np = np.array(original_img) / 255.0
-        processed_np = np.array(processed_img) / 255.0
-        
-        # Compute normalized mutual information
-        nmi = normalized_mutual_information(
-            (original_np * 255).astype(np.uint8),
-            (processed_np * 255).astype(np.uint8)
-        )
-        
-        # Simple quality score (Q) based on basic metrics
-        ssim = structural_similarity(original_np, processed_np, channel_axis=2, data_range=1.0)
-        mse = np.mean((original_np - processed_np) ** 2)
-        psnr = 20 * np.log10(1.0 / np.sqrt(mse)) if mse > 0 else float('inf')
-        
-        Q = 0.5 * (1 - ssim) + 0.3 * (1 - psnr/50) + 0.2 * (1 - nmi)
-        Q = np.clip(Q, 0.1, 0.9)  # Ensure Q is in [0.1, 0.9] range
-        
-        # Simple watermark detection score (A) based on high frequency differences
-        def high_freq_diff(img):
-            gray = np.mean(img, axis=2)
-            freq = np.fft.fft2(gray)
-            freq_shift = np.fft.fftshift(freq)
-            h, w = gray.shape
-            center_h, center_w = h//2, w//2
-            high_freq = np.abs(freq_shift[center_h-10:center_h+10, center_w-10:center_w+10])
-            return np.mean(high_freq)
-        
-        orig_hf = high_freq_diff(original_np)
-        proc_hf = high_freq_diff(processed_np)
-        A = np.clip(abs(orig_hf - proc_hf) / orig_hf, 0.1, 0.9)
-        
-        # Overall score
-        overall_score = np.sqrt(Q**2 + A**2)
-        
-        return {
-            'overall_score': float(overall_score),
-            'watermark_detection': float(A),
-            'quality_degradation': float(Q),
-            'nmi': float(nmi)
-        }
-            
+    

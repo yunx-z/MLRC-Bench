@@ -3,7 +3,7 @@ import os
 import time
 from pathlib import Path
 
-from evaluation import evaluate_method, get_scores
+from evaluation import get_scores
 from methods import all_method_handlers
 from MLAgentBench.utils import save_evals
 
@@ -41,13 +41,11 @@ if __name__ == "__main__":
     # Run evaluation for each track
     for track_type in tracks_to_evaluate:
         start_time = time.time()
-        evaluate_method(curr_method, args.phase, "beige", track_type)
+        score = get_scores(curr_method, args.phase, f"beige_{track_type}")
         end_time = time.time()
         runtime = end_time - start_time
         overall_runtime += runtime
         
-        # Get evaluation scores
-        score = get_scores(curr_method, args.phase, f"beige_{track_type}")
         overall_scores[track_type] = score["overall_score"]
         
         # Print individual track results
