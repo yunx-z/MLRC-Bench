@@ -275,7 +275,9 @@ class Environment:
         if traceback is not None:
             print("Error message saved in error.txt")
             open(os.path.join(self.log_dir, "error.txt"), "w").write(''.join(format_exception(exc_type, exc_value, traceback)))
-        open(os.path.join(self.log_dir, "overall_time.txt"), "w").write(str(time.time() - self.start_time))
+        with open(os.path.join(self.log_dir, "overall_time.txt"), "w") as writer:
+            time_info = {"total_time" : time.time() - self.start_time, "start_time" : self.start_time}
+            json.dump(time_info, writer, indent=2)
             
     ################################# public functions ########################################
 
