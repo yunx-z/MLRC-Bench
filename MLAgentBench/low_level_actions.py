@@ -33,7 +33,7 @@ def normalize_args_kwargs(f, *args, **kwargs):
 
 def append_to_low_level_steps(trace, name, args, observation):
     """ This function appends a low level step to the trace. """
-    trace.low_level_steps.append(Step(action=Action(name, args),observation=observation,timestamp=time.time()))
+    trace.low_level_steps.append(Step(action=Action(name, args),observation=None,timestamp=time.time()))
 
 
 def record_low_level_step(func):
@@ -53,14 +53,13 @@ def record_low_level_step(func):
                     input_args = a.usage.keys()
                     break
             new_kwargs = {k: v for k, v in new_kwargs.items() if k in input_args}
-            append_to_low_level_steps(trace, name, new_kwargs, observation=None)
-            # try:
-            #     observation = func(*args, **kwargs)
-            #     append_to_low_level_steps(trace, name, new_kwargs, observation)
-            #     return observation
-            # except EnvironmentError as e:
-            #     append_to_low_level_steps(trace, name, new_kwargs, e)
-            #     raise EnvException(e)
+            try:
+                observation = func(*args, **kwargs)
+                append_to_low_level_steps(trace, name, new_kwargs, observation)
+                return observation
+            except EnvironmentError as e:
+                append_to_low_level_steps(trace, name, new_kwargs, e)
+                raise EnvException(e)
     return wrapper
 
 

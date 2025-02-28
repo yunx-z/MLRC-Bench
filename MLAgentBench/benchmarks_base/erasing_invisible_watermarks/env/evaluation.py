@@ -21,7 +21,6 @@ def evaluate_method(method, phase, track, track_type=None):
         dict: Average metrics across all processed images
     """
     data_dir = "data/"
-    print(f"Data directory: {data_dir}")
     
     if track == "beige":
         data_file = os.path.join(data_dir, f"{phase}_images_{track_type}.pkl")
@@ -78,8 +77,6 @@ def get_scores(method, phase, track):
     track_type = "beige"
     track_subtype = track.split("_")[1]
     
-    # First ensure images are processed
-    evaluate_method(method, phase, track_type, track_subtype)
     
     # Initialize metrics accumulator
     total_metrics = {
@@ -94,12 +91,7 @@ def get_scores(method, phase, track):
     valid_count = 0
     
     # Load original images
-    if phase == 'dev':
-        data_dir = "data"
-    else:  # test phase
-        data_dir = os.path.join("..", "scripts", "test_data")
-    
-    data_file = os.path.join(data_dir, f"{phase}_images_{track_subtype}.pkl")
+    data_file = os.path.join("data", f"{phase}_images_{track_subtype}.pkl")
     with open(data_file, 'rb') as f:
         data = pickle.load(f)
         images = data[track_subtype]
@@ -190,12 +182,3 @@ def get_scores(method, phase, track):
         'quality_degradation': total_metrics['quality_degradation']
     }
 
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='Evaluate watermark removal')
-    parser.add_argument('--original', type=str, required=True, help='Directory with original images')
-    parser.add_argument('--processed', type=str, required=True, help='Directory with processed images')
-    
-    args = parser.parse_args()
-    
