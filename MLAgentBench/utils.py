@@ -200,22 +200,3 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
     with open(eval_file, 'w') as writer:
         json.dump(all_evals, writer, indent=2)
 
-# Example Usage
-if __name__ == "__main__":
-    from pprint import pprint
-    # anchor = "dare"
-    # idea_proposal_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/idea.txt"
-    # full_code_file = f"workspace/llm-merging--{anchor}--o1-preview/o1-preview/latest/llm-merging--{anchor}--o1-preview/llm_merging/merging/IntelligentMerge.py"
-    full_code_file = "MLAgentBench/benchmarks/llm-merging/env/methods/MyMethod.py"
-    # idea_proposal = open(idea_proposal_file, 'r').read()
-    full_code = open(full_code_file, 'r').read()
-    # fres = get_llm_feedback(idea_proposal, full_code)
-    explanation = summarize_code(full_code)
-    llm_eval_result = llm_evaluate_method(explanation, full_code, "llm-merging")
-    print("Finished!")
-    print(explanation)
-    pprint(llm_eval_result)
-    # for k in fres:
-    #     print(k)
-    #     print(fres[k])
-
