@@ -54,7 +54,7 @@ HUMAN_SINGLE_AGENT = "Human Idea + MLAB"
 PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]  
   
 # LMs  
-LMS = ["claude-3-5-sonnet-v2", "DeepSeek-R1", "gemini-exp-1206", "llama3-1-405b-instruct", "o3-mini", "gpt-4o"]  
+LMS = ["claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct", "o3-mini", "gpt-4o"]  
 colors = ['#0173b2', '#029e73', '#cc78bc', '#ca9161', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
 # Tasks 
@@ -230,16 +230,16 @@ def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):
 
     for imp in data.get("implementations", []):  
         if imp.get("phase") == "test" and imp["performance"] is not None : # performance should not be None 
-            if task == "machine_unlearning":
-                # substitute with best dev's runtime
-                dev_results = get_dev_results(_task, lm, pipeline, run_id, idea_idx)
-                dev_results.sort(key=lambda x: x[0])
-                best_dev_result = dev_results[-1]
-                best_dev_runtime = best_dev_result[1] 
+            # if task == "machine_unlearning":
+            #     # substitute with best dev's runtime
+            #     dev_results = get_dev_results(_task, lm, pipeline, run_id, idea_idx)
+            #     dev_results.sort(key=lambda x: x[0])
+            #     best_dev_result = dev_results[-1]
+            #     best_dev_runtime = best_dev_result[1] 
 
             ret = (  
                 100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
-                best_dev_runtime if task == "machine_unlearning" else 100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
+                0 if task == "machine_unlearning" else 100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
                 imp.get("relative_complexity", 0.0),  
             )  
             return ret
@@ -327,7 +327,7 @@ def compute_success_rates_data(phase='test'):
   
                 if success_list:  
                     mean_sr = np.mean(success_list)*100  
-                    std_sr  = np.std(success_list, ddof=1)*100  
+                    std_sr  = np.std(success_list, ddof=1)*100 if len(success_list) >= 3 else 0.0
                 else:  
                     mean_sr, std_sr = 0.0, 0.0  
                 result[(task,pipeline,lm)] = (mean_sr, std_sr)  
@@ -1311,7 +1311,7 @@ def load_baseline_data_for_task(_task):
     rig_list=[]  
     inn_list=[]  
     gen_list=[]  
-    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] if task != "machine_unlearning" else ALL_BASE_RUNTIME[task]["dev"] 
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] if task != "machine_unlearning" else 0 
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
 
 
