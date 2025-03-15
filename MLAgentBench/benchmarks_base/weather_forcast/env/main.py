@@ -52,9 +52,10 @@ from baseline.utils.data_utils import load_config, get_cuda_memory_usage, tensor
 # Modified RainData class to handle our data paths
 class RainData:
     def __init__(self, split, data_root='data', regions=None, year=2019, **kwargs):
-        # Adjust paths for HRIT and OPERA data
-        self.hrit_root = os.path.join(data_root, 'w4c23')  # Path for HRIT data
-        self.opera_root = data_root  # Path for OPERA data
+        # Use absolute paths based on current file location
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        self.hrit_root = os.path.join(base_path, 'data', 'w4c23')  # Path for HRIT data
+        self.opera_root = os.path.join(base_path, 'data')  # Path for OPERA data
         
         # Convert validation to val for file matching
         self.split = 'val' if split == 'validation' else split
@@ -474,7 +475,7 @@ def train(params, gpus, mode, checkpoint_path, model=UNetModel):
 
 def update_params_based_on_args(options):
     # Use absolute path for configuration files
-    base_path = '/data2/monmonli/MLAgentBench/MLAgentBench/benchmarks_base/weather_forcast/env'
+    base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
     
     # Select config file based on mode
     if options.mode == 'predict':
