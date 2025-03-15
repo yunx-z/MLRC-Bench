@@ -1,0 +1,21 @@
+Weather4cast 2023 Research Problem
+
+The Weather4cast 2023 competition focuses on predicting future radar reflectivity from satellite data. This is a crucial task for weather forecasting and early warning systems, especially in regions where ground radar coverage is limited or non-existent.
+
+Research Questions:
+1. How can we effectively use satellite imagery to predict precipitation patterns?
+2. What deep learning architectures are most effective for spatio-temporal forecasting of weather phenomena?
+3. How can we handle the inherent uncertainty in weather prediction?
+
+Task Description:
+- Input: Satellite imagery from various channels over a sequence of time steps
+- Output: Predicted radar reflectivity for future time steps
+- Evaluation: Models are evaluated based on their ability to predict future radar reflectivity using metrics like RMSE
+
+Challenges:
+- Weather phenomena are complex and chaotic systems
+- Satellite data and radar data have different resolutions and characteristics
+- Precipitation events are rare, leading to class imbalance
+- Weather patterns vary by region and season
+
+The goal is to develop models that can accurately predict precipitation patterns from satellite data, which would significantly improve weather forecasting capabilities, especially in regions with limited ground radar coverage. 
