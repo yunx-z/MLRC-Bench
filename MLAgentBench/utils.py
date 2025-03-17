@@ -184,7 +184,7 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "step" : int(os.getenv("CURR_STEP", "-1")),
             # "relevance_score" : relevance_score, 
             # "test_case_pass_rate" : test_case_pass_rate,
-            "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME,
+            "relative_runtime" : 100 * (runtime - BASE_RUNTIME) / BASE_RUNTIME if BASE_RUNTIME else None,
             "relative_complexity" :  100 * (method_complexity - base_complexity) / base_complexity,
             "runtime" : runtime,
             "method_complexity" : method_complexity,
