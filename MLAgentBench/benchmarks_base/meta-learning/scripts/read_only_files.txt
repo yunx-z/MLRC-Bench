@@ -2,5 +2,4 @@ data/*
 evaluation.py
 main.py
 constants.py
-scoring_output/*
 api.py
