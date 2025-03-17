@@ -1096,7 +1096,7 @@ def plot_scatter_api_cost_vs_success():
 # Correlation heatmaps  
 ##############################################################################  
   
-def gather_test_correlation_data():  
+def gather_test_correlation_data(tasks_to_do=TASKS):  
     records_with=[]  
     records_without=[]  
     subj_fields=["Clarity","Validity","Rigorousness","Innovativeness","Generalizability"]  
@@ -1126,7 +1126,7 @@ def gather_test_correlation_data():
                     row_wo[sf]=r  
             records_without.append(row_wo)  
   
-    for task in TASKS:  
+    for task in tasks_to_do:  
         for pipeline in PIPELINES:  
             if pipeline==MULTI_AGENT:  
                 for idx in IDEA_IDXS:  
@@ -1166,45 +1166,49 @@ def gather_test_correlation_data():
   
 def plot_correlation_heatmaps():
     plt.rcParams['font.size'] = 10
-    dfw, dfwo = gather_test_correlation_data()
-    subj = ["Clarity", "Validity", "Rigorousness", "Innovativeness", "Generalizability"]
-    obj = ["improvement_perc", "relative_runtime", "relative_complexity"]
-    obj_label_map = {
-        "improvement_perc": "Effectiveness",
-        "relative_runtime": "Efficiency",
-        "relative_complexity": "Simplicity"
-    }
+    for a_task in TASKS:
+        dfw, dfwo = gather_test_correlation_data(tasks_to_do=[a_task])
+        print("TASK:", a_task)
+        print("dfw", dfw)
+        print("dfwo", dfwo)
+        subj = ["Clarity", "Validity", "Rigorousness", "Innovativeness", "Generalizability"]
+        obj = ["improvement_perc", "relative_runtime", "relative_complexity"]
+        obj_label_map = {
+            "improvement_perc": "Effectiveness",
+            "relative_runtime": "Efficiency",
+            "relative_complexity": "Simplicity"
+        }
 
-    for nm, df_ in [("with_code", dfw), ("without_code", dfwo)]:
-        allf = subj + obj
-        ex = [c for c in allf if c in df_.columns]
-        if len(df_) < 2 or len(ex) < 2:
-            continue
-        corr_ = df_[ex].corr(method='spearman')
-        rAvail = [f for f in subj if f in corr_.index]
-        cAvail = [f for f in obj if f in corr_.columns]
-        if not rAvail or not cAvail:
-            continue
-        subcorr = corr_.loc[rAvail, cAvail]
-        plt.figure(figsize=(4, 3))
-        # print(nm, subcorr)
-        ax = sns.heatmap(
-            subcorr, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, 
-            xticklabels=[obj_label_map.get(x, x) for x in subcorr.columns], 
-            cbar_kws={'label': 'Correlation'}
-        )
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=0)  # Horizontal labels
-        nm2title = {"with_code" : "w/ code", "without_code" : "w/o code"}
-        plt.title(f"{nm2title[nm]}")
-        outfn = os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}.pdf")
-        plt.savefig(outfn, bbox_inches='tight')
-        plt.close()
-        cap = (
-            f"Correlation heatmap ({nm}) between LLM-as-a-Judge subjective metrics (rows) "
-            f"and ML objective metrics (cols) for valid test implementations."
-        )
-        # with open(os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_caption.txt"), "w") as f:
-        #     f.write(cap)
+        for nm, df_ in [("with_code", dfw), ("without_code", dfwo)]:
+            allf = subj + obj
+            ex = [c for c in allf if c in df_.columns]
+            if len(df_) < 2 or len(ex) < 2:
+                continue
+            corr_ = df_[ex].corr(method='spearman')
+            rAvail = [f for f in subj if f in corr_.index]
+            cAvail = [f for f in obj if f in corr_.columns]
+            if not rAvail or not cAvail:
+                continue
+            subcorr = corr_.loc[rAvail, cAvail]
+            plt.figure(figsize=(4, 3))
+            # print(nm, subcorr)
+            ax = sns.heatmap(
+                subcorr, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, 
+                xticklabels=[obj_label_map.get(x, x) for x in subcorr.columns], 
+                cbar_kws={'label': 'Correlation'}
+            )
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=0)  # Horizontal labels
+            nm2title = {"with_code" : "w/ code", "without_code" : "w/o code"}
+            plt.title(f"{nm2title[nm]}")
+            outfn = os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_{a_task}.pdf")
+            plt.savefig(outfn, bbox_inches='tight')
+            plt.close()
+            cap = (
+                f"Correlation heatmap ({nm}) between LLM-as-a-Judge subjective metrics (rows) "
+                f"and ML objective metrics (cols) for valid test implementations."
+            )
+            # with open(os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_caption.txt"), "w") as f:
+            #     f.write(cap)
 
   
 ##############################################################################  
