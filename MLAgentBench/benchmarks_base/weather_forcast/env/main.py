@@ -5,16 +5,15 @@
 # the original license for which is included below.
 #
 # In line with the provisions of this license, all changes and additional
-# code are also released unde the GNU General Public License as
+# code are also released under the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the License,
 # or (at your option) any later version.
 # 
-
 # Weather4cast 2022 Starter Kit
 #
 # Copyright (C) 2022
 # Institute of Advanced Research in Artificial Intelligence (IARAI)
-
+#
 # This file is part of the Weather4cast 2022 Starter Kit.
 # 
 # The Weather4cast 2022 Starter Kit is free software: you can redistribute it
@@ -29,9 +28,8 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
 # Contributors: Aleksandra Gruca, Pedro Herruzo, David Kreil, Stephen Moran
-
 
 import argparse
 import pytorch_lightning as pl
@@ -39,6 +37,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.strategies.single_device import SingleDeviceStrategy
 import datetime
 import os
 import torch 
@@ -49,7 +48,7 @@ import numpy as np
 from baseline.unet_lightning_w4c23 import UNet_Lightning as UNetModel
 from baseline.utils.data_utils import load_config, get_cuda_memory_usage, tensor_to_submission_file
 
-# Modified RainData class to handle our data paths
+# Modified RainData class with lazy loading to avoid OOM issues
 class RainData:
     def __init__(self, split, data_root='data', regions=None, year=2019, **kwargs):
         # Use absolute paths based on current file location
@@ -61,7 +60,6 @@ class RainData:
         self.split = 'val' if split == 'validation' else split
         if self.split == 'training':
             self.split = 'train'  # Convert training to train for file matching
-            
         self.year = year
         
         # Find all available regions by scanning directories
@@ -76,7 +74,7 @@ class RainData:
         hrit_regions = set()
         for f in hrit_files:
             if f.endswith(f'.{self.split}.reflbt0.ns.h5'):
-                region = f.split('.')[0]  # Get region name (e.g., 'boxi_0015')
+                region = f.split('.')[0]  # e.g., 'boxi_0015'
                 hrit_regions.add(region)
         
         print(f"Found HRIT regions for split {self.split}: {hrit_regions}")
@@ -86,7 +84,7 @@ class RainData:
         opera_regions = set()
         for f in opera_files:
             if f.endswith(f'.{self.split}.rates.crop.h5'):
-                region = f.split('.')[0]  # Get region name
+                region = f.split('.')[0]
                 opera_regions.add(region)
         
         print(f"Found OPERA regions for split {self.split}: {opera_regions}")
@@ -105,75 +103,54 @@ class RainData:
             if not self.regions:
                 raise ValueError(f"None of the specified regions have matching files. Available regions: {self.matching_regions}")
         else:
-            # Just use the first matching region
             self.regions = [self.matching_regions[0]]
             print(f"Testing with first matching region: {self.regions[0]}")
         
-        self.input_data = None
-        self.target_data = None
+        # Instead of loading all data into memory, we store file paths and determine the sample count.
+        self.sat_file = os.path.join(self.hrit_root, str(self.year), 'HRIT', f'{self.regions[0]}.{self.split}.reflbt0.ns.h5')
+        if self.split != 'test':
+            self.radar_file = os.path.join(self.opera_root, str(self.year), 'OPERA', f'{self.regions[0]}.{self.split}.rates.crop.h5')
+        else:
+            self.radar_file = None
         
-        print(f"Loading data for split: {self.split}")
-        print(f"HRIT data from: {self.hrit_root}")
-        print(f"OPERA data from: {self.opera_root}")
+        # Open the satellite file to get shape info and compute sample count
+        with h5py.File(self.sat_file, 'r') as f:
+            self.num_timesteps = f['REFL-BT'].shape[0]
+            self.data_shape = f['REFL-BT'].shape  # (T, channels, height, width)
+        if self.split != 'test':
+            # For training/validation, each sample consists of 4 input + 32 output timesteps
+            self.n_samples = self.num_timesteps - 36
+        else:
+            # For test, we use non-overlapping windows of 4 timesteps (adjust as needed)
+            self.n_samples = (self.num_timesteps - 4) // 4
         
-        # Load data for each region
-        for region in self.regions:
-            # Load satellite data from w4c23/HRIT
-            sat_file = os.path.join(self.hrit_root, str(self.year), 'HRIT', f'{region}.{self.split}.reflbt0.ns.h5')
-            print(f"Loading satellite data from: {sat_file}")
-            
-            try:
-                with h5py.File(sat_file, 'r') as f:
-                    sat_data = f['REFL-BT'][:]
-                    print(f"Successfully loaded satellite data with shape: {sat_data.shape}")
-            except Exception as e:
-                print(f"Error loading satellite data: {e}")
-                continue
-            
-            # Create input sequences
-            if self.split != 'test':
-                # Load radar data from base OPERA directory
-                radar_file = os.path.join(self.opera_root, str(self.year), 'OPERA', f'{region}.{self.split}.rates.crop.h5')
-                print(f"Loading radar data from: {radar_file}")
-                
-                try:
-                    with h5py.File(radar_file, 'r') as f:
-                        radar_data = f['rates.crop'][:]
-                        print(f"Successfully loaded radar data with shape: {radar_data.shape}")
-                except Exception as e:
-                    print(f"Error loading radar data: {e}")
-                    continue
-                
-                # Create sequences with 4 input timesteps and 32 output timesteps
-                for i in range(0, len(sat_data) - 36):  # 4 input + 32 output
-                    self.input_data.append(sat_data[i:i+4])  # 4 timesteps input
-                    self.target_data.append(radar_data[i+4:i+36])  # 32 timesteps output
-            else:
-                # For test set, only create input sequences
-                for i in range(0, len(sat_data) - 4, 4):
-                    self.input_data.append(sat_data[i:i+4])
-                    # Add dummy target for consistency
-                    self.target_data.append(np.zeros((32, 1, sat_data.shape[2], sat_data.shape[3])))
-        
-        if not self.input_data:
-            raise ValueError("No data was loaded. Please check the data paths and file availability.")
-        
-        self.input_data = np.array(self.input_data)
-        self.target_data = np.array(self.target_data)
-        
-        print(f"Loaded {len(self.input_data)} sequences for {self.split} split")
-        print(f"Input data shape: {self.input_data.shape}")
-        print(f"Target data shape: {self.target_data.shape}")
+        print(f"Dataset contains {self.n_samples} samples for split {self.split}")
     
     def __len__(self):
-        return len(self.input_data)
+        return self.n_samples
     
     def __getitem__(self, idx):
-        with h5py.File(self.sat_file, 'r') as sat_f, h5py.File(self.radar_file, 'r') as rad_f:
-            x = torch.tensor(sat_f['REFL-BT'][idx:idx+4], dtype=torch.float32)
-            y = torch.tensor(rad_f['rates.crop'][idx+4:idx+36], dtype=torch.float32)
-        return x, y, {}
+        if self.split != 'test':
+            # For training/validation: read 4 timesteps for input and 32 for target.
+            with h5py.File(self.sat_file, 'r') as sat_f:
+                sat_slice = sat_f['REFL-BT'][idx:idx+4]
+            with h5py.File(self.radar_file, 'r') as rad_f:
+                radar_slice = rad_f['rates.crop'][idx+4:idx+36]
+            x = torch.tensor(sat_slice, dtype=torch.float32)
+            y = torch.tensor(radar_slice, dtype=torch.float32)
+            return x, y, {}
+        else:
+            # For test: read input sequences in non-overlapping windows.
+            start_idx = idx * 4
+            with h5py.File(self.sat_file, 'r') as sat_f:
+                sat_slice = sat_f['REFL-BT'][start_idx:start_idx+4]
+            x = torch.tensor(sat_slice, dtype=torch.float32)
+            # Create a dummy target (shape: 32 x 1 x height x width)
+            _, _, h, w = x.shape
+            y = torch.zeros((32, 1, h, w), dtype=torch.float32)
+            return x, y, {}
 
+# The rest of the file remains the same, including DataModule, load_model, get_trainer, etc.
 
 class DataModule(pl.LightningDataModule):
     """ Class to handle training/validation splits in a single object
@@ -195,18 +172,6 @@ class DataModule(pl.LightningDataModule):
             self.test_ds = RainData('test', **self.params)
 
     def __load_dataloader(self, dataset, shuffle=True, pin=True):
-        # Calculate optimal batch size based on GPU memory
-        # if torch.cuda.is_available():
-        #     gpu = torch.cuda.get_device_properties(0)
-        #     total_memory = gpu.total_memory / 1024**3  # Convert to GB
-        #     # Use about 40% of available GPU memory
-        #     optimal_batch_size = min(
-        #         int(total_memory * 0.4 * 1024 / (dataset[0][0].numel() * 4)),  # 4 bytes per float32
-        #         self.training_params['batch_size']
-        #     )
-        #     print(f"Adjusted batch size to {optimal_batch_size} based on GPU memory")
-        #     self.training_params['batch_size'] = optimal_batch_size
-
         # Calculate optimal number of workers
         num_workers = min(
             self.training_params['n_workers'],
@@ -317,24 +282,19 @@ def get_trainer(gpus, params):
             valid_gpus = [gpu for gpu in gpus if 0 <= gpu < num_gpus]
             if not valid_gpus:
                 print("Warning: No valid GPUs specified. Using GPU 0.")
-                devices = [0]
+                valid_gpus = [0]
+            # For a single GPU, pass an int
+            if len(valid_gpus) == 1:
+                devices = 1
+                strategy = "single_device"
+                print("Using single GPU strategy")
             else:
                 devices = valid_gpus
+                strategy = "ddp"
+                print(f"Using DDP strategy with {len(valid_gpus)} GPUs")
         else:
-            if 0 <= gpus < num_gpus:
-                devices = [gpus]
-            else:
-                print("Warning: Invalid GPU specified. Using GPU 0.")
-                devices = [0]
-        
-        print(f"Using GPUs: {devices}")
-        
-        # Set strategy based on number of GPUs
-        if len(devices) > 1:
-            strategy = "ddp"
-            print(f"Using DDP strategy with {len(devices)} GPUs")
-        else:
-            strategy = "auto"
+            devices = 1
+            strategy = "single_device"
             print("Using single GPU strategy")
 
     print(f"====== process started with accelerator: {accelerator}, devices: {devices}, strategy: {strategy} ======")
@@ -362,7 +322,7 @@ def get_trainer(gpus, params):
 
     trainer = pl.Trainer(
         accelerator="gpu",
-        devices=devices,
+        devices="auto",
         max_epochs=max_epochs,
         gradient_clip_val=params['model']['gradient_clip_val'],
         gradient_clip_algorithm=params['model']['gradient_clip_algorithm'],
@@ -370,23 +330,22 @@ def get_trainer(gpus, params):
         logger=tb_logger,
         profiler='simple',
         precision=params['experiment']['precision'],
-        strategy=strategy,
-        # Enable deterministic training for reproducibility
+        strategy=SingleDeviceStrategy(device=0),
         deterministic=True,
-        # Enable automatic optimization
         enable_model_summary=True,
-        # Enable progress bar
         enable_progress_bar=True,
-        # Log every n steps
+        auto_select_gpus=True,
         log_every_n_steps=10
     )
+
+    print(f"root_device", trainer.strategy.root_device)
 
     return trainer
 
 def do_predict(trainer, model, predict_params, test_data):
     scores = trainer.predict(model, dataloaders=test_data)
     scores = torch.concat(scores)   
-    tensor_to_submission_file(scores,predict_params)
+    tensor_to_submission_file(scores, predict_params)
 
 def do_test(trainer, model, test_data):
     scores = trainer.test(model, dataloaders=test_data)
@@ -394,20 +353,12 @@ def do_test(trainer, model, test_data):
 def train(params, gpus, mode, checkpoint_path, model=UNetModel): 
     """ main training/evaluation method
     """
-    # ------------
-    # Initialize CUDA and check GPU availability
-    # ------------
     print("CUDA Available:", torch.cuda.is_available())
     if torch.cuda.is_available():
-        # Get number of available GPUs
         num_gpus = torch.cuda.device_count()
         print(f"Number of available GPUs: {num_gpus}")
-        
-        # Print available GPU information
         for i in range(num_gpus):
             print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
-        
-        # Validate GPU selection
         if isinstance(gpus, list):
             valid_gpus = [gpu for gpu in gpus if 0 <= gpu < num_gpus]
             if not valid_gpus:
@@ -421,28 +372,15 @@ def train(params, gpus, mode, checkpoint_path, model=UNetModel):
             else:
                 print("Warning: Invalid GPU specified. Using GPU 0.")
                 gpus = [0]
-        
         print(f"Using GPUs: {gpus}")
-        
-        # Set CUDA device
         torch.cuda.set_device(gpus[0])
     
-    # ------------
-    # model & data
-    # ------------
     get_cuda_memory_usage(gpus)
     data = DataModule(params['dataset'], params['train'], mode)
     model = load_model(model, params, checkpoint_path)
-    
-    # ------------
-    # trainer
-    # ------------
     trainer = get_trainer(gpus, params)
     get_cuda_memory_usage(gpus)
     
-    # ------------
-    # train & final validation
-    # ------------
     if mode == 'train':
         print("------------------")
         print("--- TRAIN MODE ---")
@@ -450,18 +388,12 @@ def train(params, gpus, mode, checkpoint_path, model=UNetModel):
         trainer.fit(model, data)
     
     if mode == "val":
-        # ------------
-        # VALIDATE
-        # ------------
         print("---------------------")
         print("--- VALIDATE MODE ---")
         print("---------------------")
         do_test(trainer, model, data.val_dataloader()) 
 
     if mode == 'predict':
-        # ------------
-        # PREDICT
-        # ------------
         print("--------------------")
         print("--- PREDICT MODE ---")
         print("--------------------")
@@ -474,15 +406,11 @@ def train(params, gpus, mode, checkpoint_path, model=UNetModel):
     get_cuda_memory_usage(gpus)
 
 def update_params_based_on_args(options):
-    # Use absolute path for configuration files
     base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-    
-    # Select config file based on mode
     if options.mode == 'predict':
         config_file = 'config_baseline_w4c23-pred.yaml'
     else:
         config_file = 'config_baseline_w4c23.yaml'
-    
     config_p = os.path.join(base_path, 'baseline/configurations', config_file)
     print(f"Loading configuration from: {config_p}")
     params = load_config(config_p)
@@ -491,18 +419,13 @@ def update_params_based_on_args(options):
         print(params['experiment']['name'])
         params['experiment']['name'] = options.name
     
-    # Update parameters based on phase
     if options.phase == 'test':
-        # Use test configuration
         params['dataset']['data_root'] = os.path.join(params['dataset']['data_root'], 'test')
     
     return params
     
 def set_parser():
-    """ set custom parser """
-    
     parser = argparse.ArgumentParser(description="Weather4cast 2023 Training Script")
-    # Config path is now handled internally based on mode
     parser.add_argument("-g", "--gpus", type=int, nargs='+', required=False, default=[0], 
                         help="specify gpu(s): 1 or 1 5 or 0 1 2 (-1 for no gpu)")
     parser.add_argument("-m", "--mode", type=str, required=False, default='train', 
@@ -513,32 +436,26 @@ def set_parser():
                         help="init a model from a checkpoint path. '' as default (random weights)")
     parser.add_argument("-n", "--name", type=str, required=False, default='', 
                          help="Set the name of the experiment")
-
     return parser
 
 def main():
     parser = set_parser()
     options = parser.parse_args()
-
     params = update_params_based_on_args(options)
     train(params, options.gpus, options.mode, options.checkpoint)
 
 if __name__ == "__main__":
     main()
     """ examples of usage:
-
     1) train from scratch on one GPU (development phase)
     python main.py -m train -p dev --gpus 0 --name baseline_train
-
     2) train from scratch on four GPUs (development phase)
     python main.py -m train -p dev --gpus 0 1 2 3 --name baseline_train
-    
     3) fine tune a model from a checkpoint (development phase)
     python main.py -m train -p dev --gpus 0 --checkpoint "lightning_logs/PATH-TO-YOUR-MODEL-LOGS/checkpoints/YOUR-CHECKPOINT-FILENAME.ckpt" --name baseline_tune
-    
     4) evaluate a trained model (development phase)
     python main.py -m val -p dev --gpus 0 --checkpoint "lightning_logs/PATH-TO-YOUR-MODEL-LOGS/checkpoints/YOUR-CHECKPOINT-FILENAME.ckpt" --name baseline_validate
-
     5) generate predictions (test phase)
     python main.py -m predict -p test --gpus 0 --checkpoint "lightning_logs/PATH-TO-YOUR-MODEL-LOGS/checkpoints/YOUR-CHECKPOINT-FILENAME.ckpt"
     """
+
