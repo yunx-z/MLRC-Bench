@@ -45,3 +45,5 @@ print(f"Original Dev Size: {len(dev_dataset)}, Loaded Dev Size: {len(dev_dataset
 print(f"Original Test Size: {len(test_dataset)}, Loaded Test Size: {len(test_dataset_loaded)}")
 
 os.system(f"cp {dev_file} ../env/data/")
+with open("prepared", 'w') as writer:
+    pass

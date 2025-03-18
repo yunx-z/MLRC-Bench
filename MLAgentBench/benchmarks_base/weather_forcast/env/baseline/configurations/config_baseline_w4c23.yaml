@@ -106,10 +106,9 @@ dataset:
       standardise: True
     
 train:    # model training settings
-  batch_size: 32  # Significantly increased batch size for better GPU utilization
+  batch_size: 16  # Significantly increased batch size for better GPU utilization
   # precision: 16
   max_epochs: 90
-  devices: 1
   n_workers: 4  # Further reduced workers to prevent CPU bottleneck
   loss: mse 
   pos_weight: 6.114572
