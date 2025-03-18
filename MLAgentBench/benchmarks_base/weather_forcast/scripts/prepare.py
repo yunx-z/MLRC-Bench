@@ -6,6 +6,7 @@ import os
 import sys
 import shutil
 import subprocess
+import paramiko
 
 def install_gdown():
     """Install gdown if not already installed."""
@@ -76,5 +77,43 @@ def prepare_environment():
     
     print("Environment and data prepared successfully!")
 
+def download_sftp_data():
+    hostname = "ala.boku.ac.at"
+    username = "w4c"
+    password = "Weather4cast23!"
+    remote_path = "w4c23"
+    local_path = "../env/data/w4c23"
+
+    print(f" Downloading satellite data from {hostname}. This may take a long time (>12 hrs) ... Thank you for your patience while waiting!")
+
+    # Connect to SFTP
+    transport = paramiko.Transport((hostname, 22))
+    transport.connect(username=username, password=password)
+    sftp = paramiko.SFTPClient.from_transport(transport)
+
+    # Ensure local directory exists
+    os.makedirs(local_path, exist_ok=True)
+
+    # Function to download files recursively
+    def download_dir(remote_path, local_path):
+        for item in sftp.listdir_attr(remote_path):
+            remote_item = f"{remote_path}/{item.filename}"
+            local_item = os.path.join(local_path, item.filename)
+            
+            if item.st_mode & 0o40000:  # Check if it's a directory
+                os.makedirs(local_item, exist_ok=True)
+                download_dir(remote_item, local_item)
+            else:
+                sftp.get(remote_item, local_item)
+
+    download_dir(remote_path, local_path)
+
+    sftp.close()
+    transport.close()
+    print("Download complete.")
+
 if __name__ == "__main__":
     prepare_environment() 
+    download_sftp_data()
+    with open("prepared", 'w') as writer:
+        pass

@@ -98,3 +98,5 @@ splits_dict = {
 file_path = os.path.join("test_data", "info", "meta_splits.txt")
 with open(file_path, "w", encoding="utf-8") as f:
     json.dump(splits_dict, f, indent=4)
+with open("prepared", 'w') as writer:
+    pass
