@@ -128,27 +128,30 @@ class RainData:
     
     def __len__(self):
         return self.n_samples
-    
+
     def __getitem__(self, idx):
         if self.split != 'test':
-            # For training/validation: read 4 timesteps for input and 32 for target.
             with h5py.File(self.sat_file, 'r') as sat_f:
                 sat_slice = sat_f['REFL-BT'][idx:idx+4]
             with h5py.File(self.radar_file, 'r') as rad_f:
                 radar_slice = rad_f['rates.crop'][idx+4:idx+36]
-            x = torch.tensor(sat_slice, dtype=torch.float32)
+            x = torch.tensor(sat_slice, dtype=torch.float32)  # shape: (4, 11, H, W)
+            # Permute to (channels, time, height, width) i.e. (11, 4, H, W)
+            x = x.permute(1, 0, 2, 3)
             y = torch.tensor(radar_slice, dtype=torch.float32)
+            y = y.permute(1, 0, 2, 3)  # Converts from (32, 1, H, W) to (1, 32, H, W)
             return x, y, {}
         else:
-            # For test: read input sequences in non-overlapping windows.
             start_idx = idx * 4
             with h5py.File(self.sat_file, 'r') as sat_f:
                 sat_slice = sat_f['REFL-BT'][start_idx:start_idx+4]
             x = torch.tensor(sat_slice, dtype=torch.float32)
-            # Create a dummy target (shape: 32 x 1 x height x width)
+            x = x.permute(1, 0, 2, 3)  # Permute similarly for test mode
             _, _, h, w = x.shape
             y = torch.zeros((32, 1, h, w), dtype=torch.float32)
+            y = y.permute(1, 0, 2, 3)  # Converts from (32, 1, H, W) to (1, 32, H, W)
             return x, y, {}
+        
 
 # The rest of the file remains the same, including DataModule, load_model, get_trainer, etc.
 
@@ -172,23 +175,12 @@ class DataModule(pl.LightningDataModule):
             self.test_ds = RainData('test', **self.params)
 
     def __load_dataloader(self, dataset, shuffle=True, pin=True):
-        # Calculate optimal number of workers
-        num_workers = min(
-            self.training_params['n_workers'],
-            os.cpu_count() or 1,
-            self.training_params['batch_size']
-        )
-        
-        dl = DataLoader(
-            dataset, 
-            batch_size=self.training_params['batch_size'],
-            num_workers=num_workers,
-            shuffle=shuffle, 
-            pin_memory=pin,
-            persistent_workers=True,
-            prefetch_factor=2,
-            generator=torch.Generator(device='cuda') if shuffle else None
-        )
+        dl = DataLoader(dataset, 
+                        batch_size=self.training_params['batch_size'],
+                        num_workers=self.training_params['n_workers'],
+                        shuffle=shuffle, 
+                        pin_memory=pin, prefetch_factor=2,
+                        persistent_workers=False)
         return dl
     
     def train_dataloader(self):
@@ -331,7 +323,7 @@ def get_trainer(gpus, params):
         profiler='simple',
         precision=params['experiment']['precision'],
         strategy=SingleDeviceStrategy(device=0),
-        deterministic=True,
+        # deterministic=True,
         enable_model_summary=True,
         enable_progress_bar=True,
         auto_select_gpus=True,

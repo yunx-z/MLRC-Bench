@@ -119,9 +119,8 @@ class UNet_Lightning(pl.LightningModule):
         return x[~m]
 
     def get_target_mask(self, metadata):
-        mask = metadata['target']['mask']
-        #print("mask---->", mask.shape)
-        return mask
+        # Return the mask if available, otherwise return None.
+        return metadata.get('target', {}).get('mask', None)
     
     def _compute_loss(self, y_hat, y, agg=True, mask=None):
         
