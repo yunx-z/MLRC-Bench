@@ -1,6 +1,7 @@
 {
   "perception_temporal_action_loc": {
     "MLAB (claude-3-5-sonnet-v2)": 0.7810185077440877,
+    "Top Human in Competition": 100.0,
     "MLAB (gemini-exp-1206)": -0.4731328246392113,
     "MLAB (o3-mini)": 0.3066106841553126,
     "MLAB (gpt-4o)": 0.3298075630252947,
@@ -9,6 +10,7 @@
   },
   "llm-merging": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": -0.9900989999019761,
+    "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 4.950495058915793,
     "MLAB (gemini-exp-1206)": 4.950495058915793,
     "MLAB (o3-mini)": -0.9900989999019761,
@@ -17,6 +19,7 @@
   },
   "meta-learning": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 1.781401026144938,
+    "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 1.781401026144938,
     "MLAB (gemini-exp-1206)": 1.781401026144938,
     "MLAB (o3-mini)": -4.900331256476853,
@@ -25,6 +28,7 @@
   },
   "product-recommendation": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 0.1459345029718814,
+    "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 2.9771372473170388,
     "MLAB (gemini-exp-1206)": 0.1459345029718814,
     "MLAB (o3-mini)": 0.1462759705510577,
@@ -33,6 +37,7 @@
   },
   "machine_unlearning": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 11.832138969791846,
+    "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": -94.71778374121965,
     "MLAB (gemini-exp-1206)": 5.632371576335568,
     "MLAB (o3-mini)": 3.623856546073656,
@@ -41,6 +46,7 @@
   },
   "backdoor-trigger-recovery": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 6.1572772457753295,
+    "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 39.903815022493674,
     "MLAB (gemini-exp-1206)": 12.94287662739089,
     "MLAB (o3-mini)": 6.238823700218141,

@@ -4,6 +4,9 @@ from collections import defaultdict
 from pathlib import Path
 import numpy as np
 
+from MLAgentBench.constants import ALL_BASE_PERFORMANCE as Baselines
+from plot import HUMAN_PERFORMANCE 
+
 # Define human performance reference
 HUMAN_PERFORMANCE = {
     # only for test
@@ -205,15 +208,14 @@ def get_capability_level(task, model):
         run_info = get_run_info(run_dir)
         
         # Calculate margins for reporting
-        human_margin = None
         agent_margin = None
         agent_margin_percent = None
         
+        human_perf = HUMAN_PERFORMANCE[base_task]["performance"]
+        baseline_test = Baselines[base_task]["test"]
+        human_margin = human_perf - baseline_test
         if run_info["test_performance"] is not None and base_task in HUMAN_PERFORMANCE and base_task in Baselines:
-            baseline_test = Baselines[base_task]["test"]
-            human_perf = HUMAN_PERFORMANCE[base_task]["performance"]
             
-            human_margin = human_perf - baseline_test
             agent_margin = run_info["test_performance"] - baseline_test
             
             if human_margin > 0:
@@ -295,7 +297,8 @@ if __name__ == "__main__":
     print(f"Capability levels saved to capability_levels.json")
 
     # Save as leaderboard csv
-    leaderboard_json = defaultdict(dict)
+    relative_improvement_to_human = defaultdict(dict)
+    absolute_improvement_to_baseline = defaultdict(dict)
     for task_scaffolding in all_levels:
         for model in all_levels[task_scaffolding]:
             if "o1-preview" in task_scaffolding:
@@ -317,11 +320,27 @@ if __name__ == "__main__":
                     for run in all_levels[task_scaffolding][model]["run_details"]
                     if run["agent_margin_percent_of_human"]
                     ]
-            metric = max(agent_margin_percent_of_human)
-            leaderboard_json[task][f"{scaffolding} ({model})"] = metric
-    with open("leaderboard_metric.json", 'w') as writer:
-        json.dump(leaderboard_json, writer, indent=2)
-    print(f"Leaderboard metric saved to leaderboard_metric.json")
+            relative_improvement_to_human[task][f"{scaffolding} ({model})"] = max(agent_margin_percent_of_human)
+            relative_improvement_to_human[task][f"Top Human in Competition"] = 100.0
+
+            improvement_perc = [
+                    100 * run["agent_margin"] / run["baseline_test"]
+                    for run in all_levels[task_scaffolding][model]["run_details"]
+                    if run["agent_margin"]
+                    ]
+            a_run = all_levels[task_scaffolding][model]["run_details"][0]
+            absolute_improvement_to_baseline[task][f"{scaffolding} ({model})"] = max(improvement_perc)
+            absolute_improvement_to_baseline[task][f"Top Human in Competition"] = 100 * a_run["human_margin"] / a_run["baseline_test"]
+
+
+    metric_dir = "leaderboard_metrics/"
+    os.makedirs(metric_dir, exist_ok=True)
+    with open(os.path.join(metric_dir, "relative_improvement_to_human.json"), 'w') as writer:
+        json.dump(relative_improvement_to_human, writer, indent=2)
+    with open(os.path.join(metric_dir, "absolute_improvement_to_baseline.json"), 'w') as writer:
+        json.dump(absolute_improvement_to_baseline, writer, indent=2)
+
+    print(f"Leaderboard metricd saved under leaderboard_metrics/")
     exit(0)
 
 

@@ -1,0 +1,56 @@
+{
+  "perception_temporal_action_loc": {
+    "MLAB (claude-3-5-sonnet-v2)": 2.222443094482299,
+    "Top Human in Competition": 284.55703321316366,
+    "MLAB (gemini-exp-1206)": -1.34633272895098,
+    "MLAB (o3-mini)": 0.8724822663469414,
+    "MLAB (gpt-4o)": 0.9384906166574135,
+    "MLAB (llama3-1-405b-instruct)": 1.474927454740455,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.9888962417416385
+  },
+  "llm-merging": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": -0.6756756689645764,
+    "Top Human in Competition": 68.24324325461103,
+    "MLAB (claude-3-5-sonnet-v2)": 3.3783783853634035,
+    "MLAB (gemini-exp-1206)": 3.3783783853634035,
+    "MLAB (o3-mini)": -0.6756756689645764,
+    "MLAB (gpt-4o)": 1.3513513581994137,
+    "MLAB (llama3-1-405b-instruct)": -0.6756756689645764
+  },
+  "meta-learning": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 5.424978139166417,
+    "Top Human in Competition": 304.53435579895256,
+    "MLAB (claude-3-5-sonnet-v2)": 5.424978139166417,
+    "MLAB (gemini-exp-1206)": 5.424978139166417,
+    "MLAB (o3-mini)": -14.923192223926499,
+    "MLAB (gpt-4o)": 5.424978139166417,
+    "MLAB (llama3-1-405b-instruct)": 5.424978139166417
+  },
+  "product-recommendation": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.6021227441680528,
+    "Top Human in Competition": 412.59793394031675,
+    "MLAB (claude-3-5-sonnet-v2)": 12.283606772997718,
+    "MLAB (gemini-exp-1206)": 0.6021227441680528,
+    "MLAB (o3-mini)": 0.6035316323448103,
+    "MLAB (gpt-4o)": 2.6400767209619422,
+    "MLAB (llama3-1-405b-instruct)": -2.9066701147102995e-09
+  },
+  "machine_unlearning": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 7.318484292638537,
+    "Top Human in Competition": 61.85258904854873,
+    "MLAB (claude-3-5-sonnet-v2)": -58.58540153334969,
+    "MLAB (gemini-exp-1206)": 3.4837676447981045,
+    "MLAB (o3-mini)": 2.2414490971518704,
+    "MLAB (gpt-4o)": -11.131587250139926,
+    "MLAB (llama3-1-405b-instruct)": 3.8409541040677597
+  },
+  "backdoor-trigger-recovery": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 38.252918051116,
+    "Top Human in Competition": 621.2635313337943,
+    "MLAB (claude-3-5-sonnet-v2)": 247.90785034564928,
+    "MLAB (gemini-exp-1206)": 80.40937239150493,
+    "MLAB (o3-mini)": 38.75953643366491,
+    "MLAB (gpt-4o)": 64.52832837042699,
+    "MLAB (llama3-1-405b-instruct)": 71.70765816958271
+  }
+}
