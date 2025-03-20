@@ -42,7 +42,11 @@ import sys
 import time
 from timeit import default_timer as timer
 
+<<<<<<< HEAD
 from baseline.utils.data_utils import *
+=======
+from utils.data_utils import *
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
 
 # folder to load config file
 # CONFIG_PATH = "../"
