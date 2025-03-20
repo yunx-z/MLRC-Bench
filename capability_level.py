@@ -252,7 +252,7 @@ def get_capability_level(task, model):
 def get_all_capability_levels():
     """Get capability levels for all task-model pairs in the data folder"""
     data_dir = Path("logs")
-    result = {}
+    result = defaultdict(dict)
     
     if not data_dir.exists():
         return result
@@ -260,27 +260,33 @@ def get_all_capability_levels():
     # Get all tasks from the data directory
     for task_dir in data_dir.iterdir():
         if task_dir.is_dir():
-            task = task_dir.name
-            
-            # Check if this task or a base task is in HUMAN_PERFORMANCE
-            base_task = get_base_task(task)
-            
-            # Process the task if it has a base task in HUMAN_PERFORMANCE
-            if base_task or task in HUMAN_PERFORMANCE:
-                result[task] = {}
-                
-                # Get all models for this task
-                for model_dir in task_dir.iterdir():
-                    if model_dir.is_dir():
-                        model = model_dir.name
-                        levels, run_details = get_capability_level(task, model)
-                        if levels:
-                            result[task][model] = {
-                                "levels": levels,
-                                "run_details": run_details,
-                                "average": sum(levels) / len(levels),
-                                "base_task": base_task or task
-                            }
+            task_scaffolding = task_dir.name
+            if "o1-preview" in task_scaffolding:
+                scaffolding = "CoI-Agent (o1) + MLAB"
+            elif "human" in task_scaffolding:
+                continue
+            elif len(task_scaffolding.split('--')) > 1:
+                continue
+            else:
+                scaffolding = "MLAB"
+
+            base_task = task_scaffolding.split('--')[0]
+           
+            # Get all models for this task
+            for model_dir in task_dir.iterdir():
+                if model_dir.is_dir():
+                    model = model_dir.name
+                    if model not in LMS:
+                        continue
+
+                    levels, run_details = get_capability_level(task_scaffolding, model)
+                    if levels:
+                        result[base_task][f"{scaffolding} ({model})"] = {
+                            "levels": levels,
+                            "run_details": run_details,
+                            "average": sum(levels) / len(levels),
+                            "base_task": base_task or task
+                        }
     
     return result
 
@@ -299,38 +305,25 @@ if __name__ == "__main__":
     # Save as leaderboard csv
     relative_improvement_to_human = defaultdict(dict)
     absolute_improvement_to_baseline = defaultdict(dict)
-    for task_scaffolding in all_levels:
-        for model in all_levels[task_scaffolding]:
-            if "o1-preview" in task_scaffolding:
-                scaffolding = "CoI-Agent (o1) + MLAB"
-            elif "human" in task_scaffolding:
-                continue
-            elif len(task_scaffolding.split('--')) > 1:
-                continue
-            else:
-                scaffolding = "MLAB"
-
-            task = task_scaffolding.split('--')[0]
-
-            if model not in LMS:
-                continue
-           
+    for task in all_levels:
+        for model in all_levels[task]:
+          
             agent_margin_percent_of_human = [
                     run["agent_margin_percent_of_human"] 
-                    for run in all_levels[task_scaffolding][model]["run_details"]
+                    for run in all_levels[task][model]["run_details"]
                     if run["agent_margin_percent_of_human"]
                     ]
-            relative_improvement_to_human[task][f"{scaffolding} ({model})"] = max(agent_margin_percent_of_human)
-            relative_improvement_to_human[task][f"Top Human in Competition"] = 100.0
+            relative_improvement_to_human[task][model] = max(agent_margin_percent_of_human)
+            relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
 
             improvement_perc = [
                     100 * run["agent_margin"] / run["baseline_test"]
-                    for run in all_levels[task_scaffolding][model]["run_details"]
+                    for run in all_levels[task][model]["run_details"]
                     if run["agent_margin"]
                     ]
-            a_run = all_levels[task_scaffolding][model]["run_details"][0]
-            absolute_improvement_to_baseline[task][f"{scaffolding} ({model})"] = max(improvement_perc)
-            absolute_improvement_to_baseline[task][f"Top Human in Competition"] = 100 * a_run["human_margin"] / a_run["baseline_test"]
+            a_run = all_levels[task][model]["run_details"][0]
+            absolute_improvement_to_baseline[task][model] = max(improvement_perc)
+            absolute_improvement_to_baseline[task]["Top Human in Competition"] = 100 * a_run["human_margin"] / a_run["baseline_test"]
 
 
     metric_dir = "leaderboard_metrics/"
