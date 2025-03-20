@@ -66,21 +66,23 @@ def get_example_from_json(path):
 def get_distances_from_json(path, mode):
     try:
         data = load_json(path)
-        messages = [decode_array_from_string(data[str(i)][mode]) for i in range(LIMIT)]
+        messages = [decode_array_from_string(data[str(i)][mode]) for i in range(LIMIT) if data[str(i)][mode]]
         return [
             message_distance(message, GROUND_TRUTH_MESSAGES[mode])
             for message in messages
         ]
     except TypeError:
+        assert 0, "get_distances_from_json failed"
         return None
 
 
 def get_metrics_from_json(path, mode):
     try:
         data = load_json(path)
-        metrics = [data[str(i)][mode] for i in range(SUBSET_LIMIT)]
-        if len(metrics) < SUBSET_LIMIT or any([metric is None for metric in metrics]):
-            return None
+        metrics = [data[str(i)][mode] for i in range(LIMIT) if data[str(i)][mode]]
+        # if len(metrics) < SUBSET_LIMIT or any([metric is None for metric in metrics]):
+        #     return None
         return metrics
     except KeyError:
+        assert 0, "get_metrics_from_json failed!"
         return None

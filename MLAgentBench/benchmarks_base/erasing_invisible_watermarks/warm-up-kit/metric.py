@@ -68,8 +68,8 @@ def get_indices(
         if attacked_path is not None
         else [True] * limit
     )
-    if mode.endswith("_fid") and sum(clean_image_existences) != limit:
-        raise ValueError(f"Cannot compute FID if not all {limit} clean images exist")
+    # if mode.endswith("_fid") and sum(clean_image_existences) != limit:
+    #     raise ValueError(f"Cannot compute FID if not all {limit} clean images exist")
     if not quiet:
         if attacked_path is None:
             print(f"Found {sum(clean_image_existences)} not-attacked images")

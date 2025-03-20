@@ -19,6 +19,7 @@ from PIL import Image
 import sys
 import subprocess
 import zipfile
+import requests
 
 def install_gdown():
     """Install gdown package if not already installed"""
@@ -30,75 +31,117 @@ def install_gdown():
         subprocess.check_call(["pip", "install", "gdown"])
         print("gdown installed successfully")
 
-def download_and_prepare_dataset(temp_dir):
-    """Download, extract and organize the beige box dataset"""
-    import gdown
+def download_file_from_dropbox(url, output_path):
+    """Download file from Dropbox, adding dl=1 to force download"""
+    # Convert sharing URL to direct download URL
+    url = url.replace("dl=0", "dl=1")
+    if "?" in url:
+        url = url + "&dl=1"
+    else:
+        url = url + "?dl=1"
+        
+    print(f"Downloading from: {url}")
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
     
-    # Create temp_data directory if it doesn't exist
+    total_size = int(response.headers.get('content-length', 0))
+    block_size = 8192
+    
+    with open(output_path, 'wb') as f:
+        for data in response.iter_content(block_size):
+            f.write(data)
+            
+    print(f"Downloaded to: {output_path}")
+
+def download_and_prepare_dataset(temp_dir):
+    """Download, extract and organize the dataset with dev/test split"""
+    # Create directories
+    dev_dir = Path("../env/dev")  # Development set (80%)
+    test_dir = Path("./test")     # Test set (20%)
+    dev_dir.mkdir(parents=True, exist_ok=True)
+    test_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create temp directory
     temp_dir.mkdir(exist_ok=True)
     
-    # Google Drive file ID from the URL
-    file_id = "1Q0Ahhg_wLk3OK15fs_cQZ7_GOkye5acS"
-    zip_path = temp_dir / "dataset.zip"
+    # URLs for the datasets
+    unwatermarked_url = "https://www.dropbox.com/scl/fi/1paem2pydn70onn5hiptr/unwatermarked_mscoco.zip?rlkey=8pdsk897xvsmsqbyxb1w5a3d3&e=1&st=elauj78e"
+    watermarked_url = "https://www.dropbox.com/scl/fi/ez4lgdhpve7nhjcrnck31/stable_signature_mscoco.zip?rlkey=6a0nbp6a5rz5ann7apgnaexa0&e=1&st=iyasywtu"
     
-    # Check if we already have the correct number of images
-    image_files = []
-    for ext in ['*.png', '*.jpg', '*.jpeg']:
-        image_files.extend(list(temp_dir.glob(ext)))
-    
-    if len(image_files) == 300:  # Expected number of images
-        print("\nCorrect number of images already present in temp_data directory, skipping download.")
-        return True
-        
-    # Clear directory and download fresh
-    for file in temp_dir.glob("*"):
-        if file.is_file():
-            file.unlink()
-    
-    print("\nDownloading dataset...")
-    url = f"https://drive.google.com/uc?id={file_id}"
-    gdown.download(url, str(zip_path), quiet=False)
-    
-    if not zip_path.exists():
-        print("\nError: Failed to download the dataset!")
-        return False
-        
-    print("\nDataset downloaded successfully!")
-    print(f"Downloaded to: {zip_path}")
-    
-    # Extract the zip file
-    print("\nExtracting dataset...")
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir)
-        
-        # Move files from subdirectory if they were extracted there
-        extracted_dir = temp_dir / "Neurips24_ETI_BeigeBox"
-        if extracted_dir.exists():
-            for file in extracted_dir.glob("*"):
-                shutil.move(str(file), str(temp_dir))
-            extracted_dir.rmdir()
-        
-        # Remove the zip file after extraction
-        zip_path.unlink()
-        
-        # Verify extracted contents
-        image_files = []
-        for ext in ['*.png', '*.jpg', '*.jpeg']:
-            image_files.extend(list(temp_dir.glob(ext)))
+        # Download and extract files to temp directory
+        print("\nDownloading and extracting datasets...")
+        for data_type, url in [("unwatermarked", unwatermarked_url), ("watermarked", watermarked_url)]:
+            print(f"\nProcessing {data_type} dataset...")
+            zip_path = temp_dir / f"{data_type}.zip"
+            download_file_from_dropbox(url, zip_path)
             
-        if not image_files:
-            print("\nError: No image files found after extraction!")
-            return False
+            # Extract to temp directory
+            temp_extract = temp_dir / data_type
+            temp_extract.mkdir(exist_ok=True)
+            print(f"Extracting to {temp_extract}")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_extract)
             
-        print(f"\nExtracted {len(image_files)} images to {temp_dir}")
+            # Split into dev/test sets
+            images = list(temp_extract.glob("**/*.png"))  # Recursive glob to find all PNGs
+            if not images:
+                print(f"No PNG files found in {temp_extract}")
+                print("Contents of directory:", list(temp_extract.glob("**/*")))
+                continue
+                
+            print(f"Found {len(images)} images")
+            random.seed(42)  # For reproducibility
+            
+            # 80/20 split
+            num_test = int(len(images) * 0.2)
+            test_indices = set(random.sample(range(len(images)), num_test))
+            
+            # Create destination directories
+            dev_dest = dev_dir / data_type
+            test_dest = test_dir / data_type
+            dev_dest.mkdir(exist_ok=True)
+            test_dest.mkdir(exist_ok=True)
+            
+            # Move files to appropriate directories
+            dev_count = 0
+            test_count = 0
+            for idx, img_path in enumerate(images):
+                try:
+                    if idx in test_indices:
+                        shutil.copy2(img_path, test_dest / img_path.name)
+                        test_count += 1
+                    else:
+                        shutil.copy2(img_path, dev_dest / img_path.name)
+                        dev_count += 1
+                except Exception as e:
+                    print(f"Error copying {img_path}: {e}")
+            
+            print(f"Split complete for {data_type}:")
+            print(f"- Development set ({dev_dest}): {dev_count} images")
+            print(f"- Test set ({test_dest}): {test_count} images")
+        
+        # Verify the split
+        for data_type in ["unwatermarked", "watermarked"]:
+            dev_files = list((dev_dir / data_type).glob("*.png"))
+            test_files = list((test_dir / data_type).glob("*.png"))
+            print(f"\nVerification for {data_type}:")
+            print(f"- Development set: {len(dev_files)} files")
+            print(f"- Test set: {len(test_files)} files")
+        
+        # Clean up temp directory
+        shutil.rmtree(temp_dir)
+        
+        print("\nDataset preparation completed!")
+        print(f"Development data in: {dev_dir}")
+        print(f"Test data in: {test_dir}")
+        
         return True
         
-    except zipfile.BadZipFile:
-        print("\nError: The downloaded file is not a valid zip file!")
-        return False
     except Exception as e:
-        print(f"\nError extracting dataset: {e}")
+        print(f"\nError preparing dataset: {e}")
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir)
         return False
 
 def create_directories():
@@ -198,39 +241,24 @@ def load_images_from_directory(data_dir):
 
 def main():
     print("\n" + "="*80)
-    print("BEIGE BOX DATASET PREPARATION")
+    print("DATASET PREPARATION")
     print("="*80)
-    print("\nThis script will:")
-    print("1. Download and extract the beige box dataset")
-    print("2. Split images by algorithm (StegaStamp: 0-149, TreeRing: 150-299)")
-    print("3. Further split each algorithm's data into:")
-    print("   - Development set (in env/data/)")
-    print("   - Test set (in scripts/test_data/)")
-    print("="*80 + "\n")
     
     # Create necessary directories
-    create_directories()
-    
-    # Set up paths
-    scripts_dir = Path("./")
+    scripts_dir = Path(".")
     temp_dir = scripts_dir / "temp_data"
     
     # Download and prepare dataset
-    install_gdown()
     if not download_and_prepare_dataset(temp_dir):
         print("Failed to prepare dataset. Please try again or check the error messages above.")
         sys.exit(1)
     
-    # Process and split dataset
-    prepare_dataset(temp_dir)
-    
     print("\n" + "="*80)
     print("DATASET PREPARATION COMPLETED!")
-    print("- Test data (hidden from AI agents) saved in: scripts/test_data/")
-    print("- Development data saved in: env/data/")
+    print("- Data saved in: env/data/")
     print("="*80 + "\n")
 
 if __name__ == "__main__":
-    main() 
+    main()
     with open("prepared", 'w') as writer:
         pass
