@@ -5,10 +5,11 @@ from pathlib import Path
 
 from evaluation import evaluate_method, get_scores
 from methods import all_method_handlers
-from MLAgentBench.MLAgentBench.utils import save_evals
+from MLAgentBench.utils import save_evals
 
 TASK_NAME = "erasing_invisible_watermarks"
 DEFAULT_METHOD_NAME = "my_method"
+TRACK_TYPES = ["stegastamp", "treering"]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate watermark removal methods")
@@ -17,43 +18,53 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--phase", type=str, default="dev", 
                        choices=["dev", "test"],
                        help="Evaluation phase (dev: development set, test: test set)")
+    parser.add_argument("-t", "--track", type=str, default="both", 
+                       choices=["stegastamp", "treering", "both"],
+                       help="Which watermark algorithm to evaluate against")
     args = parser.parse_args()
 
     # Set up paths relative to env directory
-    if args.phase == "dev":
-        data_dir = "dev"  # Points to env/dev/
-        watermarked_dir = os.path.join(data_dir, "watermarked")
-        unwatermarked_dir = os.path.join(data_dir, "unwatermarked")
-    elif args.phase == "test":  # test phase
-        data_dir = "../scripts/test"  # Points to scripts/test/
-        watermarked_dir = os.path.join(data_dir, "watermarked")
-        unwatermarked_dir = os.path.join(data_dir, "unwatermarked")
-    else:  # 5000 phase
-        data_dir = "../scripts/test"  # Points to scripts/test/
-        watermarked_dir = os.path.join(data_dir, "watermarked")
-        unwatermarked_dir = os.path.join(data_dir, "unwatermarked")
-    output_dir = os.path.join("output", args.phase)
+    data_dir = 'data/'
+    output_dir = 'output/'
     os.makedirs(output_dir, exist_ok=True)
 
-    # Load method
+    # Load methods
     loaded_methods = all_method_handlers()
     curr_method = loaded_methods[args.method](args.method)
+
+    # Determine which tracks to evaluate
+    tracks_to_evaluate = TRACK_TYPES if args.track == "both" else [args.track]
     
-    # Run evaluation
-    start_time = time.time()
-    evaluate_method(curr_method, args.phase, watermarked_dir, output_dir)
-    end_time = time.time()
-    runtime = end_time - start_time
+    overall_scores = {}
+    overall_runtime = 0
     
-    # Get scores
-    score = get_scores(curr_method, args.phase, watermarked_dir, output_dir)
+    # Run evaluation for each track
+    for track_type in tracks_to_evaluate:
+        start_time = time.time()
+        evaluate_method(curr_method, args.phase, 'beige', track_type)
+        end_time = time.time()
+        runtime = end_time - start_time
+        overall_runtime += runtime
+        
+        score = get_scores(curr_method, args.phase, f"beige_{track_type}")
+        overall_scores[track_type] = score["overall_score"]
+        
+        # Print individual track results
+        print(f"\n{track_type} Results:")
+        print(f"Score: {score['overall_score']:.4f}")
+        print(f"Runtime: {runtime:.2f}s")
     
-    # Print results
-    print(f"\nResults for {args.phase} phase:")
-    print(f"Score: {score['overall_score']:.4f}")
-    print(f"Watermark Detection (A): {score['watermark_detection']:.4f}")
-    print(f"Quality Score (Q): {score['quality_degradation']:.4f}")
-    print(f"Runtime: {runtime:.2f}s")
+    # Calculate and print combined score if both tracks were evaluated
+    if args.track == "both":
+        combined_score = sum(overall_scores.values()) / len(overall_scores)
+        print(f"\nCombined Results:")
+        print(f"Average Score: {combined_score:.4f}")
+        print(f"Total Runtime: {overall_runtime:.2f}s")
+    
+    # Print individual track results
+    print("\nIndividual Track Results:")
+    for track_type, score in overall_scores.items():
+        print(f"{track_type}: {score:.4f}")
 
     # Save evaluation results
     base_class = loaded_methods[DEFAULT_METHOD_NAME]
@@ -63,7 +74,7 @@ if __name__ == "__main__":
         method_name=args.method,
         method_class=method_class,
         base_class=base_class,
-        score=score['overall_score'],
+        score=combined_score if args.track == "both" else overall_scores[args.track],
         phase=args.phase,
-        runtime=runtime,
+        runtime=overall_runtime,
     )

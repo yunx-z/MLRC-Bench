@@ -9,7 +9,7 @@ experiment:  # Settings for the current experiment
 dataset: 
   # Available bands: 'IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073'
   sat_bands: ['IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073']
-  regions: ['boxi_0015']  # Only using one region
+  regions: null  # Will be auto-detected based on available matching files
   input_product: REFL-BT 
   output_product: RATE 
   out_channels: 1 
@@ -19,8 +19,8 @@ dataset:
   size_target_center:  252 # 42*6;  
   len_seq_in: 4        # number of input slots per training sequence
   len_seq_predict: 32  # output slots; set to 16 for 4-hours prediction or 32 for 8-hours prediction
-  data_root: 'data'  
-  years: ['2019']  # Only using 2019
+  data_root:  'data'  
+  years:  [ '2019', '2020' ]  
   splits_path: 'data/timestamps_and_splits_stage2.csv'  
   
   preprocess_OPERA:
