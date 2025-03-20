@@ -13,7 +13,6 @@
 #
 # Copyright (C) 2022
 # Institute of Advanced Research in Artificial Intelligence (IARAI)
-
 # This file is part of the Weather4cast 2022 Starter Kit.
 # 
 # The Weather4cast 2022 Starter Kit is free software: you can redistribute it
