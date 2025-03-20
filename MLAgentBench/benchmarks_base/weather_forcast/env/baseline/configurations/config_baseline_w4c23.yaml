@@ -1,8 +1,15 @@
 experiment:  # Settings for the current experiment
+<<<<<<< HEAD
   name: 'U-NET-252-single'  # name of the current experiment for logging
   experiment_folder: 'lightning_logs/'  # folder to save logs 
   sub_folder: 'baseline'  # logging sub-folder
   precision: 32  # bit precision of weights. 32 or 16 
+=======
+  name: 'U-NET-252'  # name of the current experiment for logging
+  experiment_folder: 'lightning_logs/'  # folder to save logs 
+  sub_folder: 'baseline'  # logging sub-folder
+  precision: 32  # Use mixed precision training (16-bit) for better GPU memory efficiency
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
   logging: True  # Toggle logging on/off
   plot_results: False  #Toggle plotting results in validation and prediction mode dataset
   in_channel_to_plot: 7 # satellite band to be visialised on the plots
@@ -10,10 +17,14 @@ dataset:
   # Available bands: 'IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073'
   sat_bands: ['IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073']
 <<<<<<< HEAD
+<<<<<<< HEAD
   regions: ['boxi_0015']  # Only using one region
 =======
   regions: null  # Will be auto-detected based on available matching files
 >>>>>>> yunx/main
+=======
+  regions: null  # Will be auto-detected based on available matching files
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
   input_product: REFL-BT 
   output_product: RATE 
   out_channels: 1 
@@ -24,12 +35,17 @@ dataset:
   len_seq_in: 4        # number of input slots per training sequence
   len_seq_predict: 32  # output slots; set to 16 for 4-hours prediction or 32 for 8-hours prediction
 <<<<<<< HEAD
+<<<<<<< HEAD
   data_root: 'data'  
   years: ['2019']  # Only using 2019
 =======
   data_root:  'data'  
   years:  [ '2019', '2020' ]  
 >>>>>>> yunx/main
+=======
+  data_root:  'data'  
+  years:  [ '2019', '2020' ]  
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
   splits_path: 'data/timestamps_and_splits_stage2.csv'  
   
   preprocess_OPERA:
@@ -116,15 +132,21 @@ dataset:
     
 train:    # model training settings
 <<<<<<< HEAD
+<<<<<<< HEAD
   batch_size: 16  # Reduced batch size for single GPU
   max_epochs: 90
   n_workers: 4  # Reduced workers
 =======
+=======
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
   batch_size: 16  # Significantly increased batch size for better GPU utilization
   # precision: 16
   max_epochs: 90
   n_workers: 4  # Further reduced workers to prevent CPU bottleneck
+<<<<<<< HEAD
 >>>>>>> yunx/main
+=======
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
   loss: mse 
   pos_weight: 6.114572
   early_stopping: True
@@ -134,7 +156,10 @@ train:    # model training settings
   init_filter_size: 32
   dropout_rate: 0.4
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
   # accumulate_grad_batches: 2  # Re-enabled gradient accumulation for larger effective batch size
   # use_amp: True  # Enable automatic mixed precision
   # benchmark: True  # Enable cuDNN benchmarking for better performance
@@ -142,7 +167,10 @@ train:    # model training settings
   # strategy: "ddp"  # Use DDP strategy for better GPU utilization
   # sync_batchnorm: True  # Enable synchronized batch normalization
   # replace_sampler_ddp: True  # Ensure proper data distribution across GPUs
+<<<<<<< HEAD
 >>>>>>> yunx/main
+=======
+>>>>>>> 97b09858c83b8c59a7461e7a5f165e9533f92a2c
 
 model:    # model definition settings
   model_name: 3D_UNET_base
