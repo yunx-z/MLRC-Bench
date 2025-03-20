@@ -7,6 +7,9 @@ import sys
 import shutil
 import subprocess
 import paramiko
+import h5py
+import numpy as np
+from glob import glob
 
 def install_gdown():
     """Install gdown if not already installed."""
@@ -112,8 +115,63 @@ def download_sftp_data():
     transport.close()
     print("Download complete.")
 
+
+def split_h5_file(input_file, num_samples, output_file_1, output_file_2=None, seed=42):
+    # Set seed for reproducibility
+    np.random.seed(seed)
+    
+    # Open the input HDF5 file
+    with h5py.File(input_file, 'r') as f:
+        # Identify dataset name dynamically
+        dataset_name = 'REFL-BT' if 'REFL-BT' in f else 'rates.crop' if 'rates.crop' in f else None
+        if dataset_name is None:
+            raise ValueError("Unsupported file format: No recognized dataset found.")
+        
+        num_images = f[dataset_name].shape[0]
+        
+        # Randomly sample indices
+        indices = np.random.permutation(num_images)
+        selected_indices = indices[:num_samples]
+        remaining_indices = indices[num_samples:]
+        
+        # Open output files
+        with h5py.File(output_file_1, 'w') as f1:
+            dset1 = f1.create_dataset(dataset_name, shape=(num_samples, *f[dataset_name].shape[1:]), dtype=f[dataset_name].dtype, compression='gzip')
+            
+            for i, idx in enumerate(selected_indices):
+                dset1[i] = f[dataset_name][idx]
+            
+        
+        if output_file_2:
+            with h5py.File(output_file_2, 'w') as f2:
+                dset2 = f2.create_dataset(dataset_name, shape=(num_images - num_samples, *f[dataset_name].shape[1:]), dtype=f[dataset_name].dtype, compression='gzip')
+                
+                for i, idx in enumerate(remaining_indices):
+                    dset2[i] = f[dataset_name][idx]
+
+    
+    print(f"Saved {num_samples} images to {output_file_1} and {num_images - num_samples} images to {output_file_2}")
+
+def reorganize_files():
+    for year in [2019, 2020]:
+        os.system(f"mv ../env/data/w4c23/stage-2/{year}/HRIT ../env/data/{year}")
+    os.system(f"mv ../env/data/w4c23/2019/HRIT/* ../env/data/2019/HRIT")
+    os.system(f"rm ../env/data/*/*/*test*")
+    os.system(f"rm -rf ../env/data/w4c23")
+
+    # use 2019's val as ours dev, 2020's val as ours test
+    for source in ["OPERA", "HRIT"]:
+        folder_path = f"../env/data/2020/{source}/"
+        for filename in os.listdir(folder_path):
+            if ".val." in filename:
+                new_filename = filename.replace(".val.", ".test.")
+                old_path = os.path.join(folder_path, filename)
+                new_path = os.path.join(folder_path, new_filename)
+                os.rename(old_path, new_path)
+
 if __name__ == "__main__":
     prepare_environment() 
     download_sftp_data()
+    reorganize_files()
     with open("prepared", 'w') as writer:
         pass
