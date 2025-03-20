@@ -9,7 +9,11 @@ experiment:  # Settings for the current experiment
 dataset: 
   # Available bands: 'IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073'
   sat_bands: ['IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073']
+<<<<<<< HEAD
   regions: ['boxi_0015']  # Only using one region
+=======
+  regions: null  # Will be auto-detected based on available matching files
+>>>>>>> yunx/main
   input_product: REFL-BT 
   output_product: RATE 
   out_channels: 1 
@@ -19,8 +23,13 @@ dataset:
   size_target_center:  252 # 42*6;  
   len_seq_in: 4        # number of input slots per training sequence
   len_seq_predict: 32  # output slots; set to 16 for 4-hours prediction or 32 for 8-hours prediction
+<<<<<<< HEAD
   data_root: 'data'  
   years: ['2019']  # Only using 2019
+=======
+  data_root:  'data'  
+  years:  [ '2019', '2020' ]  
+>>>>>>> yunx/main
   splits_path: 'data/timestamps_and_splits_stage2.csv'  
   
   preprocess_OPERA:
@@ -106,9 +115,16 @@ dataset:
       standardise: True
     
 train:    # model training settings
+<<<<<<< HEAD
   batch_size: 16  # Reduced batch size for single GPU
   max_epochs: 90
   n_workers: 4  # Reduced workers
+=======
+  batch_size: 16  # Significantly increased batch size for better GPU utilization
+  # precision: 16
+  max_epochs: 90
+  n_workers: 4  # Further reduced workers to prevent CPU bottleneck
+>>>>>>> yunx/main
   loss: mse 
   pos_weight: 6.114572
   early_stopping: True
@@ -117,6 +133,16 @@ train:    # model training settings
   weight_decay: 2e-2 
   init_filter_size: 32
   dropout_rate: 0.4
+<<<<<<< HEAD
+=======
+  # accumulate_grad_batches: 2  # Re-enabled gradient accumulation for larger effective batch size
+  # use_amp: True  # Enable automatic mixed precision
+  # benchmark: True  # Enable cuDNN benchmarking for better performance
+  # deterministic: False  # Disable deterministic mode for better performance
+  # strategy: "ddp"  # Use DDP strategy for better GPU utilization
+  # sync_batchnorm: True  # Enable synchronized batch normalization
+  # replace_sampler_ddp: True  # Ensure proper data distribution across GPUs
+>>>>>>> yunx/main
 
 model:    # model definition settings
   model_name: 3D_UNET_base

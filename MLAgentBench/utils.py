@@ -173,8 +173,8 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
 
     method_complexity = calculate_complexity(method_code)
     base_complexity = calculate_complexity(base_method_code)
-    BASE_RUNTIME = ALL_BASE_RUNTIME[task_name][phase] 
-    BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task_name][phase]
+    BASE_RUNTIME = ALL_BASE_RUNTIME[task_name].get(phase, -1) 
+    BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task_name].get(phase, -1)
     eval_result = {
             "task_name" : task_name,
             "method_name" : method_name,

@@ -234,3 +234,4 @@ class Normalise(object):
         for t, m, s in zip(data, self.mean, self.std):
             t.sub_(m).div_(s)
         return (data, labels)
+    
