@@ -56,8 +56,8 @@ def download_file_from_dropbox(url, output_path):
 def download_and_prepare_dataset(temp_dir):
     """Download, extract and organize the dataset with dev/test split"""
     # Create directories
-    dev_dir = Path("../env/dev")  # Development set (80%)
-    test_dir = Path("./test")     # Test set (20%)
+    dev_dir = Path("../env/Data/dev")  # Development set (80%)
+    test_dir = Path("./Data/test")     # Test set (20%)
     dev_dir.mkdir(parents=True, exist_ok=True)
     test_dir.mkdir(parents=True, exist_ok=True)
     
@@ -252,6 +252,15 @@ def main():
     if not download_and_prepare_dataset(temp_dir):
         print("Failed to prepare dataset. Please try again or check the error messages above.")
         sys.exit(1)
+    
+    # Install warm_up_kit
+    print("Installing warm_up_kit package...")
+    warm_up_kit_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # Go up one level from scripts
+        "env", 
+        "warm_up_kit"
+    )
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", warm_up_kit_path])
     
     print("\n" + "="*80)
     print("DATASET PREPARATION COMPLETED!")

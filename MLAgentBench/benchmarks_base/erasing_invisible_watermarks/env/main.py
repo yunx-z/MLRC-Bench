@@ -19,7 +19,7 @@ if __name__ == "__main__":
                        help="Evaluation phase (dev: development set, test: test set)")
     args = parser.parse_args()
 
-    data_dir = f"data/{args.phase}"
+    data_dir = f"Data/{args.phase}"
     watermarked_dir = os.path.join(data_dir, "watermarked")
     unwatermarked_dir = os.path.join(data_dir, "unwatermarked")
 
