@@ -1,3 +1,4 @@
 data/*
 evaluation.py
 main.py
+warm_up_kit/*

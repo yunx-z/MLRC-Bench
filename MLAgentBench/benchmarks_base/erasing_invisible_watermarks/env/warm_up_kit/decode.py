@@ -288,4 +288,5 @@ def main(path, isorg, subset, quiet, limit=LIMIT, subset_limit=SUBSET_LIMIT):
 
 
 if __name__ == "__main__":
+    print("Starting decode.py")
     main()

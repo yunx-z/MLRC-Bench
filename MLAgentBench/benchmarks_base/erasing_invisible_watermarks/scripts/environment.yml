@@ -12,6 +12,7 @@ dependencies:
   - pillow
   - tqdm
   - pip:
+    # Original packages from environment.yml
     - scikit-image
     - matplotlib
     - requests
@@ -22,11 +23,4 @@ dependencies:
     - ftfy  # Required for CLIP
     - regex  # Required for CLIP
     - ldm  # Required for VAE
-  - pip:
-    - scikit-image
-    - matplotlib
-    - requests
-    - torchmetrics>=0.11.0
-    - lpips
-    - clip
-    - timm  # For FID calculation 
+    - clip  # Alternative CLIP installation

@@ -45,7 +45,7 @@ def run_command(script_name, path, orgpath, isorg, args):
 @click.option("--uw_path", "-u", default="./", help="Unwatermarked image directory.")
 @click.argument("args", nargs=-1)
 def eval(path, w_path, uw_path, args):
-
+    print(f"Starting eval")
     run_command("decode", uw_path, None, True, args)
     run_command("decode", path, None, False, args)
     run_command("metric", w_path, path, True, args)
