@@ -56,8 +56,8 @@ def download_file_from_dropbox(url, output_path):
 def download_and_prepare_dataset(temp_dir):
     """Download, extract and organize the dataset with dev/test split"""
     # Create directories
-    dev_dir = Path("../env/Data/dev")  # Development set (80%)
-    test_dir = Path("./Data/test")     # Test set (20%)
+    dev_dir = Path("../env/data/dev")  # Development set (20%)
+    test_dir = Path("./test_data/test")     # Test set (80%)
     dev_dir.mkdir(parents=True, exist_ok=True)
     test_dir.mkdir(parents=True, exist_ok=True)
     
@@ -94,7 +94,7 @@ def download_and_prepare_dataset(temp_dir):
             random.seed(42)  # For reproducibility
             
             # 80/20 split
-            num_test = int(len(images) * 0.2)
+            num_test = int(len(images) * 0.8)
             test_indices = set(random.sample(range(len(images)), num_test))
             
             # Create destination directories
@@ -154,7 +154,7 @@ def create_directories():
         os.makedirs(dir_path, exist_ok=True)
         print(f"Created directory: {dir_path}")
 
-def prepare_dataset(data_dir, test_ratio=0.2, seed=42):
+def prepare_dataset(data_dir, test_ratio=0.8, seed=42):
     """
     Process the beige box dataset:
     1. Split by algorithm (StegaStamp vs TreeRing)

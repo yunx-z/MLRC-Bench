@@ -10,8 +10,20 @@ import subprocess
 from warm_up_kit.dev import get_performance_from_jsons, get_quality_from_jsons
 import math
 
+QUALITY_METRICS = {
+    "legacy_fid": "Legacy FID",
+    "clip_fid": "CLIP FID",
+    "psnr": "PSNR",
+    "ssim": "SSIM",
+    "nmi": "Normed Mutual-Info",
+    "lpips": "LPIPS",
+    "aesthetics": "Delta Aesthetics",
+    "artifacts": "Delta Artifacts",
+    # "clip_score": "Delta CLIP-Score",
+    # "watson": "Watson-DFT",
+}
 
-def evaluate_method(method, phase, watermarked_dir, output_dir):
+def evaluate_method(method_class, method_name, phase, watermarked_dir, output_dir):
     """
     Process images with the watermark removal method and save results
     
@@ -22,12 +34,13 @@ def evaluate_method(method, phase, watermarked_dir, output_dir):
         output_dir: Directory to save processed images
     """
     # Create output directory
-    if(phase == "debug"):
-        print(f"[DEBUG] Starting evaluate_method with phase={phase}")
-        print(f"[DEBUG] watermarked_dir: {watermarked_dir}")
-        print(f"[DEBUG] output_dir: {output_dir}")
-        return
+    # if(phase == "debug"):
+    #     print(f"[DEBUG] Starting evaluate_method with phase={phase}")
+    #     print(f"[DEBUG] watermarked_dir: {watermarked_dir}")
+    #     print(f"[DEBUG] output_dir: {output_dir}")
+    #     return
     os.makedirs(output_dir, exist_ok=True)
+    method = method_class(method_name)
     
     # Process each image in watermarked directory
     for img_file in os.listdir(watermarked_dir):
@@ -55,13 +68,11 @@ def evaluate_method(method, phase, watermarked_dir, output_dir):
             print(f"Error processing image {img_file}: {e}")
             continue
 
-def get_scores(method, phase, watermarked_dir, output_dir):
+def get_scores(watermarked_dir, output_dir):
     """
     Calculate evaluation scores for processed images using warm-up-kit
     
     Args:
-        method: The method to evaluate
-        phase: 'dev' or 'test'
         watermarked_dir: Directory containing original watermarked images
         output_dir: Directory containing processed images
     """
@@ -72,25 +83,27 @@ def get_scores(method, phase, watermarked_dir, output_dir):
         unwatermarked_dir = watermarked_dir.replace("watermarked", "unwatermarked")
         
         # Run the evaluation command
-        cmd = [
-            "erasinginvisible",
-            "eval",
-            "--path", output_dir,  # Path to processed images (attacked)
-            "--w_path", watermarked_dir,  # Path to watermarked images
-            "--uw_path", unwatermarked_dir  # For this task, we use watermarked as the reference
-        ]
+        # cmd = [
+        #     "erasinginvisible",
+        #     "eval",
+        #     "--path", output_dir,  # Path to processed images (attacked)
+        #     "--w_path", watermarked_dir,  # Path to watermarked images
+        #     "--uw_path", unwatermarked_dir  # For this task, we use watermarked as the reference
+        # ]
 
-        if(phase == "debug"):
-            print(f"[DEBUG] cmd: {cmd}")
-            return {
-                'overall_score': 0.0,
-                'watermark_detection': 0.0,
-                'quality_degradation': 0.0
-            }
+        # if(phase == "debug"):
+        #     print(f"[DEBUG] cmd: {cmd}")
+        #     return {
+        #         'overall_score': 0.0,
+        #         'watermark_detection': 0.0,
+        #         'quality_degradation': 0.0
+        #     }
 
-        print(f"Running warm-up-kit evaluation...")
-        subprocess.run(cmd, check=True)  # Will raise exception if command fails
-        print(f"Warm-up-kit evaluation completed")
+        # print(f"Running warm-up-kit evaluation...")
+        # subprocess.run(cmd, check=True)  # Will raise exception if command fails
+        # print(f"Warm-up-kit evaluation completed")
+
+        os.system(f"erasinginvisible eval --path {output_dir} --w_path {watermarked_dir} --uw_path {unwatermarked_dir}")
         
         # Use warm-up-kit's own functions to extract metrics
         performance_dict = get_performance_from_jsons(
@@ -119,7 +132,7 @@ def get_scores(method, phase, watermarked_dir, output_dir):
         delta_artifacts = quality_dict.get('artifacts', [0, 0])[0] if 'artifacts' in quality_dict else 0
         
         # Define 10th and 90th percentile values for normalization
-        # These values would typically be pre-determined from a corpus analysis
+        # extracted from Figure 14 of WAVES paper (https://arxiv.org/pdf/2401.08573)
         percentiles = {
             'legacy_fid': {'p10': 1.20, 'p90': 53.40},
             'clip_fid': {'p10': 0.28, 'p90': 19.02},
@@ -171,6 +184,24 @@ def get_scores(method, phase, watermarked_dir, output_dir):
         
         # Overall score calculation (higher is better) using the new A and Q metrics
         overall_score = math.sqrt(quality_degradation**2 + watermark_detection**2)
+
+        print("#" * 20)
+        print()
+        print("# Evaluation results:")
+        print("### Watermark Performance:")
+        print(f"Accuracy: {performance_dict['acc_1']*100:.2f}%")
+        print(f"AUC Score: {performance_dict['auc_1']*100:.2f}%")
+        print(f"TPR@0.1%FPR: {performance_dict['low1000_1']*100:.2f}%")
+        print(f"TPR@1%FPR Score: {performance_dict['low100_1']*100:.2f}%")
+        print()
+        print("### Image Quality:")
+        for key, value in quality_dict.items():
+            if value is None:
+                continue
+            print(f"{QUALITY_METRICS[key]}: {value[0]:e} +/- {value[1]:e}")
+        print()
+        print("Warmup kit evaluation completed.")
+        print("#" * 20)
         
         return {
             'overall_score': float(overall_score),
@@ -180,5 +211,3 @@ def get_scores(method, phase, watermarked_dir, output_dir):
         
     except Exception as e:
         print(f"Error running warm-up-kit evaluation: {e}")
-        # Fall back to the original evaluation method
-        # [Original implementation code here...]

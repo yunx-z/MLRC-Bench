@@ -116,10 +116,7 @@ def download_sftp_data():
     print("Download complete.")
 
 
-def split_h5_file(input_file, num_samples, output_file_1, output_file_2=None, seed=42):
-    # Set seed for reproducibility
-    np.random.seed(seed)
-    
+def split_h5_file(input_file, num_samples, output_file_1, output_file_2=None):
     # Open the input HDF5 file
     with h5py.File(input_file, 'r') as f:
         # Identify dataset name dynamically
@@ -173,5 +170,6 @@ if __name__ == "__main__":
     prepare_environment() 
     download_sftp_data()
     reorganize_files()
+    split_h5_file()
     with open("prepared", 'w') as writer:
         pass

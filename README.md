@@ -14,7 +14,6 @@ Install dependencies with python 3.10 by running
 bash install.sh
 ```
 
-set `export MLR_BENCH_DIR="/absolute/path/to/MLAgentBench/on/your/local/machine"` in `~/.bashrc` and `source ~/.bashrc`
 
 (Optional) For Kaggle datasets, you need to set up Kaggle API and authentication (~/.kaggle/kaggle.json) as described [here](https://www.kaggle.com/docs/api). You may also need to provide manual consent to the rules of specific competitions by following the prompts. 
 

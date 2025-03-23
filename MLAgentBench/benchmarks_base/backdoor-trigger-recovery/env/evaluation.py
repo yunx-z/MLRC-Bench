@@ -13,7 +13,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 
 from constants import *
-from MLAgentBench.constants import MLR_BENCH_DIR
 
 # Reuse logic from original evaluation.py but refactor into two functions:
 # - evaluate_model: run the method on test data and save predictions

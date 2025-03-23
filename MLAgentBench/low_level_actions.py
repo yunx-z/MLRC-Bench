@@ -299,7 +299,7 @@ def final_answer(final_solution, best_score, work_dir = ".", **kwargs):
         all_scores = [eval_result['performance'] for eval_result in json.load(reader)["implementations"]]
     score_float_in_all_scores = False
     for s in all_scores:
-        if abs(score_float - s) < 1e-3:
+        if abs(abs(score_float) - abs(s)) < 1e-3:
             score_float_in_all_scores = True
             break
     if not score_float_in_all_scores:

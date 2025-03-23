@@ -4,7 +4,6 @@ import time
 from typing import Dict
 
 from MLAgentBench.LLM import complete_text
-from MLAgentBench.constants import MLR_BENCH_DIR
 
 # adapted from https://arxiv.org/pdf/2404.07738
 rubric = {
@@ -199,7 +198,10 @@ def llm_evaluate_method_on_metric(scientificMethod: str, code: str, researchProb
     return None
 
 def llm_evaluate_method(scientificMethod: str, code: str, task_name: str, max_retries: int = 3, delay: int = 2) -> Dict[str, str]:
-    research_problem_file = os.path.join(MLR_BENCH_DIR, f"MLAgentBench/benchmarks_base/{task_name}/scripts/research_problem.txt")
+    research_problem_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 
+            f"benchmarks_base/{task_name}/scripts/research_problem.txt"
+            )
     with open(research_problem_file, 'r') as reader:
         researchProblem = reader.read()
     eval_result = {"with_code" : {}, "without_code" : {}}
