@@ -34,11 +34,6 @@ def evaluate_method(method_class, method_name, phase, watermarked_dir, output_di
         output_dir: Directory to save processed images
     """
     # Create output directory
-    # if(phase == "debug"):
-    #     print(f"[DEBUG] Starting evaluate_method with phase={phase}")
-    #     print(f"[DEBUG] watermarked_dir: {watermarked_dir}")
-    #     print(f"[DEBUG] output_dir: {output_dir}")
-    #     return
     os.makedirs(output_dir, exist_ok=True)
     method = method_class(method_name)
     
@@ -83,26 +78,6 @@ def get_scores(watermarked_dir, output_dir):
         unwatermarked_dir = watermarked_dir.replace("watermarked", "unwatermarked")
         
         # Run the evaluation command
-        # cmd = [
-        #     "erasinginvisible",
-        #     "eval",
-        #     "--path", output_dir,  # Path to processed images (attacked)
-        #     "--w_path", watermarked_dir,  # Path to watermarked images
-        #     "--uw_path", unwatermarked_dir  # For this task, we use watermarked as the reference
-        # ]
-
-        # if(phase == "debug"):
-        #     print(f"[DEBUG] cmd: {cmd}")
-        #     return {
-        #         'overall_score': 0.0,
-        #         'watermark_detection': 0.0,
-        #         'quality_degradation': 0.0
-        #     }
-
-        # print(f"Running warm-up-kit evaluation...")
-        # subprocess.run(cmd, check=True)  # Will raise exception if command fails
-        # print(f"Warm-up-kit evaluation completed")
-
         os.system(f"erasinginvisible eval --path {output_dir} --w_path {watermarked_dir} --uw_path {unwatermarked_dir}")
         
         # Use warm-up-kit's own functions to extract metrics

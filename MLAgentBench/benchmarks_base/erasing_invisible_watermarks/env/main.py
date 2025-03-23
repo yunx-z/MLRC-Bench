@@ -34,7 +34,6 @@ if __name__ == "__main__":
     
     # Run evaluation
     start_time = time.time()
-    # evaluate_method(curr_method, args.phase, watermarked_dir, output_dir)
     process = multiprocessing.Process(
         target=evaluate_method, 
         args=(method_class, args.method, args.phase, watermarked_dir, output_dir)
@@ -49,10 +48,9 @@ if __name__ == "__main__":
     
     # Print results
     print(f"\nResults for {args.phase} phase:")
-    print(f"Score: {score['overall_score']:.4f}")
-    print(f"Watermark Detection (A): {score['watermark_detection']:.4f}")
-    print(f"Quality Score (Q): {score['quality_degradation']:.4f}")
-    print(f"Runtime: {runtime:.2f}s")
+    print(f"Watermark Detection Performance (A): {score['watermark_detection']:.4f}")
+    print(f"Image Quality Degredation (Q): {score['quality_degradation']:.4f}")
+    print(f"Final Score (lower is better): {score['overall_score']:.4f}")
 
     # Save evaluation results
     base_class = loaded_methods[DEFAULT_METHOD_NAME]
