@@ -1,23 +1,18 @@
-Technical Approaches and Methodologies:
-The availability of watermarking methodology information enables more targeted approaches to watermark removal. An et al. (2024) demonstrate that different watermarking techniques exhibit distinct vulnerabilities that can be specifically targeted. For instance:
+The paper "Stable Signature is Unstable: Removing Image Watermark from Diffusion Models" proposes a model-targeted attack to remove the Stable Signature watermark from open-source diffusion models . This attack works by fine-tuning the decoder of the diffusion model using a set of non-watermarked images, referred to as the attacking dataset . The method consists of two main steps :   
 
-Frequency Domain Analysis: When the watermarking method's frequency characteristics are known, precise frequency domain transformations can be designed. DCT and DWT transformations can be specifically tuned to target known watermark insertion points while minimizing impact on image quality. This approach is particularly effective when the watermark's frequency domain properties are disclosed.
+Step I: Estimate the Denoised Latent Vector
 
-Neural Network Architectures: The WAVES benchmark (An et al., 2024) shows that specialized neural networks can be designed for specific watermarking methods. Autoencoders can be trained to recognize and remove specific watermark patterns, while GANs can be configured to generate clean images that specifically counter known watermarking techniques. Model architecture and training strategies can be optimized based on the watermarking method's characteristics.
+This step aims to estimate a denoised latent vector for each non-watermarked image in the attacking dataset . The approach varies depending on whether the attacker has access to the diffusion model's encoder .   
 
-Model Merging Strategies: Knowledge of watermarking techniques enables the development of specialized expert models for each method. These models can then be merged using advanced techniques like TIES and Dare merging, creating robust solutions that maintain effectiveness across multiple known watermarking approaches. The merging process can be optimized based on known watermark characteristics.
+Encoder-aware Scenario: If the attacker has access to the encoder, they can directly encode a non-watermarked image into the latent space. This encoded latent vector is then used as the estimated denoised latent vector .   
 
-Advanced Research Directions:
-Recent work by An et al. (2024) has revealed that knowledge of watermarking techniques enables more sophisticated attack strategies. Their research shows that different watermarking methods have distinct vulnerabilities that can be specifically targeted. The key innovation in the beige-box context lies in developing specialized attack vectors for each known watermarking technique while maintaining the ability to generalize across similar methods.
+Encoder-agnostic Scenario: If the encoder is not accessible, the attacker needs to estimate the denoised latent vector using only the denoising layers and the watermarked decoder . The paper proposes an optimization method for this. Initially, a latent vector is randomly generated. Then, an iterative process using gradient descent is employed to adjust this latent vector. The goal is to minimize the difference between the output of the watermarked decoder (when given this latent vector as input) and the corresponding non-watermarked image from the attacking dataset . This optimization typically involves minimizing a loss function that considers both pixel-level differences and perceptual similarity .   
 
-The TIES merging method has proven particularly effective in the beige-box setting, as it can combine multiple expert models, each specialized for a specific watermarking technique. This approach allows for optimal handling of known watermarking methods while maintaining computational efficiency. The Dare merging approach further enhances this by introducing targeted dropout mechanisms based on watermark characteristics.
+Step II: Fine-tune the Decoder
 
-Implementation and Practical Considerations:
-In the beige-box context, implementation focuses on developing modular solutions that can adapt to different known watermarking techniques. This requires:
-1. Development of specialized attack modules for each watermarking method
-2. Efficient switching mechanisms between different attack strategies
-3. Resource optimization based on watermark characteristics
-4. Quality preservation techniques tailored to specific watermark types
+Once the denoised latent vectors are estimated for all the non-watermarked images in the attacking dataset, the second step involves fine-tuning the decoder of the watermarked diffusion model . The objective is to train the decoder so that when it receives the estimated denoised latent vectors as input, it generates images that are visually similar to the non-watermarked images in the attacking dataset . This fine-tuning process typically involves minimizing a loss function that quantifies the difference between the decoder's output and the target non-watermarked image. This loss function often includes a combination of Mean Squared Error (MSE) loss and perceptual loss to ensure both pixel-level accuracy and high visual quality of the generated images . In some cases, an adversarial loss might also be used to further enhance the realism of the generated images .   
+
+The key idea behind this attack is to make the watermarked decoder learn to produce non-watermarked images when given the latent representations of non-watermarked images . The research demonstrates that this fine-tuning approach can effectively remove the Stable Signature watermark while preserving the visual quality of the generated images, suggesting that Stable Signature might not be as robust against such model-targeted attacks as initially claimed . This attack assumes that the attacker has the ability to modify the parameters of the open-source diffusion model's decoder .   
 
 References:
-An, B., Ding, M., Rabbani, T., Agrawal, A., Xu, Y., Deng, C., Zhu, S., Mohamed, A., Wen, Y., Goldstein, T., & Huang, F. (2024). WAVES: Benchmarking the Robustness of Image Watermarks. arXiv preprint arXiv:2401.08573.
+Hu, Y., Jiang, Z., Guo, M., & Gong, N. (2024). Stable signature is unstable: removing image watermark from diffusion models. arXiv preprint arXiv:2405.07145.

@@ -7,6 +7,7 @@ import warnings
 import dotenv
 from dev import get_performance_from_jsons, get_quality_from_jsons, QUALITY_METRICS
 
+os.environ["MODEL_DIR"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 dotenv.load_dotenv(override=False)
 warnings.filterwarnings("ignore")
 

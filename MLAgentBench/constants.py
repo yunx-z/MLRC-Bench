@@ -31,8 +31,8 @@ ALL_BASE_RUNTIME = {
             "debug" : 233,
         },
         "erasing_invisible_watermarks": {
-            "dev": 66.40938814,
-            "test": 17.44162552,
+            "dev": 158.2858313,
+            "test": 626.034725,
         },
         "product-recommendation": {
             "dev" : 262.0930183,
@@ -76,8 +76,8 @@ ALL_BASE_PERFORMANCE = {
             "debug" : 0.15,
         },
         "erasing_invisible_watermarks": {
-            "dev": 0.2129997074,
-            "test": 0.2097184418,
+            "dev": -1.00034643,
+            "test": -1.001120229,
         },
         "product-recommendation" : {
             # range 0-1

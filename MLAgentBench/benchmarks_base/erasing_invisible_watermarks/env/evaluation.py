@@ -7,7 +7,7 @@ from skimage.metrics import structural_similarity, normalized_mutual_information
 import pickle
 import sys
 import subprocess
-from warm_up_kit.dev import get_performance_from_jsons, get_quality_from_jsons
+from dev import get_performance_from_jsons, get_quality_from_jsons
 import math
 
 QUALITY_METRICS = {
@@ -74,12 +74,30 @@ def get_scores(watermarked_dir, output_dir):
     try:
         # Set environment variables
         os.environ["RESULT_DIR"] = output_dir
-        os.environ["MODEL_DIR"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "warm_up_kit", "models")
         unwatermarked_dir = watermarked_dir.replace("watermarked", "unwatermarked")
         
         # Run the evaluation command
-        os.system(f"erasinginvisible eval --path {output_dir} --w_path {watermarked_dir} --uw_path {unwatermarked_dir}")
-        
+        conda_env_path = os.path.dirname(os.path.dirname(os.path.dirname(sys.executable))) # "~/.conda/envs"
+        erasinginvisible_path = os.path.join(conda_env_path, "erasing_invisible_watermarks/bin/erasinginvisible")
+
+        command = [
+            erasinginvisible_path,
+            "eval",
+            "--path",
+            output_dir,
+            "--w_path",
+            watermarked_dir,
+            "--uw_path",
+            unwatermarked_dir,
+        ]
+
+        try:
+            result = subprocess.run(command, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"erasinginvisible execution failed, error message: {e}")
+        except FileNotFoundError:
+            print(f"Error: Cannot find executable {erasinginvisible_path}\n Please double check the path")
+                
         # Use warm-up-kit's own functions to extract metrics
         performance_dict = get_performance_from_jsons(
             os.path.join(output_dir, "org-decode.json"),

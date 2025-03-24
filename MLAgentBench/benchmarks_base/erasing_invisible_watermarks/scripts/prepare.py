@@ -257,7 +257,6 @@ def main():
     print("Installing warm_up_kit package...")
     warm_up_kit_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # Go up one level from scripts
-        "env", 
         "warm_up_kit"
     )
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", warm_up_kit_path])
