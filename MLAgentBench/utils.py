@@ -180,7 +180,8 @@ def save_evals(task_name, method_name, method_class, base_class, score, phase, r
             "method_name" : method_name,
             "phase" : phase,
             "performance" : score,
-            "improvement_perc" : 100 * (score - BASE_PERFORMANCE) / BASE_PERFORMANCE if score else None,
+            # performance score might be negative for some tasks where metric is lower the better, so we need absolute value on the denominator
+            "improvement_perc" : 100 * (score - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE) if score else None,
             "step" : int(os.getenv("CURR_STEP", "-1")),
             # "relevance_score" : relevance_score, 
             # "test_case_pass_rate" : test_case_pass_rate,

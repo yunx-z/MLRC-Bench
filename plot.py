@@ -103,7 +103,7 @@ all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:
     human_perf = HUMAN_PERFORMANCE[task]["performance"] 
     base_perf = ALL_BASE_PERFORMANCE[task_name_mapping[task]]["test"]
-    task_improvement_perc = 100 * (human_perf - base_perf) / base_perf 
+    task_improvement_perc = 100 * (human_perf - base_perf) / abs(base_perf) 
     HUMAN_PERFORMANCE[task]["improvement_perc"] = task_improvement_perc 
     all_task_improvement_perc.append(task_improvement_perc)
 
@@ -204,7 +204,7 @@ def get_dev_results(_task, lm, pipeline, run_id, idea_idx=None):
         if imp.get("phase") == "dev" and imp["performance"] is not None: # performance should not be None  
             out.append(  
                 (  
-                    100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
+                    100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE), # updated with newest estimation
                     100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
                     imp["relative_complexity"],
                 )  
@@ -238,7 +238,7 @@ def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):
             #     best_dev_runtime = best_dev_result[1] 
 
             ret = (  
-                100 * (imp["performance"] - BASE_PERFORMANCE) / BASE_PERFORMANCE, # updated with newest estimation
+                100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE), # updated with newest estimation
                 0 if task == "machine_unlearning" else 100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
                 imp.get("relative_complexity", 0.0),  
             )  

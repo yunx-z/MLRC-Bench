@@ -14,6 +14,8 @@ def read_files_in_directory(directory):
         for file in files:
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, directory)
+            if not file_path.endswith(".py"):
+                continue
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     print(f"\n--- Start of File: {relative_path} ---\n")
