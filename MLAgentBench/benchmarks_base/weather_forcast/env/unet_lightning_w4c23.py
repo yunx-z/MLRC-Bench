@@ -50,7 +50,7 @@ from utils.viz import plot_sequence, save_pdf
 
 
 #models
-from models.baseline_UNET3D import UNet as Base_UNET3D # 3_3_2 model selection
+from methods import *
 
 VERBOSE = False
 # VERBOSE = True
@@ -66,7 +66,9 @@ class UNet_Lightning(pl.LightningModule):
         self.start_filts = params['init_filter_size']
         self.dropout_rate = params['dropout_rate']
         self.out_channels = params['len_seq_predict']
-        self.model = Base_UNET3D(in_channels=self.in_channels, start_filts =  self.start_filts, 
+        loaded_methods = all_method_handlers()
+        BaseModel = loaded_methods[UNet_params['name']]
+        self.model = BaseModel(in_channels=self.in_channels, start_filts =  self.start_filts, 
                                  dropout_rate = self.dropout_rate, out_channels = self.out_channels)
 
         self.save_hyperparameters()
@@ -136,6 +138,11 @@ class UNet_Lightning(pl.LightningModule):
         else:
             loss = self.loss_fn(y_hat, y, reduction='none')
         return loss
+
+    def compute_metrics(self, y, y_hat):
+        mcsi = computing_multilevel_csi(y, y_hat)
+        iou = iou_class(y_hat, y)
+        return iou, mcsi
     
     def training_step(self, batch, batch_idx, phase='train'):
         x, y, metadata  = batch
@@ -147,8 +154,15 @@ class UNet_Lightning(pl.LightningModule):
         mask = self.get_target_mask(metadata)
         loss = self._compute_loss(y_hat, y, mask=mask)
 
-        #LOGGING
-        self.log(f'{phase}_loss', loss,batch_size=self.bs, sync_dist=True)
+        # Compute metrics
+        
+        # iou, mcsi = self.compute_metrics(y, y_hat)
+
+        # Logging
+        self.log(f'{phase}_loss', loss, batch_size=self.bs, sync_dist=True)
+        # self.log(f'{phase}_iou', iou, batch_size=self.bs, sync_dist=True)
+        # self.log(f'{phase}_mcsi', mcsi, batch_size=self.bs, sync_dist=True)
+
         return loss
                 
     def validation_step(self, batch, batch_idx, phase='val'):
@@ -169,13 +183,15 @@ class UNet_Lightning(pl.LightningModule):
             y[mask]=0
 
         #LOGGING
-        self.log(f'{phase}_loss', loss, batch_size=self.bs, sync_dist=True)
-        values  = {'val_mse': loss} 
-        self.log_dict(values, batch_size=self.bs, sync_dist=True)
 
-        return {'loss': loss.cpu(), 'N': x.shape[0],
-                'mse': loss.cpu()}
-        
+        # Compute metrics
+        iou, mcsi = self.compute_metrics(y, y_hat)
+        # Logging
+        self.log(f'{phase}_loss', loss, batch_size=self.bs, sync_dist=True)
+        self.log(f'{phase}_iou', iou, batch_size=self.bs, sync_dist=True)
+        self.log(f'{phase}_mcsi', mcsi, batch_size=self.bs, sync_dist=True)
+
+        return {'loss': loss.cpu(), 'N': x.shape[0], 'mse': loss.cpu(), 'iou': iou, 'mcsi': mcsi} 
 
     def validation_epoch_end(self, outputs, phase='val'):
         print("Validation epoch end average over batches: ",
@@ -203,17 +219,21 @@ class UNet_Lightning(pl.LightningModule):
         if mask is not None:
             y_hat[mask]=0
             y[mask]=0
-
         #LOGGING
+
+        # Compute metrics
+        iou, mcsi = self.compute_metrics(y, y_hat)
+        # Logging
         self.log(f'{phase}_loss', loss, batch_size=self.bs, sync_dist=True)
-        values = {'test_mse': loss}
-        self.log_dict(values, batch_size=self.bs, sync_dist=True)
+        self.log(f'{phase}_iou', iou, batch_size=self.bs, sync_dist=True)
+        self.log(f'{phase}_mcsi', mcsi, batch_size=self.bs, sync_dist=True)
+
 
         if(self.plot_results):
             title = f'batch {self.val_batch} | mse: {loss.cpu():.3f}'
             self.plot_batch(x, y, y_hat, metadata, title , phase, vmax=1.)
 
-        return 0, y_hat
+        return {'loss': loss.cpu(), 'N': x.shape[0], 'mse': loss.cpu(), 'iou': iou, 'mcsi': mcsi} 
 
     def predict_step(self, batch, batch_idx, phase='predict'):
         x, y, metadata = batch

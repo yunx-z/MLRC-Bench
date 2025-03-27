@@ -1,0 +1,19 @@
+train:    # model training settings
+  batch_size: 64  # 40# 16
+  max_epochs: 10
+  n_workers: 4  # 8
+  loss: mse 
+  pos_weight: 6.114572
+  early_stopping: True
+  patience: 5
+  lr: 1e-4
+  weight_decay: 2e-2 
+  init_filter_size: 32
+  dropout_rate: 0.4
+
+model:    # model definition settings
+  name: "my_method"
+  in_channels: 11  
+  gradient_clip_val: 2.0
+  gradient_clip_algorithm: value
+

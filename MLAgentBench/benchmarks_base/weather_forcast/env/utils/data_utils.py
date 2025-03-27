@@ -531,12 +531,12 @@ def preprocess_fn(x, preprocess, verbose=False):
                 x[np.isnan(x)] = v
             elif q == "inf":
                 x[np.isinf(x)] = v
-            #elif "greaterthan" in q:
-            #    greater_v = float(q.partition("greaterthan")[2])
-            #    x[x > greater_v] = v
-            #elif "lessthan" in q:
-            #    less_v = float(q.partition("lessthan")[2])
-            #    x[x < less_v] = v
+            elif "greaterthan" in q:
+                greater_v = float(q.partition("greaterthan")[2])
+                x[x > greater_v] = v
+            elif "lessthan" in q:
+                less_v = float(q.partition("lessthan")[2])
+                x[x < less_v] = v
         else:
             x[x == q] = v
     if verbose:
@@ -823,52 +823,16 @@ def get_mean_std_opera(dataset, batch_size=10):
 
 
 def get_cuda_memory_usage(gpus):
-    """Get detailed memory usage for specified GPUs."""
-    if not torch.cuda.is_available():
-        print("CUDA is not available")
-        return
-    
-    if gpus is None:
-        return
-        
-    try:
-        print("\nDetailed GPU Memory Analysis:")
-        for gpu_id in gpus:
-            if gpu_id < 0:
-                continue
-            try:
-                # Get detailed memory information
-                allocated = torch.cuda.memory_allocated(gpu_id) / (1024**2)
-                reserved = torch.cuda.memory_reserved(gpu_id) / (1024**2)
-                max_memory = torch.cuda.get_device_properties(gpu_id).total_memory / (1024**2)
-                
-                print(f"\nGPU {gpu_id} ({torch.cuda.get_device_name(gpu_id)}):")
-                print(f"  Allocated: {allocated:.2f}MB")
-                print(f"  Reserved:  {reserved:.2f}MB")
-                print(f"  Total:     {max_memory:.2f}MB")
-                print(f"  Free:      {max_memory - allocated:.2f}MB")
-                print(f"  Utilization: {torch.cuda.utilization(gpu_id)}%")
-                
-                # Get memory stats
-                stats = torch.cuda.memory_stats(gpu_id)
-                print(f"  Active allocations: {stats['num_alloc_retries'] if 'num_alloc_retries' in stats else 0}")
-                print(f"  Active memory blocks: {stats['num_ooms'] if 'num_ooms' in stats else 0}")
-                
-                # Print recommendations
-                if allocated < max_memory * 0.1:  # Using less than 10% of GPU memory
-                    print("\nRecommendations for better GPU utilization:")
-                    print("  1. Increase batch size (current might be too small)")
-                    print("  2. Enable gradient accumulation for larger effective batch size")
-                    print("  3. Use mixed precision training (torch.float16)")
-                    print("  4. Ensure data is properly moved to GPU")
-                    print(f"  5. Consider using up to {int(max_memory * 0.8 / 1024):.1f}GB for better performance")
-                
-            except RuntimeError as e:
-                print(f"Could not get memory info for GPU {gpu_id}: {str(e)}")
-                continue
-    except Exception as e:
-        print(f"Error getting GPU memory usage: {str(e)}")
-        return
+    """Get the GPU memory usage
+
+    Args:
+        gpus (list): list of GPUs
+    """
+    for gpu in gpus:
+        r = torch.cuda.memory_reserved(gpu)
+        a = torch.cuda.memory_allocated(gpu)
+        f = r - a  # free inside reserved
+        print("GPU", gpu, "CUDA memory reserved:", r, "allocated:", a, "free:", f)
 
 
 # --------------------------------------- Crop files--------------------------------------------

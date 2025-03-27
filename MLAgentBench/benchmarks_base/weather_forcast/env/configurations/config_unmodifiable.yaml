@@ -1,15 +1,12 @@
 experiment:  # Settings for the current experiment
-  name: 'U-NET-252'  # name of the current experiment for logging
-  experiment_folder: 'lightning_logs/'  # folder to save logs 
-  sub_folder: 'baseline'  # logging sub-folder
-  precision: 32  # Use mixed precision training (16-bit) for better GPU memory efficiency
-  logging: True  # Toggle logging on/off
+  precision: 32  # bit precision of weights. 32 or 16 
   plot_results: False  #Toggle plotting results in validation and prediction mode dataset
   in_channel_to_plot: 7 # satellite band to be visialised on the plots
 dataset: 
   # Available bands: 'IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073'
   sat_bands: ['IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073']
-  regions: null  # Will be auto-detected based on available matching files
+  regions: [ 'boxi_0015' ]  
+  # or, e.g., ['boxi_0015'] if you want to train your model for one region only
   input_product: REFL-BT 
   output_product: RATE 
   out_channels: 1 
@@ -20,7 +17,7 @@ dataset:
   len_seq_in: 4        # number of input slots per training sequence
   len_seq_predict: 32  # output slots; set to 16 for 4-hours prediction or 32 for 8-hours prediction
   data_root:  'data'  
-  years:  [ '2019', '2020' ]  
+  years:  [ '2019' ] # 2019 in development, 2020 for testing  
   splits_path: 'data/timestamps_and_splits_stage2.csv'  
   
   preprocess_OPERA:
@@ -30,8 +27,6 @@ dataset:
       rainfall_rate-500X500: 
         mask: [-9999000.0, inf, nan, max128] #, 0range0.1] # Mostly used for loss function: values added here are added to a mask and not used for loss 
         map: [[lessthan0.2, 0], [-8888000.0, 0], [-9999000.0, 0], [inf, 0], [nan, 0]]   #Mostly used for input preprocessing   # 1. map values   # stage-1
-#        map: [[lessthan0.2, 0], [greaterthan0.2, 1], [-8888000.0, 0], [-9999000.0, 0], [inf, 0], [nan, 0]]   #Mostly used for input preprocessing   # 1. map values   # stage-1
-#        map: [[-8888000.0, 0], [-9999000.0, 0], [inf, 0], [nan, 0]]   #Mostly used for input preprocessing   # 1. map values   # stage-2
 #        mean_std: [0.07165331, 0.6302647]
         range: [0, 128]          # 2. we evaluate only pixels in this range
         standardise: False       # 3. use log(x+1) instead & normalize (x/max)
@@ -104,34 +99,4 @@ dataset:
       range: [0, 300]
       mean_std: [248.0414, 9.495061]
       standardise: True
-    
-train:    # model training settings
-  batch_size: 16  # Significantly increased batch size for better GPU utilization
-  # precision: 16
-  max_epochs: 90
-  n_workers: 4  # Further reduced workers to prevent CPU bottleneck
-  loss: mse 
-  pos_weight: 6.114572
-  early_stopping: True
-  patience: 20
-  lr: 1e-4
-  weight_decay: 2e-2 
-  init_filter_size: 32
-  dropout_rate: 0.4
-  # accumulate_grad_batches: 2  # Re-enabled gradient accumulation for larger effective batch size
-  # use_amp: True  # Enable automatic mixed precision
-  # benchmark: True  # Enable cuDNN benchmarking for better performance
-  # deterministic: False  # Disable deterministic mode for better performance
-  # strategy: "ddp"  # Use DDP strategy for better GPU utilization
-  # sync_batchnorm: True  # Enable synchronized batch normalization
-  # replace_sampler_ddp: True  # Ensure proper data distribution across GPUs
-
-model:    # model definition settings
-  model_name: 3D_UNET_base
-  in_channels: 11  
-  gradient_clip_val: 2.0
-  gradient_clip_algorithm: value
-
-predict:  # model prediction settings
-  region_to_predict: boxi_0015  # must match one of the names defined in 'dataset' / 'regions'
-  year_to_predict: 2019
+ 

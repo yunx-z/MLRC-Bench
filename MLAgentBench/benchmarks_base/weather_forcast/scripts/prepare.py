@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import paramiko
 import h5py
+import requests
 import numpy as np
 from glob import glob
 
@@ -37,10 +38,6 @@ def download_and_extract_data():
             "id": "1DVzKwY061FHVsWRHpBJ8LhrKLMun8oRd",
             "output": "weather4cast_data_2.zip"
         },
-        {
-            "id": "1z9-_vw1vncfjHR4pxZ4hmS-FlJP0behU",
-            "output": "weather4cast_data_3.zip"
-        }
     ]
     
     # Download and extract each file
@@ -67,109 +64,74 @@ def download_and_extract_data():
         os.remove(output)
         print(f"Dataset {output} extracted successfully!")
 
+    target_dir = "../env/data/2019/OPERA/"
+    for filename in os.listdir(target_dir):
+        file_path = os.path.join(target_dir, filename)
+        if os.path.isfile(file_path) and "boxi_0015" not in filename:
+            os.remove(file_path)
+
+    os.makedirs("test_data/2020/OPERA/", exist_ok=True)
+    os.system("mv ../env/data/2020/OPERA/boxi_0015.val.rates.crop.h5 test_data/2020/OPERA/")
+    os.system("rm -rf ../env/data/2020/")
+
+
+    # URL of the file
+    url = "https://github.com/agruca-polsl/weather4cast-2023/raw/refs/heads/main/data/timestamps_and_splits_stage2.csv"
+
+    # Directory where you want to save the file
+    save_dir = "../env/data/"  # Change this to your desired path
+
+    # Define the full path for saving the file
+    file_path = os.path.join(save_dir, "timestamps_and_splits_stage2.csv")
+
+    # Download the file
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(file_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=1024):
+                file.write(chunk)
+        print(f"File downloaded successfully: {file_path}")
+    else:
+        print(f"Failed to download file, status code: {response.status_code}")
+
+
 def prepare_environment():
     """Prepare the benchmark environment by setting up necessary directories and files."""
-    # Create necessary directories
-    os.makedirs("../env/methods/models", exist_ok=True)
-    os.makedirs("../env/methods/configurations", exist_ok=True)
-    os.makedirs("../results", exist_ok=True)
     
     # Install gdown and download data
     install_gdown()
     download_and_extract_data()
     
+   
     print("Environment and data prepared successfully!")
 
 def download_sftp_data():
     hostname = "ala.boku.ac.at"
     username = "w4c"
     password = "Weather4cast23!"
-    remote_path = "w4c23"
-    local_path = "../env/data/w4c23"
 
-    print(f" Downloading satellite data from {hostname}. This may take a long time (>12 hrs) ... Thank you for your patience while waiting!")
+    print(f" Downloading satellite data from {hostname}. This may take a long time (>1 hrs) ... Thank you for your patience while waiting!")
 
     # Connect to SFTP
     transport = paramiko.Transport((hostname, 22))
     transport.connect(username=username, password=password)
     sftp = paramiko.SFTPClient.from_transport(transport)
 
-    # Ensure local directory exists
-    os.makedirs(local_path, exist_ok=True)
-
-    # Function to download files recursively
-    def download_dir(remote_path, local_path):
-        for item in sftp.listdir_attr(remote_path):
-            remote_item = f"{remote_path}/{item.filename}"
-            local_item = os.path.join(local_path, item.filename)
-            
-            if item.st_mode & 0o40000:  # Check if it's a directory
-                os.makedirs(local_item, exist_ok=True)
-                download_dir(remote_item, local_item)
-            else:
-                sftp.get(remote_item, local_item)
-
-    download_dir(remote_path, local_path)
+    os.makedirs("test_data/2020/HRIT", exist_ok=True)
+    os.makedirs("../env/data/2019/HRIT", exist_ok=True)
+    print("downloading 1/3 files to ../env/data/2019/HRIT/boxi_0015.train.reflbt0.ns.h5")
+    sftp.get("w4c23/2019/HRIT/boxi_0015.train.reflbt0.ns.h5", "../env/data/2019/HRIT/boxi_0015.train.reflbt0.ns.h5")
+    print("downloading 2/3 files to ../env/data/2019/HRIT/boxi_0015.val.reflbt0.ns.h5")
+    sftp.get("w4c23/2019/HRIT/boxi_0015.val.reflbt0.ns.h5", "../env/data/2019/HRIT/boxi_0015.val.reflbt0.ns.h5")
+    print("downloading 3/3 files to test_data/2020/HRIT/boxi_0015.val.reflbt0.ns.h5")
+    sftp.get("w4c23/stage-2/2020/HRIT/boxi_0015.val.reflbt0.ns.h5", "test_data/2020/HRIT/boxi_0015.val.reflbt0.ns.h5")
 
     sftp.close()
     transport.close()
-    print("Download complete.")
 
-
-def split_h5_file(input_file, num_samples, output_file_1, output_file_2=None):
-    # Open the input HDF5 file
-    with h5py.File(input_file, 'r') as f:
-        # Identify dataset name dynamically
-        dataset_name = 'REFL-BT' if 'REFL-BT' in f else 'rates.crop' if 'rates.crop' in f else None
-        if dataset_name is None:
-            raise ValueError("Unsupported file format: No recognized dataset found.")
-        
-        num_images = f[dataset_name].shape[0]
-        
-        # Randomly sample indices
-        indices = np.random.permutation(num_images)
-        selected_indices = indices[:num_samples]
-        remaining_indices = indices[num_samples:]
-        
-        # Open output files
-        with h5py.File(output_file_1, 'w') as f1:
-            dset1 = f1.create_dataset(dataset_name, shape=(num_samples, *f[dataset_name].shape[1:]), dtype=f[dataset_name].dtype, compression='gzip')
-            
-            for i, idx in enumerate(selected_indices):
-                dset1[i] = f[dataset_name][idx]
-            
-        
-        if output_file_2:
-            with h5py.File(output_file_2, 'w') as f2:
-                dset2 = f2.create_dataset(dataset_name, shape=(num_images - num_samples, *f[dataset_name].shape[1:]), dtype=f[dataset_name].dtype, compression='gzip')
-                
-                for i, idx in enumerate(remaining_indices):
-                    dset2[i] = f[dataset_name][idx]
-
-    
-    print(f"Saved {num_samples} images to {output_file_1} and {num_images - num_samples} images to {output_file_2}")
-
-def reorganize_files():
-    for year in [2019, 2020]:
-        os.system(f"mv ../env/data/w4c23/stage-2/{year}/HRIT ../env/data/{year}")
-    os.system(f"mv ../env/data/w4c23/2019/HRIT/* ../env/data/2019/HRIT")
-    os.system(f"rm ../env/data/*/*/*test*")
-    os.system(f"rm -rf ../env/data/w4c23")
-
-    # use 2019's val as ours dev, 2020's val as ours test
-    for source in ["OPERA", "HRIT"]:
-        folder_path = f"../env/data/2020/{source}/"
-        for filename in os.listdir(folder_path):
-            if ".val." in filename:
-                new_filename = filename.replace(".val.", ".test.")
-                old_path = os.path.join(folder_path, filename)
-                new_path = os.path.join(folder_path, new_filename)
-                os.rename(old_path, new_path)
 
 if __name__ == "__main__":
     prepare_environment() 
     download_sftp_data()
-    reorganize_files()
-    split_h5_file()
     with open("prepared", 'w') as writer:
         pass

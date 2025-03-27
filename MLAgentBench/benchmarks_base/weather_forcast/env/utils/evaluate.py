@@ -51,50 +51,59 @@ def get_confusion_matrix(y_true, y_pred):
     labels = [0,1]
     return confusion_matrix(y_true, y_pred, labels=labels).ravel()
 
-def recall_precision_f1_acc(y, y_hat):
+def computing_csi(y, y_hat):
     """ returns metrics for recall, precision, f1, accuracy
 
     Args:
-        y (numpy array): ground truth 
-        y_hat (numpy array): prediction 
+        y (numpy array): ground truth
+        y_hat (numpy array): prediction
 
     Returns:
-        recall(float): recall/TPR 
+        recall(float): recall/TPR
         precision(float): precision/PPV
         F1(float): f1-score
         acc(float): accuracy
         csi(float): critical success index
-    """  
-      
+    """
+
     # pytorch to numpy
     y, y_hat = [o.cpu() for o in [y, y_hat]]
-    y, y_hat = [np.asarray(o) for o in [y, y_hat]]
+    y, y_hat = [o.detach().numpy() for o in [y, y_hat]]
 
     cm = get_confusion_matrix(y.ravel(), y_hat.ravel())
-    if len(cm)==4:
+    if len(cm) == 4:
         tn, fp, fn, tp = cm
-        recall, precision, F1, acc, csi = 0, 0, 0, 0, 0
+        csi = 0
 
-        if (tp + fn) > 0:
-            recall = tp / (tp + fn)
-        
-        if (tp + fp) > 0:
-            precision = tp / (tp + fp)
-        
-        if (precision + recall) > 0:
-            F1 = 2 * (precision * recall) / (precision + recall)
-        
-        if (tp + fn + fp) > 0: 
+        if (tp + fn + fp) > 0:
             csi = tp / (tp + fn + fp)
 
-        if (tn+fp+fn+tp) > 0:
-            acc = (tn + tp) / (tn+fp+fn+tp)
     else:
         print("FATAL ERROR: cannot create confusion matrix")
-        print("EXITING....")
-        sys.exit()
+        return None
 
-    return recall, precision, F1, acc, csi
+    return csi
+
+
+def computing_multilevel_csi(y, y_hat):
+    level_thresh = [0.2, 1, 5, 10, 15]
+    mCSI = 0
+
+    for l in level_thresh:
+        y_hat_l = y_hat.clone()
+        y_l = y.clone()
+        idx_pred = y_hat_l>=l
+        y_hat_l[idx_pred] = 1
+        y_hat_l[~idx_pred] = 0
+        idx_label = y_l>=l
+        y_l[idx_label] = 1
+        y_l[~idx_label] = 0
+        csi = computing_csi(y_l, y_hat_l)
+        mCSI += csi
+
+    mCSI = mCSI / len(level_thresh)
+
+    return mCSI
 
 
 def iou_class(y_pred: t.Tensor, y_true: t.Tensor):

@@ -38,6 +38,10 @@ ALL_BASE_RUNTIME = {
             "dev" : 262.0930183,
             "test" : 260.7098073,
         },
+        "weather_forcast" : {
+            "dev" : 3000, # placeholder,
+            "test" : 300,
+        },
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -83,6 +87,10 @@ ALL_BASE_PERFORMANCE = {
             # range 0-1
             "dev" : 0.08035839265,
             "test" : 0.08039049179,
+        },
+        "weather_forcast" : {
+            "dev" : 0.1, # placeholder
+            "test" : 0.1,
         },
     }
 

@@ -1,21 +1,48 @@
-Weather4cast 2023 Research Problem
+Super-Resolution Rain Movie Prediction under Temporal Shifts
 
-The Weather4cast 2023 competition focuses on predicting future radar reflectivity from satellite data. This is a crucial task for weather forecasting and early warning systems, especially in regions where ground radar coverage is limited or non-existent.
+## Description
+The aim of the Weather4cast competition is to predict quantitatively future high resolution rainfall events from lower resolution satellite radiances. Ground-radar reflectivity measurements are used to calculate pan-European composite rainfall rates by the Operational Program for Exchange of Weather Radar Information (OPERA) radar network. While these are more precise, accurate, and of higher resolution than satellite data, they are expensive to obtain and not available in many parts of the world. We thus want to learn how to predict this high value rain rates from radiation measured by geostationary satellites operated by the European Organisation for the Exploitation of Meteorological Satellites (EUMETSAT).
 
-Research Questions:
-1. How can we effectively use satellite imagery to predict precipitation patterns?
-2. What deep learning architectures are most effective for spatio-temporal forecasting of weather phenomena?
-3. How can we handle the inherent uncertainty in weather prediction?
+Competition participants should predict the exact amount of rainfall for the next 8 hours in 32 time slots from an input sequence of 4 time slots of the preceeding hour. The input sequence consists of four 11-band spectral satellite images. These 11 channels show slightly noisy satellite radiances covering so-called visible (VIS), water vapor (WV), and infrared (IR) bands. Each satellite image covers a 15 minute period and its pixels correspond to a spatial area of about 12km x 12km. The prediction output is a sequence of 32 images representing rain rates from ground-radar reflectivities. Output images also have a temporal resolution of 15 minutes but have higher spatial resolution, with each pixel corresponding to a spatial area of about 2km x 2km. So in addition to predicting the weather in the future, converting satellite inputs to ground-radar outputs, this adds a super-resolution task due to the coarser spatial resolution of the satellite data.
 
-Task Description:
-- Input: Satellite imagery from various channels over a sequence of time steps
-- Output: Predicted radar reflectivity for future time steps
-- Evaluation: Models are evaluated based on their ability to predict future radar reflectivity using metrics like RMSE
+We provide training and validation data from one Eureopean region in 2019, and testing data from the same region in 2020, measuring a transfer learning performance under temporal shift. The task is to predict exact amount of rain events 4 hours into the future from a 1 hour sequence of satellite images. Rain rates computed from OPERA ground-radar reflectivities provide a ground truth.
 
-Challenges:
-- Weather phenomena are complex and chaotic systems
-- Satellite data and radar data have different resolutions and characteristics
-- Precipitation events are rare, leading to class imbalance
-- Weather patterns vary by region and season
+Data are provided in HDF-5 files, separately for each year and data type. In our canonical folder structure year/datatype/ the HRIT folder holds the satellite data and the OPERA folder provides the ground radar data. The file names reflect the different regions (boxi_####) and data splits (train, validation, and test). The test data split is of course withheld.
 
-The goal is to develop models that can accurately predict precipitation patterns from satellite data, which would significantly improve weather forecasting capabilities, especially in regions with limited ground radar coverage. 
+Your data files have been arranged in `data/` folders of the following structure:
+data/2019/
+    +-- HRIT/  ... sub-folder for satellite radiance datasets
+        +-- boxi_0015.train.reflbt0.ns.h5
+        +-- boxi_0015.val.reflbt0.ns.h5
+    +-- OPERA/  ... sub-folder for OPERA ground-radar rain rates
+        +-- boxi_0015.train.rates.crop.h5
+        +-- boxi_0015.val.rates.crop.h5
+
+Each HDF file provides a set of (multi-channel) images:
+
+- boxi_00XX.train.reflbt0.ns.h5 provides REFL-BT, which is a tensor of shape (20308, 11, 252, 252) representing 20,308 images with 11 channels of satellite radiances for region XX. These are the input training data. The order of the channels in the H5 file corresonds to the following order of the satellite channels: IR_016, IR_039, IR_087, IR_097, IR_108, IR_120,IR_134, VIS006, VIS008, WV_062, WV_073.
+
+- boxi_00XX.train.rates.crop.h5 provides rates.crop, which is a tensor of shape (20308, 11, 252, 252) representing OPERA ground-radar rain rates for the corresponding satellite radiances from the train dataset. Model output should be 1 or 0 for rain or no-rain predictions respectively.
+
+- boxi_00XX.val.reflbt0.ns.h5 provides REFL-BT, which is a tensor of shape (2160, 11, 252, 252) representing additional measured satellite radiances. This data can be used as input for independent model validation. There are 60 validation sequences and each validation sequence consists of images for 4 input time slots; while in addition we also provide images for the 32 output time slots please note that this is just to aid model development and that model predictions cannot use these. The validation data set thus holds 4x60 + 32x60 = 2,160 images in total.
+
+- boxi_00XX.val.rates.crop.h5 provides rates.crop, which is a tensor of shape (2160, 1, 252, 252) representing OPERA ground-radar rain rates for the corresponding satellite radiances from the validation dataset. Model output should be 1 or 0 for rain or no-rain predictions respectively.
+
+Both input satellite radiances and output OPERA ground-radar rain rates are given for 252x252 pixel patches but please note that the spatial resolution of the satellite images is about six times lower than the resolution of the ground radar. This means that the 252x252 pixel ground radar patch corresponds to a 42x42 pixel center region in the coarser satellite resolution. The model target region thus is surrounded by a large area providing sufficient context as input for a prediction of future weather. In fact, fast storm clouds from one border of the input data would reach the center target region in about 7-8h.
+
+Evaluation metric is a mean CSI score for thresholds 0.2, 1, 5, 10, and 15, to reward correct prediction over the whole gamut of rainfall intensities. The Critical Success Index (CSI), also known as the Threat Score (TS), is a metric used in meteorology and machine learning to evaluate the accuracy of binary classification models, especially in imbalanced datasets where the positive class (e.g., detecting severe weather events) is rare.
+Formula: CSI = TP / (TP + FN + FP), where:
+
+TP (True Positives): Correctly predicted positive cases.
+FN (False Negatives): Missed positive cases.
+FP (False Positives): Incorrectly predicted positive cases.
+
+## Developing New Methods
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method---a modified version of a 3D variant of the U-Net.
+
+1. To add a new method, modify the `methods/MyMethod.py` to implement your own neural network and save it as a new file in `methods/`.
+2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+3. Add the new module to `methods/__init__.py`.
+
+## Test Method
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`. It will first train your model using the pytorch_lightning trainer defined in `unet_lightning_w4c23.py` and evaluate it on the validation set.
