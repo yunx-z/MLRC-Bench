@@ -242,6 +242,8 @@ def execute_script(script_name_and_args, work_dir = ".", **kwargs):
         for line in process.stderr:
             line = line
             print("STDERR:", line, end =" ")
+            if "CUDA error: all CUDA-capable devices are busy or unavailable" in line:
+                raise EnvException(f"Something went wrong in executing `python {script_name_and_args}`: {line}. Please check if GPU is working.")
             stderr_lines.append(line)
 
         return_code = process.returncode
