@@ -54,13 +54,13 @@
     "MLAB (llama3-1-405b-instruct)": 3.8
   },
   "erasing_invisible_watermarks": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": -0.0,
-    "Top Human in Competition": -95.6,
-    "MLAB (claude-3-5-sonnet-v2)": -0.0,
-    "MLAB (gemini-exp-1206)": -0.0,
-    "MLAB (o3-mini)": -0.0,
-    "MLAB (gpt-4o)": 0.5,
-    "MLAB (llama3-1-405b-instruct)": -0.0
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 80.3,
+    "Top Human in Competition": 95.6,
+    "MLAB (claude-3-5-sonnet-v2)": 83.7,
+    "MLAB (gemini-exp-1206)": 93.3,
+    "MLAB (o3-mini)": 79.8,
+    "MLAB (gpt-4o)": 79.8,
+    "MLAB (llama3-1-405b-instruct)": 79.8
   },
   "backdoor-trigger-recovery": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 85.0,
