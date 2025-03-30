@@ -278,7 +278,7 @@ if __name__ == "__main__":
                     for run in all_levels[task][model]["run_details"]
                     if not is_none_or_nan(run["agent_margin_percent_of_human"])
                     ]
-            relative_improvement_to_human[task][model] = max(agent_margin_percent_of_human)
+            relative_improvement_to_human[task][model] = round(max(agent_margin_percent_of_human), 1)
             relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
 
             improvement_perc = [
@@ -287,8 +287,8 @@ if __name__ == "__main__":
                     if not is_none_or_nan(run["agent_margin"])
                     ]
             a_run = all_levels[task][model]["run_details"][0]
-            absolute_improvement_to_baseline[task][model] = max(improvement_perc)
-            absolute_improvement_to_baseline[task]["Top Human in Competition"] = 100 * a_run["human_margin"] / a_run["baseline_test"]
+            absolute_improvement_to_baseline[task][model] = round(max(improvement_perc), 1)
+            absolute_improvement_to_baseline[task]["Top Human in Competition"] = round(100 * a_run["human_margin"] / a_run["baseline_test"], 1)
 
 
     metric_dir = "leaderboard_metrics/"
