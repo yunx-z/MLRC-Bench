@@ -66,6 +66,7 @@ task_name_mapping = {
         "meta-learning" : "meta-learning",
         "product-rec" : "product-recommendation",
         "erasing-watermark" : "erasing_invisible_watermarks",
+        "weather-forecast" : "weather_forcast",
         }
 TASKS = list(task_name_mapping.keys())
 for k in TASKS:
@@ -99,7 +100,8 @@ HUMAN_PERFORMANCE = {
     "machine-unlearning": {"performance" : 0.0984971060},
     "meta-learning": {"performance" : 0.699},
     "product-rec": {"performance" : 0.41208},
-    "erasing-watermark": {"performance" : -0.1737},
+    "erasing-watermark": {"performance" : -0.04363443074502975},
+    "weather-forecast": {"performance" : 0.1014596},
 } 
 all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:
@@ -1103,11 +1105,17 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
     records_without=[]  
     subj_fields=["Clarity","Validity","Rigorousness","Innovativeness","Generalizability"]  
     obj_fields=["improvement_perc","relative_runtime","relative_complexity"]  
+
+    # recalculate improvement_perc?
   
     def process_imp(imp):  
+        BASE_RUNTIME = ALL_BASE_RUNTIME[imp["task_name"]][imp["phase"]] 
+        BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[imp["task_name"]][imp["phase"]]
+
         base={  
-            "improvement_perc":imp.get("improvement_perc",0.0),  
-            "relative_runtime":-imp.get("relative_runtime",0.0),  # higher the better
+            "improvement_perc": 100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE),  
+            # None values are automatically ignored when calculating correlation
+            "relative_runtime": -100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME if BASE_RUNTIME else None,  # higher the better
             "relative_complexity":-imp.get("relative_complexity",0.0),  # higher the better
         }  
         llm_eval=imp.get("llm_eval",{})  
@@ -1128,7 +1136,8 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
                     row_wo[sf]=r  
             records_without.append(row_wo)  
   
-    for task in tasks_to_do:  
+    for a_task in tasks_to_do:  
+        task = task_name_mapping[a_task]
         for pipeline in PIPELINES:  
             if pipeline==MULTI_AGENT:  
                 for idx in IDEA_IDXS:  
@@ -1168,49 +1177,46 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
   
 def plot_correlation_heatmaps():
     plt.rcParams['font.size'] = 10
-    for a_task in TASKS:
-        dfw, dfwo = gather_test_correlation_data(tasks_to_do=[a_task])
-        print("TASK:", a_task)
-        print("dfw", dfw)
-        print("dfwo", dfwo)
-        subj = ["Clarity", "Validity", "Rigorousness", "Innovativeness", "Generalizability"]
-        obj = ["improvement_perc", "relative_runtime", "relative_complexity"]
-        obj_label_map = {
-            "improvement_perc": "Effectiveness",
-            "relative_runtime": "Efficiency",
-            "relative_complexity": "Simplicity"
-        }
+    # for a_task in TASKS:
+    dfw, dfwo = gather_test_correlation_data(tasks_to_do=TASKS)
+    subj = ["Clarity", "Validity", "Rigorousness", "Innovativeness", "Generalizability"]
+    obj = ["improvement_perc", "relative_runtime", "relative_complexity"]
+    obj_label_map = {
+        "improvement_perc": "Effectiveness",
+        "relative_runtime": "Efficiency",
+        "relative_complexity": "Simplicity"
+    }
 
-        for nm, df_ in [("with_code", dfw), ("without_code", dfwo)]:
-            allf = subj + obj
-            ex = [c for c in allf if c in df_.columns]
-            if len(df_) < 2 or len(ex) < 2:
-                continue
-            corr_ = df_[ex].corr(method='spearman')
-            rAvail = [f for f in subj if f in corr_.index]
-            cAvail = [f for f in obj if f in corr_.columns]
-            if not rAvail or not cAvail:
-                continue
-            subcorr = corr_.loc[rAvail, cAvail]
-            plt.figure(figsize=(4, 3))
-            # print(nm, subcorr)
-            ax = sns.heatmap(
-                subcorr, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, 
-                xticklabels=[obj_label_map.get(x, x) for x in subcorr.columns], 
-                cbar_kws={'label': 'Correlation'}
-            )
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=0)  # Horizontal labels
-            nm2title = {"with_code" : "w/ code", "without_code" : "w/o code"}
-            plt.title(f"{nm2title[nm]}")
-            outfn = os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_{a_task}.pdf")
-            plt.savefig(outfn, bbox_inches='tight')
-            plt.close()
-            cap = (
-                f"Correlation heatmap ({nm}) between LLM-as-a-Judge subjective metrics (rows) "
-                f"and ML objective metrics (cols) for valid test implementations."
-            )
-            # with open(os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_caption.txt"), "w") as f:
-            #     f.write(cap)
+    for nm, df_ in [("with_code", dfw), ("without_code", dfwo)]:
+        allf = subj + obj
+        ex = [c for c in allf if c in df_.columns]
+        if len(df_) < 2 or len(ex) < 2:
+            continue
+        corr_ = df_[ex].corr(method='spearman')
+        rAvail = [f for f in subj if f in corr_.index]
+        cAvail = [f for f in obj if f in corr_.columns]
+        if not rAvail or not cAvail:
+            continue
+        subcorr = corr_.loc[rAvail, cAvail]
+        plt.figure(figsize=(4, 3))
+        # print(nm, subcorr)
+        ax = sns.heatmap(
+            subcorr, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1, 
+            xticklabels=[obj_label_map.get(x, x) for x in subcorr.columns], 
+            cbar_kws={'label': 'Correlation'}
+        )
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=0)  # Horizontal labels
+        nm2title = {"with_code" : "w/ code", "without_code" : "w/o code"}
+        plt.title(f"{nm2title[nm]}")
+        outfn = os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}.pdf")
+        plt.savefig(outfn, bbox_inches='tight')
+        plt.close()
+        cap = (
+            f"Correlation heatmap ({nm}) between LLM-as-a-Judge subjective metrics (rows) "
+            f"and ML objective metrics (cols) for valid test implementations."
+        )
+        # with open(os.path.join(RESULTS_DIR, f"correlation_heatmap_{nm}_caption.txt"), "w") as f:
+        #     f.write(cap)
 
   
 ##############################################################################  
@@ -1352,7 +1358,14 @@ def load_baseline_data_for_task(_task):
         np.mean(inn_list),
         np.mean(gen_list)
     )  
-  
+
+def get_best_dev_runtime(_task, lm, pipeline, run_id, idea_idx=None):
+    dev_results = get_dev_results(_task, lm, pipeline, run_id, idea_idx)
+    dev_results.sort(key=lambda x: x[0])
+    best_dev_result = dev_results[-1]
+    best_dev_runtime = best_dev_result[1] 
+    return best_dev_runtime
+
 def gather_test_absolute_data_for_task(_task):  
     """  
     For each pipeline, LM, gather the average (performance, runtime, method_complexity, clarity, validity, rigorousness, innov, gener).  
@@ -1383,7 +1396,7 @@ def gather_test_absolute_data_for_task(_task):
                             for imp in d["implementations"]:  
                                 if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
                                     p=imp.get("performance",0.0)  
-                                    r=imp.get("runtime",0.0)  
+                                    r=get_best_dev_runtime(_task, lm, pipeline, rid, idx) if task == "machine_unlearning" else imp.get("runtime",0.0)  
                                     c=imp.get("method_complexity",0.0)  
                                     perf_list.append(p)  
                                     run_list.append(r)  
@@ -1409,7 +1422,7 @@ def gather_test_absolute_data_for_task(_task):
                         for imp in d["implementations"]:  
                             if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None 
                                 p=imp.get("performance",0.0)  
-                                r=imp.get("runtime",0.0)  
+                                r=get_best_dev_runtime(_task, lm, pipeline, rid) if task == "machine_unlearning" else imp.get("runtime",0.0)  
                                 c=imp.get("method_complexity",0.0)  
                                 perf_list.append(p)  
                                 run_list.append(r)  
@@ -1434,7 +1447,7 @@ def gather_test_absolute_data_for_task(_task):
                         for imp in d["implementations"]:  
                             if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
                                 p=imp.get("performance",0.0)  
-                                r=imp.get("runtime",0.0)  
+                                r=get_best_dev_runtime(_task, lm, pipeline, rid) if task == "machine_unlearning" else imp.get("runtime",0.0)  
                                 c=imp.get("method_complexity",0.0)  
                                 perf_list.append(p)  
                                 run_list.append(r)  
@@ -1603,7 +1616,7 @@ def plot_combined_radar_charts():
     
     # Determine grid layout (example: 2 rows, 3 cols for 6 tasks)
     n_rows = 2
-    n_cols = 3 # (len(tasks) + 1) // 2  # Adjust as needed
+    n_cols = 4 # (len(tasks) + 1) // 2  # Adjust as needed
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols*5, n_rows*6), subplot_kw={'polar': True})
     axes = axes.flatten()  # Flatten to iterate easily
 

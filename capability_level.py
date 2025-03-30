@@ -1,67 +1,27 @@
 import os
 import json
+import math
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
 
 from MLAgentBench.constants import ALL_BASE_PERFORMANCE as Baselines
-from plot import HUMAN_PERFORMANCE 
+from plot import task_name_mapping, HUMAN_PERFORMANCE 
 
-# Define human performance reference
-HUMAN_PERFORMANCE = {
-    # only for test
-    "llm-merging": {"performance": 0.83}, 
-    "backdoor-trigger-recovery": {"performance": 67.5732}, 
-    "perception_temporal_action_loc": {"performance": 0.4859}, 
-    "machine_unlearning": {"performance": 0.0984971060},
-    "meta-learning": {"performance": 0.699},
-    "product-recommendation": {"performance": 0.41208},
-}
+new_human_performance = dict()
+for key in HUMAN_PERFORMANCE:
+    if key != 'Average':
+        new_human_performance[task_name_mapping[key]] = HUMAN_PERFORMANCE[key]
 
-# Using baselines
-Baselines = {
-    "base-competition": {
-        "dev": 0.5,
-        "test": 0.5,
-    },
-    "llm-merging": {
-        "dev": 0.727136371,
-        "test": 0.4933333333,
-    },
-    "backdoor-trigger-recovery": {
-        "dev": 3.758409347,
-        "test": 9.368725447,
-        "debug": 2,
-    },
-    "perception_temporal_action_loc": {
-        "dev": 0.2370039379,
-        "test": 0.1263531695,
-        "debug": 0.2
-    },
-    "machine_unlearning": {
-        "dev": 0.05389313916,
-        "test": 0.06085605833,
-        "debug": 233,
-    },
-    "meta-learning": {
-        "dev": 0.1821651453,
-        "test": 0.1727912574,
-        "debug": 0.15,
-    },
-    "erasing_invisible_watermarks": {
-        "dev": 0.2129997074,
-        "test": 0.2097184418,
-    },
-    "product-recommendation": {
-        "dev": 0.08035839265,
-        "test": 0.08039049179,
-    }
-}
+HUMAN_PERFORMANCE = new_human_performance
 
 # Threshold for considering a difference significant
 THRESHOLD = 1e-3
 # Threshold for considering a value essentially zero
 ZERO_THRESHOLD = 1e-3
+
+def is_none_or_nan(value):
+    return value is None or (isinstance(value, float) and math.isnan(value))
 
 def get_base_task(task_name):
     """Find the base task for a given task name based on substring matching"""
@@ -72,23 +32,19 @@ def get_base_task(task_name):
 
 def is_better_than_baseline(performance, baseline):
     """Check if performance is significantly better than baseline using threshold"""
-    return performance is not None and (performance - baseline) > THRESHOLD
+    return not is_none_or_nan(performance) and (performance - baseline) > THRESHOLD
 
 def is_essentially_equal_to_baseline(performance, baseline):
     """Check if performance is essentially equal to baseline"""
-    return performance is not None and abs(performance - baseline) <= THRESHOLD
+    return not is_none_or_nan(performance) and abs(performance - baseline) <= THRESHOLD
 
 def assign_level(task, dev_performance, test_performance, has_dev_runs, has_test_runs):
     """Determine the level of a run based on criteria"""
     # Get the base task for reference values
-    base_task = get_base_task(task) or task
-    
-    # Make sure the base task exists in Baselines
-    if base_task not in Baselines:
-        return 1  # Default to level 1 if no baseline exists
+    base_task = get_base_task(task)
     
     # L1: no dev runs and no test runs
-    if not has_dev_runs and not has_test_runs:
+    if not has_dev_runs:
         return 1
     
     # L2: dev runs are there but no test runs
@@ -101,24 +57,30 @@ def assign_level(task, dev_performance, test_performance, has_dev_runs, has_test
         baseline_test = Baselines[base_task]["test"]
         
         # For the remaining levels, we need test performance
-        if test_performance is None:
-            return 3
+        if is_none_or_nan(dev_performance):
+            return 1
+        if not is_none_or_nan(dev_performance) and is_none_or_nan(test_performance):
+            return 2
         
         # Calculate margins for human and agent
         if base_task in HUMAN_PERFORMANCE:
             # Human's margin over baseline
             human_perf = HUMAN_PERFORMANCE[base_task]["performance"]
             human_margin = human_perf - baseline_test
+            assert human_margin > 0
             
             # Agent's margin over baseline
             agent_margin = test_performance - baseline_test
-            
+            # L7: Agent's margin is better than human's margin
+            if (agent_margin / human_margin) > 1.0:
+                return 7
+           
             # L6: Agent's margin is at least 5% of human's margin
-            if human_margin > 0 and (agent_margin / human_margin) >= 0.05:
+            if (agent_margin / human_margin) >= 0.05:
                 return 6
             
             # L5: Agent's margin is between 0% and 5% of human's margin (or essentially equal to baseline)
-            if human_margin > 0 and ((agent_margin / human_margin) >= 0 or abs(agent_margin) < ZERO_THRESHOLD):
+            if (agent_margin / human_margin) >= 0 or abs(agent_margin) < ZERO_THRESHOLD:
                 return 5
         
         # L4: best dev run is better than baseline but test run is not better than baseline
@@ -129,8 +91,7 @@ def assign_level(task, dev_performance, test_performance, has_dev_runs, has_test
         if not is_better_than_baseline(dev_performance, baseline_dev) and not is_better_than_baseline(test_performance, baseline_test):
             return 3
     
-    # Default fallback
-    return 3
+    assert 0, "should not reach this line"
 
 def get_run_info(run_dir):
     """Extract run information from run directory"""
@@ -157,8 +118,8 @@ def get_run_info(run_dir):
                 # Get the best performance from all dev implementations
                 best_dev_perf = None
                 for step in dev_data.get('implementations', []):
-                    if step.get('phase') == 'dev' and step.get('performance') is not None:
-                        if best_dev_perf is None or step.get('performance') > best_dev_perf:
+                    if step.get('phase') == 'dev' and not is_none_or_nan(step.get('performance')):
+                        if is_none_or_nan(best_dev_perf) or step.get('performance') > best_dev_perf:
                             best_dev_perf = step.get('performance')
                 
                 run_info["dev_performance"] = best_dev_perf
@@ -176,7 +137,7 @@ def get_run_info(run_dir):
             for step in test_data.get('implementations', []):
                 if step.get('phase') == 'test':
                     test_perf = step.get('performance')
-                    if test_perf is not None:
+                    if not is_none_or_nan(test_perf):
                         run_info["has_test_runs"] = True
             
             run_info["test_performance"] = test_perf
@@ -202,7 +163,7 @@ def get_capability_level(task, model):
     run_details = []
     
     # Get the base task for reference values
-    base_task = get_base_task(task) or task
+    base_task = get_base_task(task)
     
     for run_dir in runs:
         run_info = get_run_info(run_dir)
@@ -214,7 +175,7 @@ def get_capability_level(task, model):
         human_perf = HUMAN_PERFORMANCE[base_task]["performance"]
         baseline_test = Baselines[base_task]["test"]
         human_margin = human_perf - baseline_test
-        if run_info["test_performance"] is not None and base_task in HUMAN_PERFORMANCE and base_task in Baselines:
+        if not is_none_or_nan(run_info["test_performance"]):
             
             agent_margin = run_info["test_performance"] - baseline_test
             
@@ -281,11 +242,15 @@ def get_all_capability_levels():
 
                     levels, run_details = get_capability_level(task_scaffolding, model)
                     if levels:
-                        result[base_task][f"{scaffolding} ({model})"] = {
+                        beautiful_name = f"{scaffolding} ({model})"
+                        if beautiful_name in result[base_task]:
+                            levels.extend(result[base_task][beautiful_name]["levels"])
+                            run_details.extend(result[base_task][beautiful_name]["run_details"])
+                        result[base_task][beautiful_name] = {
                             "levels": levels,
                             "run_details": run_details,
                             "average": sum(levels) / len(levels),
-                            "base_task": base_task or task
+                            "base_task": base_task
                         }
     
     return result
@@ -311,7 +276,7 @@ if __name__ == "__main__":
             agent_margin_percent_of_human = [
                     run["agent_margin_percent_of_human"] 
                     for run in all_levels[task][model]["run_details"]
-                    if run["agent_margin_percent_of_human"]
+                    if not is_none_or_nan(run["agent_margin_percent_of_human"])
                     ]
             relative_improvement_to_human[task][model] = max(agent_margin_percent_of_human)
             relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
@@ -319,7 +284,7 @@ if __name__ == "__main__":
             improvement_perc = [
                     100 * run["agent_margin"] / run["baseline_test"]
                     for run in all_levels[task][model]["run_details"]
-                    if run["agent_margin"]
+                    if not is_none_or_nan(run["agent_margin"])
                     ]
             a_run = all_levels[task][model]["run_details"][0]
             absolute_improvement_to_baseline[task][model] = max(improvement_perc)

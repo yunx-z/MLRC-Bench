@@ -6,7 +6,7 @@
     "MLAB (o3-mini)": 0.3066106841553126,
     "MLAB (gpt-4o)": 0.3298075630252947,
     "MLAB (llama3-1-405b-instruct)": 0.5183240203504569,
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.3475212791527979
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.359092127622128
   },
   "llm-merging": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": -0.9900989999019761,
@@ -18,16 +18,16 @@
     "MLAB (llama3-1-405b-instruct)": -0.9900989999019761
   },
   "meta-learning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 1.781401026144938,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.0,
     "Top Human in Competition": 100.0,
-    "MLAB (claude-3-5-sonnet-v2)": 1.781401026144938,
-    "MLAB (gemini-exp-1206)": 1.781401026144938,
+    "MLAB (claude-3-5-sonnet-v2)": 0.0,
+    "MLAB (gemini-exp-1206)": 0.0,
     "MLAB (o3-mini)": -4.900331256476853,
-    "MLAB (gpt-4o)": 1.781401026144938,
-    "MLAB (llama3-1-405b-instruct)": 1.781401026144938
+    "MLAB (gpt-4o)": 0.0,
+    "MLAB (llama3-1-405b-instruct)": 0.0
   },
   "product-recommendation": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.1459345029718814,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.5631496283210442,
     "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 2.9771372473170388,
     "MLAB (gemini-exp-1206)": 0.1459345029718814,
@@ -35,8 +35,17 @@
     "MLAB (gpt-4o)": 0.6398666846799662,
     "MLAB (llama3-1-405b-instruct)": -7.044800459739471e-10
   },
+  "weather_forcast": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 20.92571419388861,
+    "Top Human in Competition": 100.0,
+    "MLAB (claude-3-5-sonnet-v2)": 7.773848999855125,
+    "MLAB (gemini-exp-1206)": 22.8788478013231,
+    "MLAB (o3-mini)": 13.333834122654315,
+    "MLAB (gpt-4o)": 25.230729618052862,
+    "MLAB (llama3-1-405b-instruct)": 16.703324166421556
+  },
   "machine_unlearning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 11.832138969791846,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 14.15189507130952,
     "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": -94.71778374121965,
     "MLAB (gemini-exp-1206)": 5.632371576335568,
@@ -44,8 +53,17 @@
     "MLAB (gpt-4o)": -17.996962489965668,
     "MLAB (llama3-1-405b-instruct)": 6.2098517833311
   },
+  "erasing_invisible_watermarks": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 83.95546150092426,
+    "Top Human in Competition": 100.0,
+    "MLAB (claude-3-5-sonnet-v2)": 87.5563896288299,
+    "MLAB (gemini-exp-1206)": 97.50069914191698,
+    "MLAB (o3-mini)": 83.42496885653976,
+    "MLAB (gpt-4o)": 83.42496885653976,
+    "MLAB (llama3-1-405b-instruct)": 83.42496885653976
+  },
   "backdoor-trigger-recovery": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 6.1572772457753295,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 13.67378432244214,
     "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 39.903815022493674,
     "MLAB (gemini-exp-1206)": 12.94287662739089,

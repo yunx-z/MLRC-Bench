@@ -6,7 +6,7 @@
     "MLAB (o3-mini)": 0.8724822663469414,
     "MLAB (gpt-4o)": 0.9384906166574135,
     "MLAB (llama3-1-405b-instruct)": 1.474927454740455,
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.9888962417416385
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 1.0218219048635548
   },
   "llm-merging": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": -0.6756756689645764,
@@ -18,16 +18,16 @@
     "MLAB (llama3-1-405b-instruct)": -0.6756756689645764
   },
   "meta-learning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 5.424978139166417,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.0,
     "Top Human in Competition": 304.53435579895256,
-    "MLAB (claude-3-5-sonnet-v2)": 5.424978139166417,
-    "MLAB (gemini-exp-1206)": 5.424978139166417,
+    "MLAB (claude-3-5-sonnet-v2)": 0.0,
+    "MLAB (gemini-exp-1206)": 0.0,
     "MLAB (o3-mini)": -14.923192223926499,
-    "MLAB (gpt-4o)": 5.424978139166417,
-    "MLAB (llama3-1-405b-instruct)": 5.424978139166417
+    "MLAB (gpt-4o)": 0.0,
+    "MLAB (llama3-1-405b-instruct)": 0.0
   },
   "product-recommendation": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.6021227441680528,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 2.323543731445201,
     "Top Human in Competition": 412.59793394031675,
     "MLAB (claude-3-5-sonnet-v2)": 12.283606772997718,
     "MLAB (gemini-exp-1206)": 0.6021227441680528,
@@ -35,8 +35,17 @@
     "MLAB (gpt-4o)": 2.6400767209619422,
     "MLAB (llama3-1-405b-instruct)": -2.9066701147102995e-09
   },
+  "weather_forcast": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 83.57339889948773,
+    "Top Human in Competition": 399.38134548303964,
+    "MLAB (claude-3-5-sonnet-v2)": 31.047302731441217,
+    "MLAB (gemini-exp-1206)": 91.37385017994103,
+    "MLAB (o3-mini)": 53.25284612353345,
+    "MLAB (gpt-4o)": 100.7668274237673,
+    "MLAB (llama3-1-405b-instruct)": 66.70996079624813
+  },
   "machine_unlearning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 7.318484292638537,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 8.7533135010389,
     "Top Human in Competition": 61.85258904854873,
     "MLAB (claude-3-5-sonnet-v2)": -58.58540153334969,
     "MLAB (gemini-exp-1206)": 3.4837676447981045,
@@ -44,8 +53,17 @@
     "MLAB (gpt-4o)": -11.131587250139926,
     "MLAB (llama3-1-405b-instruct)": 3.8409541040677597
   },
+  "erasing_invisible_watermarks": {
+    "CoI-Agent (o1) + MLAB (gpt-4o)": -1.406828534011105e-08,
+    "Top Human in Competition": -95.64143951135466,
+    "MLAB (claude-3-5-sonnet-v2)": -1.406828534011105e-08,
+    "MLAB (gemini-exp-1206)": -1.406828534011105e-08,
+    "MLAB (o3-mini)": -0.0299116168403593,
+    "MLAB (gpt-4o)": 0.48496546056525436,
+    "MLAB (llama3-1-405b-instruct)": -1.406828534011105e-08
+  },
   "backdoor-trigger-recovery": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 38.252918051116,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 84.95023534857077,
     "Top Human in Competition": 621.2635313337943,
     "MLAB (claude-3-5-sonnet-v2)": 247.90785034564928,
     "MLAB (gemini-exp-1206)": 80.40937239150493,
