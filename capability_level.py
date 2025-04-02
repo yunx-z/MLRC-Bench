@@ -282,7 +282,7 @@ if __name__ == "__main__":
             relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
 
             improvement_perc = [
-                    100 * run["agent_margin"] / run["baseline_test"]
+                    100 * run["agent_margin"] / abs(run["baseline_test"])
                     for run in all_levels[task][model]["run_details"]
                     if not is_none_or_nan(run["agent_margin"])
                     ]
