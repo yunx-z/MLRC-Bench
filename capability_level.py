@@ -288,7 +288,7 @@ if __name__ == "__main__":
                     ]
             a_run = all_levels[task][model]["run_details"][0]
             absolute_improvement_to_baseline[task][model] = round(max(improvement_perc), 1)
-            absolute_improvement_to_baseline[task]["Top Human in Competition"] = round(100 * a_run["human_margin"] / a_run["baseline_test"], 1)
+            absolute_improvement_to_baseline[task]["Top Human in Competition"] = round(100 * a_run["human_margin"] / abs(a_run["baseline_test"]), 1)
 
 
     metric_dir = "leaderboard_metrics/"
