@@ -6,7 +6,8 @@
     "MLAB (o3-mini)": 0.3,
     "MLAB (gpt-4o)": 0.3,
     "MLAB (llama3-1-405b-instruct)": 0.5,
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.4
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.4,
+    "Human Idea + MLAB (gpt-4o)": 0.5
   },
   "llm-merging": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": -1.0,
@@ -15,16 +16,18 @@
     "MLAB (gemini-exp-1206)": 5.0,
     "MLAB (o3-mini)": -1.0,
     "MLAB (gpt-4o)": 2.0,
-    "MLAB (llama3-1-405b-instruct)": -1.0
+    "MLAB (llama3-1-405b-instruct)": -1.0,
+    "Human Idea + MLAB (gpt-4o)": -1.0
   },
   "meta-learning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 1.8,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": -4.9,
     "Top Human in Competition": 100.0,
-    "MLAB (claude-3-5-sonnet-v2)": 1.8,
-    "MLAB (gemini-exp-1206)": 1.8,
+    "MLAB (claude-3-5-sonnet-v2)": -4.9,
+    "MLAB (gemini-exp-1206)": -1.1,
     "MLAB (o3-mini)": -4.9,
-    "MLAB (gpt-4o)": 1.8,
-    "MLAB (llama3-1-405b-instruct)": 1.8
+    "MLAB (gpt-4o)": -4.9,
+    "MLAB (llama3-1-405b-instruct)": -4.9,
+    "Human Idea + MLAB (gpt-4o)": -4.9
   },
   "product-recommendation": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 0.6,
@@ -33,42 +36,37 @@
     "MLAB (gemini-exp-1206)": 0.1,
     "MLAB (o3-mini)": 0.1,
     "MLAB (gpt-4o)": 0.6,
-    "MLAB (llama3-1-405b-instruct)": -0.0
+    "MLAB (llama3-1-405b-instruct)": -0.0,
+    "Human Idea + MLAB (gpt-4o)": 2.2
   },
   "weather_forcast": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 20.9,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 39.4,
     "Top Human in Competition": 100.0,
-    "MLAB (claude-3-5-sonnet-v2)": 7.8,
-    "MLAB (gemini-exp-1206)": 22.9,
-    "MLAB (o3-mini)": 13.3,
-    "MLAB (gpt-4o)": 25.2,
-    "MLAB (llama3-1-405b-instruct)": 16.7
+    "Human Idea + MLAB (gpt-4o)": 12.3,
+    "MLAB (claude-3-5-sonnet-v2)": 14.6,
+    "MLAB (gemini-exp-1206)": 43.1,
+    "MLAB (o3-mini)": 25.1,
+    "MLAB (gpt-4o)": 47.5,
+    "MLAB (llama3-1-405b-instruct)": 31.5
   },
   "machine_unlearning": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 14.2,
     "Top Human in Competition": 100.0,
+    "Human Idea + MLAB (gpt-4o)": 6.8,
     "MLAB (claude-3-5-sonnet-v2)": -94.7,
     "MLAB (gemini-exp-1206)": 5.6,
     "MLAB (o3-mini)": 3.6,
     "MLAB (gpt-4o)": -18.0,
     "MLAB (llama3-1-405b-instruct)": 6.2
   },
-  "erasing_invisible_watermarks": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 84.0,
-    "Top Human in Competition": 100.0,
-    "MLAB (claude-3-5-sonnet-v2)": 87.6,
-    "MLAB (gemini-exp-1206)": 97.5,
-    "MLAB (o3-mini)": 83.4,
-    "MLAB (gpt-4o)": 83.4,
-    "MLAB (llama3-1-405b-instruct)": 83.4
-  },
   "backdoor-trigger-recovery": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 13.7,
     "Top Human in Competition": 100.0,
+    "MLAB (gpt-4o)": 11.9,
     "MLAB (claude-3-5-sonnet-v2)": 39.9,
     "MLAB (gemini-exp-1206)": 12.9,
     "MLAB (o3-mini)": 6.2,
-    "MLAB (gpt-4o)": 10.4,
-    "MLAB (llama3-1-405b-instruct)": 11.5
+    "MLAB (llama3-1-405b-instruct)": 11.5,
+    "Human Idea + MLAB (gpt-4o)": 8.8
   }
 }

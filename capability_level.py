@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from MLAgentBench.constants import ALL_BASE_PERFORMANCE as Baselines
-from plot import task_name_mapping, HUMAN_PERFORMANCE 
+from plot import task_name_mapping, HUMAN_PERFORMANCE, is_float_in_list 
 
 new_human_performance = dict()
 for key in HUMAN_PERFORMANCE:
@@ -28,6 +28,7 @@ def get_base_task(task_name):
     for base_task in HUMAN_PERFORMANCE.keys():
         if base_task in task_name:
             return base_task
+    assert 0, f"no base_task for {task_name}"
     return None
 
 def is_better_than_baseline(performance, baseline):
@@ -134,9 +135,13 @@ def get_run_info(run_dir):
             
             # Extract test performance (should be in the last entry with phase="test")
             test_perf = None
+            all_dev_performaces = [step["performance"] for step in test_data["implementations"] if step["phase"] == "dev"]
             for step in test_data.get('implementations', []):
                 if step.get('phase') == 'test':
                     test_perf = step.get('performance')
+                    if test_perf and is_float_in_list(test_perf, all_dev_performaces):
+                        # fix meta-learning eval bug
+                        test_perf = None
                     if not is_none_or_nan(test_perf):
                         run_info["has_test_runs"] = True
             
@@ -171,7 +176,7 @@ def get_capability_level(task, model):
         # Calculate margins for reporting
         agent_margin = None
         agent_margin_percent = None
-        
+       
         human_perf = HUMAN_PERFORMANCE[base_task]["performance"]
         baseline_test = Baselines[base_task]["test"]
         human_margin = human_perf - baseline_test
@@ -222,12 +227,14 @@ def get_all_capability_levels():
     for task_dir in data_dir.iterdir():
         if task_dir.is_dir():
             task_scaffolding = task_dir.name
+            if "erasing_invisible_watermarks" in task_scaffolding:
+                # temporarily skip the task
+                continue
+
             if "o1-preview" in task_scaffolding:
                 scaffolding = "CoI-Agent (o1) + MLAB"
             elif "human" in task_scaffolding:
-                continue
-            elif len(task_scaffolding.split('--')) > 1:
-                continue
+                scaffolding = "Human Idea + MLAB"
             else:
                 scaffolding = "MLAB"
 
