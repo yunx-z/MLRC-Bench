@@ -4,6 +4,9 @@ import math
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
+import random
+
+random.seed(2025)
 
 from MLAgentBench.constants import ALL_BASE_PERFORMANCE as Baselines
 from plot import task_name_mapping, HUMAN_PERFORMANCE, is_float_in_list 
@@ -231,7 +234,9 @@ def get_all_capability_levels():
                 # temporarily skip the task
                 continue
 
-            if "o1-preview" in task_scaffolding:
+            if "--o1-preview" in task_scaffolding:
+                if "1--o1-preview" not in task_scaffolding:
+                    continue
                 scaffolding = "CoI-Agent (o1) + MLAB"
             elif "human" in task_scaffolding:
                 scaffolding = "Human Idea + MLAB"
@@ -285,6 +290,8 @@ if __name__ == "__main__":
                     for run in all_levels[task][model]["run_details"]
                     if not is_none_or_nan(run["agent_margin_percent_of_human"])
                     ]
+            if len(agent_margin_percent_of_human) == 0:
+                print(all_levels[task][model])
             relative_improvement_to_human[task][model] = round(max(agent_margin_percent_of_human), 1)
             relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
 

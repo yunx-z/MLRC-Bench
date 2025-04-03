@@ -19,25 +19,15 @@
     "MLAB (llama3-1-405b-instruct)": -0.7,
     "Human Idea + MLAB (gpt-4o)": -0.7
   },
-  "meta-learning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": -14.9,
-    "Top Human in Competition": 304.5,
-    "MLAB (claude-3-5-sonnet-v2)": -14.9,
-    "MLAB (gemini-exp-1206)": -3.2,
-    "MLAB (o3-mini)": -14.9,
-    "MLAB (gpt-4o)": -14.9,
-    "MLAB (llama3-1-405b-instruct)": -14.9,
-    "Human Idea + MLAB (gpt-4o)": -14.9
-  },
   "product-recommendation": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 2.3,
-    "Top Human in Competition": 412.6,
     "MLAB (claude-3-5-sonnet-v2)": 12.3,
+    "Top Human in Competition": 412.6,
     "MLAB (gemini-exp-1206)": 0.6,
     "MLAB (o3-mini)": 0.6,
     "MLAB (gpt-4o)": 2.6,
     "MLAB (llama3-1-405b-instruct)": -0.0,
-    "Human Idea + MLAB (gpt-4o)": 8.9
+    "Human Idea + MLAB (gpt-4o)": 8.9,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 0.6
   },
   "weather_forcast": {
     "CoI-Agent (o1) + MLAB (gpt-4o)": 83.6,
@@ -49,10 +39,20 @@
     "MLAB (gpt-4o)": 100.8,
     "MLAB (llama3-1-405b-instruct)": 66.7
   },
+  "meta-learning": {
+    "MLAB (claude-3-5-sonnet-v2)": -14.9,
+    "Top Human in Competition": 304.5,
+    "MLAB (gemini-exp-1206)": -3.2,
+    "MLAB (o3-mini)": -14.9,
+    "MLAB (gpt-4o)": -14.9,
+    "MLAB (llama3-1-405b-instruct)": -14.9,
+    "Human Idea + MLAB (gpt-4o)": -14.9,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": -14.9
+  },
   "machine_unlearning": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 8.8,
-    "Top Human in Competition": 61.9,
     "Human Idea + MLAB (gpt-4o)": 4.2,
+    "Top Human in Competition": 61.9,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 7.3,
     "MLAB (claude-3-5-sonnet-v2)": -58.6,
     "MLAB (gemini-exp-1206)": 3.5,
     "MLAB (o3-mini)": 2.2,
@@ -60,9 +60,9 @@
     "MLAB (llama3-1-405b-instruct)": 3.8
   },
   "backdoor-trigger-recovery": {
-    "CoI-Agent (o1) + MLAB (gpt-4o)": 85.0,
-    "Top Human in Competition": 621.3,
     "MLAB (gpt-4o)": 74.0,
+    "Top Human in Competition": 621.3,
+    "CoI-Agent (o1) + MLAB (gpt-4o)": 24.9,
     "MLAB (claude-3-5-sonnet-v2)": 247.9,
     "MLAB (gemini-exp-1206)": 80.4,
     "MLAB (o3-mini)": 38.8,
