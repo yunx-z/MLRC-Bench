@@ -1728,7 +1728,8 @@ def plot_combined_radar_charts():
                 legend_elements[lab] = line[0]
         
         # Add legend to the right of each subplot
-        ax.set_title(task, fontsize=18)  # Add title padding
+        title_task = 'rainfall-pred' if task == 'weather-forecast' else task
+        ax.set_title(title_task, fontsize=18)  # Add title padding
 
     
     # Hide unused subplots

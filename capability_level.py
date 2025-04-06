@@ -1,6 +1,7 @@
 import os
 import json
 import math
+import glob
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
@@ -9,7 +10,7 @@ import random
 random.seed(2025)
 
 from MLAgentBench.constants import ALL_BASE_PERFORMANCE as Baselines
-from plot import task_name_mapping, HUMAN_PERFORMANCE, is_float_in_list 
+from plot import task_name_mapping, HUMAN_PERFORMANCE, is_float_in_list, extract_timestamp_from_dirname 
 
 new_human_performance = dict()
 for key in HUMAN_PERFORMANCE:
@@ -166,7 +167,22 @@ def get_capability_level(task, model):
     if not task_dir.exists():
         return []
     
-    runs = [d for d in task_dir.iterdir() if d.is_dir()]
+    # runs = [d for d in task_dir.iterdir() if d.is_dir()]
+    base_pattern_logs = f"{task_dir}/*"
+    log_runs = []  
+    for path in glob.glob(base_pattern_logs):  
+        if os.path.isdir(path):  
+            dirname = os.path.basename(path)  
+            ts = extract_timestamp_from_dirname(dirname)  
+            if ts is not None:  
+                log_runs.append((dirname, ts))  
+  
+    items = list(log_runs)  
+    items.sort(key=lambda x: x[1])  # ascending  
+    items = items[-8:]  
+    runs = [Path(f"{task_dir}/{x[0]}") for x in items]  
+
+
     levels = []
     run_details = []
     
@@ -215,6 +231,11 @@ def get_capability_level(task, model):
             "human_performance": HUMAN_PERFORMANCE.get(base_task, {}).get("performance"),
             "base_task": base_task
         })
+
+    if len(levels) != 8: 
+        print(f"{task} {model} has {len(levels)} levels")
+    if len(run_details) != 8:
+        print(f"{task} {model} has {len(run_details)} run_details")
     
     return levels, run_details
 
@@ -291,7 +312,7 @@ if __name__ == "__main__":
                     if not is_none_or_nan(run["agent_margin_percent_of_human"])
                     ]
             if len(agent_margin_percent_of_human) == 0:
-                print(all_levels[task][model])
+                print(f"agent_margin_percent_of_human is None for task={task} model={model}", all_levels[task][model])
             relative_improvement_to_human[task][model] = round(max(agent_margin_percent_of_human), 1)
             relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
 

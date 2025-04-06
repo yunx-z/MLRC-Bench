@@ -60,12 +60,12 @@
     "MLAB (llama3-1-405b-instruct)": 6.2
   },
   "backdoor-trigger-recovery": {
-    "MLAB (gpt-4o)": 11.9,
-    "Top Human in Competition": 100.0,
     "CoI-Agent (o1) + MLAB (gpt-4o)": 4.0,
+    "Top Human in Competition": 100.0,
     "MLAB (claude-3-5-sonnet-v2)": 39.9,
     "MLAB (gemini-exp-1206)": 12.9,
     "MLAB (o3-mini)": 6.2,
+    "MLAB (gpt-4o)": 10.4,
     "MLAB (llama3-1-405b-instruct)": 11.5,
     "Human Idea + MLAB (gpt-4o)": 8.8
   }
