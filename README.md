@@ -1,5 +1,14 @@
+# MLRC-Bench: Can Language Agents Solve Machine Learning Research Challenges?
+MLRC-Bench ([paper](https://drive.google.com/file/d/14ol9OVNm2d1SKdNQkLTztH6pbyhrHyW8/view?usp=sharing)) is a benchmark designed to quantify how effectively language agents can tackle challenging Machine Learning (ML) Research Competition problems by proposing and implementing novel ideas into code. 
+
+![](main.pdf)
+
+The first release of our benchmark includes 7 tasks adapted from recent Machine Learning conference competitions.
+
+![](table.pdf)
+
 # Setup
-This repo is based on [MLAgentBench](https://github.com/snap-stanford/MLAgentBench). 
+
 
 Create a conda enviroment with your TASK_NAME.
 
@@ -62,6 +71,5 @@ Others:
 - Also put all test data under `scripts/test_data`
 - Your code should not attempt to access internet. Any pretrained models, datasets should be downloaded beforehand by `prepare.py`.
 
-# Pro tips
-
-You may use ChatGPT to help you refactor the code and further tweak upon the generated code. Feel free to use the [template prompt](https://docs.google.com/document/d/1GMREHB8phddatCQcsg9QlWJdqzryQ2xBCV7sFV21g0Q/edit?usp=sharing) I developed here, which relies on `print_all_dir_files.py` that gives you the concatenation of all files under a specified directory.
+# Acknowledgements
+This repo is based on [MLAgentBench](https://github.com/snap-stanford/MLAgentBench). 
