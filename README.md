@@ -1,11 +1,11 @@
 # MLRC-Bench: Can Language Agents Solve Machine Learning Research Challenges?
 MLRC-Bench ([paper](https://drive.google.com/file/d/14ol9OVNm2d1SKdNQkLTztH6pbyhrHyW8/view?usp=sharing)) is a benchmark designed to quantify how effectively language agents can tackle challenging Machine Learning (ML) Research Competition problems by proposing and implementing novel ideas into code. 
 
-![](main.pdf)
+![](main.png)
 
 The first release of our benchmark includes 7 tasks adapted from recent Machine Learning conference competitions.
 
-![](table.pdf)
+![](table.png)
 
 # Setup
 
