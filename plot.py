@@ -30,6 +30,7 @@ import os
 import glob  
 import json  
 import re  
+import math
 import numpy as np  
 import pandas as pd  
 import matplotlib.pyplot as plt  
@@ -43,6 +44,8 @@ import colorsys
 
   
 from MLAgentBench.constants import *
+from MLAgentBench.utils import calculate_complexity
+
 ##############################################################################  
 # Global config  
 ##############################################################################  
@@ -55,6 +58,7 @@ PIPELINES = [SINGLE_AGENT, MULTI_AGENT, HUMAN_SINGLE_AGENT]
   
 # LMs  
 LMS = ["claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct", "o3-mini", "gpt-4o"]  
+LM_LABELS = {"gemini-exp-1206" : "gemini-exp-1206"}
 colors = ['#0173b2', '#029e73', '#cc78bc', '#ca9161', '#ece133', '#56b4e9']
 LM_COLORS = {lm : c for lm, c in zip(LMS, colors)}
 # Tasks 
@@ -65,13 +69,32 @@ task_name_mapping = {
         "machine-unlearning" : "machine_unlearning",
         "meta-learning" : "meta-learning",
         "product-rec" : "product-recommendation",
-        "erasing-watermark" : "erasing_invisible_watermarks",
+        # "erasing-watermark" : "erasing_invisible_watermarks",
         "weather-forecast" : "weather_forcast",
         }
 TASKS = list(task_name_mapping.keys())
+
+BASELINE_FILE = {
+        "llm-merging" : "methods/MyMethod.py",
+        "backdoor-trigger-recovery" : "methods/MyMethod.py",
+        "perception_temporal_action_loc" : "methods/MyMethod.py",
+        "machine_unlearning" : "methods/MyMethod.py",
+        "meta-learning" : "methods/MyMethod/model.py",
+        "product-recommendation" : "methods/MyMethod.py",
+        "erasing_invisible_watermarks" : "methods/MyMethod.py",
+        "weather_forcast" : "methods/MyMethod.py",
+        }
+
+BASELINE_LLOC = dict()
 for k in TASKS:
     v = task_name_mapping[k]
     task_name_mapping[v] = v
+    baseline_file_path = os.path.join(f"MLAgentBench/benchmarks_base/{v}/env", BASELINE_FILE[v])
+    with open(baseline_file_path, 'r') as reader:
+        baseline_code = reader.read()
+    BASELINE_LLOC[v] = calculate_complexity(baseline_code)
+
+print("baseline LLOC", BASELINE_LLOC)
 
   
 # Idea indices  
@@ -100,8 +123,8 @@ HUMAN_PERFORMANCE = {
     "machine-unlearning": {"performance" : 0.0984971060},
     "meta-learning": {"performance" : 0.699},
     "product-rec": {"performance" : 0.41208},
-    "erasing-watermark": {"performance" : -0.04363443074502975},
-    "weather-forecast": {"performance" : 0.1014596},
+    # "erasing-watermark": {"performance" : -0.04363443074502975},
+    "weather-forecast": {"performance" : 0.06339907646179199},
 } 
 all_task_improvement_perc = []
 for task in HUMAN_PERFORMANCE:
@@ -150,7 +173,19 @@ def load_json_safely(path):
             return json.load(f)  
     except:  
         return None  
-  
+
+def is_float_in_list(num, num_list, rel_tol=1e-6):
+    """
+    Check if a float number is in a list, with optional approximate matching.
+
+    :param num: The float number to check.
+    :param num_list: The list of float numbers.
+    :param rel_tol: Relative tolerance for approximate matching (default: 1e-9).
+    :return: True if the number is in the list, False otherwise.
+    """
+    return any(math.isclose(num, x, rel_tol=rel_tol) for x in num_list)
+
+
 def find_most_recent_8_runs_for_pipeline(_task, lm, pipeline, idea_idx=None):  
     """  
     Collect run dirs from workspace and logs, unify, then keep the last 8 by ascending time.  
@@ -203,6 +238,7 @@ def get_dev_results(_task, lm, pipeline, run_id, idea_idx=None):
     out = []  
     BASE_RUNTIME = ALL_BASE_RUNTIME[task]["dev"] 
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["dev"]
+    BASE_COMPLEXITY = BASELINE_LLOC[task]
 
     for imp in data.get("implementations", []):  
         if imp.get("phase") == "dev" and imp["performance"] is not None: # performance should not be None  
@@ -210,7 +246,7 @@ def get_dev_results(_task, lm, pipeline, run_id, idea_idx=None):
                 (  
                     100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE), # updated with newest estimation
                     100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
-                    imp["relative_complexity"],
+                    100 * (imp["method_complexity"] - BASE_COMPLEXITY) / BASE_COMPLEXITY,
                 )  
             )  
     return out  
@@ -231,7 +267,9 @@ def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):
         return None  
     BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] 
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
+    BASE_COMPLEXITY = BASELINE_LLOC[task]
 
+    all_dev_performances = [imp["performance"] for imp in data["implementations"] if imp["phase"] == "dev"]
     for imp in data.get("implementations", []):  
         if imp.get("phase") == "test" and imp["performance"] is not None : # performance should not be None 
             # if task == "machine_unlearning":
@@ -240,11 +278,15 @@ def get_test_result(_task, lm, pipeline, run_id, idea_idx=None):
             #     dev_results.sort(key=lambda x: x[0])
             #     best_dev_result = dev_results[-1]
             #     best_dev_runtime = best_dev_result[1] 
-
+            if is_float_in_list(imp["performance"], all_dev_performances):
+                # fix meta-learning bug
+                return None
+            else:
+                performance_improve_perc = 100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE)
             ret = (  
-                100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE), # updated with newest estimation
+                performance_improve_perc,
                 0 if task == "machine_unlearning" else 100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME,
-                imp.get("relative_complexity", 0.0),  
+                100 * (imp["method_complexity"] - BASE_COMPLEXITY) / BASE_COMPLEXITY,
             )  
             return ret
     return None
@@ -285,7 +327,7 @@ def compute_success_rates_data(phase='test'):
                         if phase=='test':  
                             r = get_test_result(task, lm, pipeline, rid)  
                             success_list.append(  
-                                1 if (r and r[0]>TASK_THRESHOLD[task]) else 0  
+                                1 if (r and r[0] and r[0]>TASK_THRESHOLD[task]) else 0  
                             )  
                         else: # dev  
                             dev_res = get_dev_results(task, lm, pipeline, rid)  
@@ -303,7 +345,7 @@ def compute_success_rates_data(phase='test'):
                             if phase=='test':  
                                 r = get_test_result(task, lm, pipeline, rid, idea_idx)  
                                 agg.append(  
-                                    1 if (r and r[0]>TASK_THRESHOLD[task]) else 0  
+                                    1 if (r and r[0] and r[0]>TASK_THRESHOLD[task]) else 0  
                                 )  
                             else:  
                                 dev_res = get_dev_results(task, lm, pipeline, rid, idea_idx)  
@@ -319,7 +361,7 @@ def compute_success_rates_data(phase='test'):
                         if phase=='test':  
                             r = get_test_result(task, lm, pipeline, rid)  
                             success_list.append(  
-                                1 if (r and r[0]>TASK_THRESHOLD[task]) else 0  
+                                1 if (r and r[0] and r[0]>TASK_THRESHOLD[task]) else 0  
                             )  
                         else:  
                             dev_res = get_dev_results(task, lm, pipeline, rid)  
@@ -906,7 +948,7 @@ def plot_figure_4(fig4_data):
                     xvals = range(1, len(arr) + 1)
                     style_ = PIPELINE_LINESTYLES.get(pipeline, 'solid')
                     color_ = LM_COLORS.get(lm, 'black')
-                    lab = f"{lm}"
+                    lab = LM_LABELS.get(lm, lm)
                     line, = ax.plot(xvals, arr, marker='o', linestyle=style_, color=color_, label=lab) # Get line object
 
                     metric_handles.append(line) # Collect handles for legend
@@ -1108,15 +1150,22 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
 
     # recalculate improvement_perc?
   
-    def process_imp(imp):  
+    def process_imp(imp, dat):  
         BASE_RUNTIME = ALL_BASE_RUNTIME[imp["task_name"]][imp["phase"]] 
         BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[imp["task_name"]][imp["phase"]]
+        BASE_COMPLEXITY = BASELINE_LLOC[imp["task_name"]]
+        all_dev_performances = [imp["performance"] for imp in dat["implementations"] if imp["phase"] == "dev"]
+        if is_float_in_list(imp["performance"], all_dev_performances):
+            # fix meta-learning eval bug
+            return
+        else:
+            performance_improve_perc = 100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE)
 
         base={  
-            "improvement_perc": 100 * (imp["performance"] - BASE_PERFORMANCE) / abs(BASE_PERFORMANCE),  
+            "improvement_perc": performance_improve_perc,  
             # None values are automatically ignored when calculating correlation
             "relative_runtime": -100 * (imp["runtime"] - BASE_RUNTIME) / BASE_RUNTIME if BASE_RUNTIME else None,  # higher the better
-            "relative_complexity":-imp.get("relative_complexity",0.0),  # higher the better
+            "relative_complexity": 100 * (imp["method_complexity"] - BASE_COMPLEXITY) / BASE_COMPLEXITY,
         }  
         llm_eval=imp.get("llm_eval",{})  
         wc=llm_eval.get("with_code",{})  
@@ -1149,7 +1198,7 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
                             if dat and "implementations" in dat:  
                                 for imp in dat["implementations"]:  
                                     if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None  
-                                        process_imp(imp)  
+                                        process_imp(imp, dat)  
             elif pipeline==SINGLE_AGENT:  
                 for lm in LMS:  
                     rids=find_most_recent_8_runs_for_pipeline(task,lm,pipeline)  
@@ -1159,7 +1208,7 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
                         if dat and "implementations" in dat:  
                             for imp in dat["implementations"]:  
                                 if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
-                                    process_imp(imp)  
+                                    process_imp(imp, dat)  
             else:  
                 for lm in LMS:  
                     rids=find_most_recent_8_runs_for_pipeline(task,lm,pipeline)  
@@ -1169,7 +1218,7 @@ def gather_test_correlation_data(tasks_to_do=TASKS):
                         if dat and "implementations" in dat:  
                             for imp in dat["implementations"]:  
                                 if imp.get("phase")=="test" and imp["performance"] is not None: # performance should not be None
-                                    process_imp(imp)  
+                                    process_imp(imp, dat)  
   
     df_with=pd.DataFrame(records_with)  
     df_without=pd.DataFrame(records_without)  
@@ -1325,7 +1374,7 @@ def load_baseline_data_for_task(_task):
     gen_list=[]  
     BASE_RUNTIME = ALL_BASE_RUNTIME[task]["test"] if task != "machine_unlearning" else 0 
     BASE_PERFORMANCE = ALL_BASE_PERFORMANCE[task]["test"]
-
+    BASE_COMPLEXITY = BASELINE_LLOC[task]
 
     for imp in data.get("implementations", []):  
         if imp.get("phase")=="test":  
@@ -1351,7 +1400,7 @@ def load_baseline_data_for_task(_task):
     return (  
         BASE_PERFORMANCE, # np.mean(perf_vals),  
         BASE_RUNTIME, # np.mean(run_vals),  
-        comp_vals[0],  # assume LLOC of each test is same
+        BASE_COMPLEXITY,  # assume LLOC of each test is same
         np.mean(clar_list),
         np.mean(val_list),
         np.mean(rig_list),
@@ -1679,7 +1728,8 @@ def plot_combined_radar_charts():
                 legend_elements[lab] = line[0]
         
         # Add legend to the right of each subplot
-        ax.set_title(task, fontsize=18)  # Add title padding
+        title_task = 'rainfall-pred' if task == 'weather-forecast' else task
+        ax.set_title(title_task, fontsize=18)  # Add title padding
 
     
     # Hide unused subplots

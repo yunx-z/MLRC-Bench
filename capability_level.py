@@ -1,12 +1,16 @@
 import os
 import json
 import math
+import glob
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
+import random
+
+random.seed(2025)
 
 from MLAgentBench.constants import ALL_BASE_PERFORMANCE as Baselines
-from plot import task_name_mapping, HUMAN_PERFORMANCE 
+from plot import task_name_mapping, HUMAN_PERFORMANCE, is_float_in_list, extract_timestamp_from_dirname 
 
 new_human_performance = dict()
 for key in HUMAN_PERFORMANCE:
@@ -28,6 +32,7 @@ def get_base_task(task_name):
     for base_task in HUMAN_PERFORMANCE.keys():
         if base_task in task_name:
             return base_task
+    assert 0, f"no base_task for {task_name}"
     return None
 
 def is_better_than_baseline(performance, baseline):
@@ -134,9 +139,13 @@ def get_run_info(run_dir):
             
             # Extract test performance (should be in the last entry with phase="test")
             test_perf = None
+            all_dev_performaces = [step["performance"] for step in test_data["implementations"] if step["phase"] == "dev"]
             for step in test_data.get('implementations', []):
                 if step.get('phase') == 'test':
                     test_perf = step.get('performance')
+                    if test_perf and is_float_in_list(test_perf, all_dev_performaces):
+                        # fix meta-learning eval bug
+                        test_perf = None
                     if not is_none_or_nan(test_perf):
                         run_info["has_test_runs"] = True
             
@@ -158,7 +167,22 @@ def get_capability_level(task, model):
     if not task_dir.exists():
         return []
     
-    runs = [d for d in task_dir.iterdir() if d.is_dir()]
+    # runs = [d for d in task_dir.iterdir() if d.is_dir()]
+    base_pattern_logs = f"{task_dir}/*"
+    log_runs = []  
+    for path in glob.glob(base_pattern_logs):  
+        if os.path.isdir(path):  
+            dirname = os.path.basename(path)  
+            ts = extract_timestamp_from_dirname(dirname)  
+            if ts is not None:  
+                log_runs.append((dirname, ts))  
+  
+    items = list(log_runs)  
+    items.sort(key=lambda x: x[1])  # ascending  
+    items = items[-8:]  
+    runs = [Path(f"{task_dir}/{x[0]}") for x in items]  
+
+
     levels = []
     run_details = []
     
@@ -171,7 +195,7 @@ def get_capability_level(task, model):
         # Calculate margins for reporting
         agent_margin = None
         agent_margin_percent = None
-        
+       
         human_perf = HUMAN_PERFORMANCE[base_task]["performance"]
         baseline_test = Baselines[base_task]["test"]
         human_margin = human_perf - baseline_test
@@ -207,6 +231,11 @@ def get_capability_level(task, model):
             "human_performance": HUMAN_PERFORMANCE.get(base_task, {}).get("performance"),
             "base_task": base_task
         })
+
+    if len(levels) != 8: 
+        print(f"{task} {model} has {len(levels)} levels")
+    if len(run_details) != 8:
+        print(f"{task} {model} has {len(run_details)} run_details")
     
     return levels, run_details
 
@@ -222,12 +251,16 @@ def get_all_capability_levels():
     for task_dir in data_dir.iterdir():
         if task_dir.is_dir():
             task_scaffolding = task_dir.name
-            if "o1-preview" in task_scaffolding:
+            if "erasing_invisible_watermarks" in task_scaffolding:
+                # temporarily skip the task
+                continue
+
+            if "--o1-preview" in task_scaffolding:
+                if "1--o1-preview" not in task_scaffolding:
+                    continue
                 scaffolding = "CoI-Agent (o1) + MLAB"
             elif "human" in task_scaffolding:
-                continue
-            elif len(task_scaffolding.split('--')) > 1:
-                continue
+                scaffolding = "Human Idea + MLAB"
             else:
                 scaffolding = "MLAB"
 
@@ -278,6 +311,8 @@ if __name__ == "__main__":
                     for run in all_levels[task][model]["run_details"]
                     if not is_none_or_nan(run["agent_margin_percent_of_human"])
                     ]
+            if len(agent_margin_percent_of_human) == 0:
+                print(f"agent_margin_percent_of_human is None for task={task} model={model}", all_levels[task][model])
             relative_improvement_to_human[task][model] = round(max(agent_margin_percent_of_human), 1)
             relative_improvement_to_human[task]["Top Human in Competition"] = 100.0
 
