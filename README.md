@@ -1,5 +1,5 @@
 # MLRC-Bench: Can Language Agents Solve Machine Learning Research Challenges?
-MLRC-Bench ([paper](https://drive.google.com/file/d/14ol9OVNm2d1SKdNQkLTztH6pbyhrHyW8/view?usp=sharing)) is a benchmark designed to quantify how effectively language agents can tackle challenging Machine Learning (ML) Research Competition problems by proposing and implementing novel ideas into code. 
+MLRC-Bench ([arxiv](https://arxiv.org/abs/2504.09702), [leaderboard](https://huggingface.co/spaces/launch/MLRC_Bench)) is a benchmark designed to quantify how effectively language agents can tackle challenging Machine Learning (ML) Research Competition problems by proposing and implementing novel ideas into code. 
 
 ![](main.png)
 
@@ -9,8 +9,9 @@ The first release of our benchmark includes 7 tasks adapted from recent Machine 
 
 # Setup
 
+First, install [MLAB](https://github.com/snap-stanford/MLAgentBench) agent environment.
 
-Create a conda enviroment with your TASK_NAME.
+Create a conda enviroment named `mlab`.
 
 Then install the MLAgentBench package with
 ```
@@ -23,14 +24,25 @@ Install dependencies with python 3.10 by running
 bash install.sh
 ```
 
+Then, install each task's environment by running the following commands:
+```
+cd MLAgentBench/benchmarks_base/${TASK_NAME}/scripts
+conda env create -f environment.yml --name ${TASK_NAME}
+conda activate ${TASK_NAME}
+cd -
+pip install -e .
+pip install openai
+```
 
-(Optional) For Kaggle datasets, you need to set up Kaggle API and authentication (~/.kaggle/kaggle.json) as described [here](https://www.kaggle.com/docs/api). You may also need to provide manual consent to the rules of specific competitions by following the prompts. 
+(Optional) Some competition requires the following action: for Kaggle datasets, you need to set up Kaggle API and authentication (~/.kaggle/kaggle.json) as described [here](https://www.kaggle.com/docs/api). You may also need to provide manual consent to the rules of specific competitions by following the prompts. 
 
 # Tasks
 
 Each task is a folder in `MLAgentBench/benchmarks_base/`, under which the `env/` folder contains files that the research agent will see at the beginning, and `script/` folder contains additional hidden files such as `prepare.py` for downloading data.
 
-# Instructions for Refactoring:
+To launch MLAB agent, run `bash launch.sh ${TASK_NAME} ${MODEL} ${GPU_ID}` where supported MODEL can be checked out [here](https://github.com/yunx-z/MLRC-Bench/blob/main/MLAgentBench/LLM.py#L13). You will need to specify `MY_OPENAI_API_KEY` and `MY_AZURE_OPENAI_ENDPOINT` as environment variables to use openai models.
+
+# Instructions for Adding New Tasks (PRs Welcomed!):
 
 Steps:
 - Fork this github repo to your own github space.
@@ -72,4 +84,4 @@ Others:
 - Your code should not attempt to access internet. Any pretrained models, datasets should be downloaded beforehand by `prepare.py`.
 
 # Acknowledgements
-This repo is based on [MLAgentBench](https://github.com/snap-stanford/MLAgentBench). 
+This repo is based on [MLAgentBench](https://github.com/snap-stanford/MLAgentBench), and we thank the authors for their foundational work.
