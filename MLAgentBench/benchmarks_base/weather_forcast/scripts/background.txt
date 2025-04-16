@@ -1,0 +1,70 @@
+## Methods
+Our proposed framework utilizes the WeatherFusionNet[7] as the backbone, as shown in the left part of Fig 1. It consists of three main components:
+1) PhyDNet [2] is trained to predict the future frames of satellite data, enabling to model the
+temporal evolution of the weather patterns. PhyDNet disentangles physical dynamics from
+other visual information.
+2) sat2rad network is trained to inference the precipitation levels of the current time frame.
+By training with such objective, sat2rad are expected to provide the modeling ability of
+extracting precipitation information from the satellite data.
+3) 2D U-Net is further employed to predict precipitation using the outputs from the two
+previous modules as well as the original satellite data. To be specific, the PhyDNet output
+consists of 11 channels across 10 frames, the sat2rad output contains 1 channel across 4
+frames, and the original satellite data consists of 11 channels across 4 frames. To prepare
+the input data, the temporal dimension is flattened and the data is concatenated along the
+channel dimension, resulting in a total of 158 channels. The U-Net is implemented with 158
+input channels and 32 output channels.
+
+U-Net can’t model temporal information for the predicted frames due to its 2D network structure.
+We propose to improve the output with a ConvLSTM module, which processes the input frames
+step-by-step and enhance them with generated hidden states at each time step.
+To tackle the challenge posed by the diverse precipitation patterns in the training data, we propose an
+ensemble approach using multiple lightweight learners to improve the predictions. Our observation
+reveals that the last convolution layer of the U-Net transforms the hidden representation to the actual
+precipitation value, which can serve as a learner in the task of precipitation prediction. To leverage
+this insight, we integrate multiple such output heads and train each one independently with different
+settings (see Fig 2).
+The outputs of these learners are combined by using a controller network for obtaining more reliable
+results. It takes a rainfall probability map as input and generates weight maps for the learners. These
+generated weight maps are multiplied with the output values of their corresponding learners, and the
+resulting values are further summed to produce the final prediction, the whole process is illustrated
+in Fig 3. In our implementation, we use a one-layer ConvLSTM module as the controller and the
+rainfall probability map can be obtained from the off-the-shelf method [7]. During the inference
+phase, this rainfall probability map can be further used as a mask to exclude regions that are predicted
+to have a low likelihood of rainfall.
+We aim to leverage the strengths of each individual module, effectively extracting and fusing in-
+formation from multiple dimensions of the satellite data to improve the accuracy and reliability of
+precipitation predictions. The experimental results will demonstrate that the proposed method has led
+to a substantial improvement in prediction accuracy, particularly in scenarios with high precipitation
+levels.
+
+## 3 Framework Training
+Our framework contain many network modules and it’s quite difficult to optimize all their parameters
+sufficiently in a joint manner, so we propose to use a 3-stage training scheme instead.
+3.1 Stage 1: Backbone Training
+The corresponding training process is illustrated in Fig 4. To accurately predict future precipitation
+values, we re-train the U-Net of WeatherFusionNet, which utilizes the outputs of PhyDNet, sat2rad,
+and the original satellite data, along with a ConvLSTM module to model the temporal dependencies
+of precipitation values, thereby further enhancing the predictive performance. In this stage, the
+PhyDNet and sat2rad modules are frozen with pretrained parameters.
+3.2 Stage 2: Training of Ensemble Learners
+The corresponding training process is illustrated in Fig 5. The last convolution layer of the U-Net,
+referred to as the output head, plays the most important role in transforming the latent representation
+into actual precipitation values. The modeling capability and diversity of this layer in capturing
+the patterns within the latent representation directly impact the accuracy of the model’s predictions.
+In this stage, building upon the previous stage, we freeze the U-Net backbone part and introduce
+multiple parallel convolution layers as ensemble learners. These ensemble learners are trained in an
+individual way that each one has its own loss function for independent backpropagation process. To
+encourage diverse knowledge acquisition among these learners from the latent representation, we
+apply different dropout rates to each independent output branch. Moreover, the ConvLSTM module
+is further finetuned to adapt itself to the changes brought by the learners.
+3.3 Stage 3: Training of Ensemble Controllers
+The corresponding training process is illustrated in Fig 6. The ensemble controller is responsible for
+applying learnable weight maps to each output and aggregating the outputs of all the learners to obtain
+the final result. In this stage, the backbone network remains frozen, and the rainfall probability map
+obtained from a pretrained U-Net passes through a ConvLSTM module, and its output corresponds to
+a weight map that is multiplied by the output of each learner. The weighted sum of the outputs is
+further used to optimized the parameters of the controller.
+
+
+Reference:
+Li, X., Rui, S., Niu, Y., & Liu, Y. (2023). Precipitation Prediction Using an Ensemble of Lightweight Learners. arXiv preprint arXiv:2401.09424.
