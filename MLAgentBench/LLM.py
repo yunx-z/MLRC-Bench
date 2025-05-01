@@ -505,7 +505,7 @@ def complete_text_fast(prompt, **kwargs):
 if __name__ == "__main__":
     os.makedirs("logs/env_log", exist_ok=True)
     # for model in ["o1", "o1-mini", "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-v2", "gemini-exp-1206", "llama3-1-405b-instruct"]:
-    for model in ["gemini-exp-1206"]:
+    for model in ["gpt-4o", "gpt-4o-mini"]:
         completion = complete_text("12+32=?", "logs/tmp.log", model)
         print(model)
         print(completion)
