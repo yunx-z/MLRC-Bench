@@ -5,7 +5,10 @@ import time
 import re
 import json
 from .schema import TooLongPromptError, LLMError
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 # https://openai.com/api/pricing/ as of 01/10/2025
 # https://aws.amazon.com/bedrock/pricing/ as of 01/20/2025
@@ -55,9 +58,9 @@ MODEL2PRICE = {
             "input" : 0,
             "output" : 0,
             },
-        "gemini-2.0-flash-exp" : {
-            "input" : 0,
-            "output" : 0,
+        "gemini-2.0-flash" : {
+            "input" : 0.15 / 1e6,
+            "output" : 0.40 / 1e6,
             },
         "gemini-1.5-pro-002" : {
             "input" : 1.25 / 1e6,
@@ -144,12 +147,12 @@ except Exception as e:
     pass
 
 try:
-    import vertexai
-    from vertexai.preview.generative_models import GenerativeModel, Part
-    from google.cloud.aiplatform_v1beta1.types import SafetySetting, HarmCategory
-    vertexai.init(project=os.environ["GCP_PROJECT_ID"], location="us-central1")
+    from google import genai
+    # setup Google AI Studio client
+    google_ai_client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 except Exception as e:
-    pass
+    print(e)
+    print("Could not load Google AI API key from environment.")
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -240,23 +243,15 @@ def complete_text_hf(prompt, stop_sequences=[], model="huggingface/codellama/Cod
     return completion
 
 
-def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample = 8000, temperature=0.5, log_file=None, **kwargs):
-    """ Call the gemini API to complete a prompt."""
+def complete_text_gemini(prompt, stop_sequences=[], model="gemini-pro", max_tokens_to_sample=8000, temperature=0.5, log_file=None, **kwargs):
+    """ Call the Google AI Studio API to complete a prompt."""
     # Load the model
     _model = "gemini-2.0-pro-exp-02-05" if model == "gemini-exp-1206" else model
-    gemini_model = GenerativeModel(_model)
     # Query the model
-    parameters = {
-            "temperature": temperature,
-            "max_output_tokens": max_tokens_to_sample,
-            "stop_sequences": stop_sequences,
-            **kwargs
-        }
-    safety_settings = {
-            harm_category: SafetySetting.HarmBlockThreshold(SafetySetting.HarmBlockThreshold.BLOCK_NONE)
-            for harm_category in iter(HarmCategory)
-        }
-    response = gemini_model.generate_content( [prompt], generation_config=parameters, safety_settings=safety_settings)
+    response = google_ai_client.models.generate_content(
+        model=_model,
+        contents=prompt
+    )
     if "thinking" in model:
         print(response)
         thought = response.candidates[0].content.parts[0].text

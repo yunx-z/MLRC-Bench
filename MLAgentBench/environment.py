@@ -184,7 +184,7 @@ class Environment:
         # init backup folder and remove all content if it exists
         if os.path.exists(os.path.join(work_dir, "backup")):
             shutil.rmtree(os.path.join(work_dir, "backup"))
-        os.makedirs(os.path(work_dir))
+        os.makedirs(work_dir, exist_ok=True)
         os.mkdir(os.path.join(work_dir, "backup"))
 
         if self.args.resume:

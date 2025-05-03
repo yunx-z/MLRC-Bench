@@ -1,0 +1,11 @@
+[project]
+name = "mlrc-bench"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.50.0",
+    "dotenv>=0.9.9",
+    "pandas>=2.2.3",
+]

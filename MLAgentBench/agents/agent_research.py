@@ -27,12 +27,11 @@ Follow these instructions and do not forget them:
 
 Always respond in this format exactly:
 {format_prompt}
-Observation: 
-```
-the result of the action
-```
-
 """
+# Observation: 
+# ```
+# the result of the action
+# ```
 
 
 format_prompt_dict = {

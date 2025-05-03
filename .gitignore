@@ -28,3 +28,4 @@ scripts/
 .kaggle/
 .venv/
 .env
+cmds.txt

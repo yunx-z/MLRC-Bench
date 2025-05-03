@@ -5,7 +5,7 @@ import subprocess
 import sys
 import json
 
-benchmarks_dir = os.path.dirname(os.path.realpath(__file__)) + "/benchmarks"
+benchmarks_dir = os.path.dirname(os.path.realpath(__file__)) + "/benchmarks_base"
 
 def get_task_info(task):
     """Get research problem and benchmark folder name for task"""
