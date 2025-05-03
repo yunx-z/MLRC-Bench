@@ -20,7 +20,8 @@ else
 fi
 
 # ANCHORS=("ties" "dare" "emrmerging")
-PYTHON_PATH="/home/yunxiang/.conda/envs/${TASK_ENV}/bin/python"
+# PYTHON_PATH="/home/yunxiang/.conda/envs/${TASK_ENV}/bin/python"
+PYTHON_PATH="/opt/anaconda3/envs/mlab"
 
 if [ "$OPTION" ]; then
 	TASK=${TASK_ENV}--${OPTION}--${IDEA_PROPOSAL_MODEL}
