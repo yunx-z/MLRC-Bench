@@ -158,7 +158,7 @@ class Environment:
         if os.path.exists(work_dir):
             shutil.rmtree(work_dir)
 
-        benchmark_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "benchmarks", self.benchmark_folder_name)
+        benchmark_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "benchmarks_base", self.benchmark_folder_name)
 
         # prepare if there is a prepare.py and it has not been prepared
         # prepare_task(benchmark_dir, self.args.python)

@@ -39,7 +39,7 @@ LOG_DIR="logs/${TASK}/${MODEL}/${RUN_ID}"
 mkdir -p ${LOG_DIR}
 LOG_FILE="${LOG_DIR}/run.log"
 WORKSPACE_DIR="workspace/${TASK}/${MODEL}/${RUN_ID}"
-BENCHMARK_DIR="MLAgentBench/benchmarks"
+BENCHMARK_DIR="MLAgentBench/benchmarks_base"
 
 if [ ! -d ${BENCHMARK_DIR}/${TASK} ]; then
 	echo "${TASK} env does not exists! please run scripts/init_env.sh first"
