@@ -26,3 +26,5 @@ MLAgentBench/benchmarks_base/weather_forcast/env/data/
 tmp/
 scripts/
 .kaggle/
+.venv/
+.env
