@@ -1,5 +1,5 @@
 ## TODO Add more implemented methods here
-from methods.MyMethod import MyMethod
+from .MyMethod import MyMethod
 
 def all_method_handlers():
     """Enumerate and Load (import) all implemented methods."""

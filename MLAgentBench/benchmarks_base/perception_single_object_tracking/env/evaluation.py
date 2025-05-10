@@ -3,6 +3,8 @@ import os
 from typing import Tuple, List, Dict, Any
 import json
 import numpy as np
+import cv2 # For video processing
+from tqdm import tqdm # For progress bar
 
 from vot.region import calculate_overlaps as calculate_region_overlaps
 from vot.region import Polygon, Rectangle, Special
@@ -50,21 +52,50 @@ def get_start_frame(track_arr: List[List[float]]) -> int:
 
 def get_start_info(track: Dict[str, Any]) -> Dict[str, Any]:
   """Retrieve information about the start frame of a track.
+  Handles cases for dev (with 'initial_tracking_box') and test (without).
 
   Args:
     track (Dict): A dictionary containing information about the track.
+                  Expected keys: 'frame_ids', 'bounding_boxes'.
+                  Optional key: 'initial_tracking_box' for dev phase.
 
   Returns:
     Dict[str: Any]: A dictionary with the following keys:
       'start_id': The frame ID of the start frame.
-      'start_bounding_box': The bounding box coordinates of the start
-        frame.
-      'start_idx': The index of the start frame in the
-      'bounding_boxes' list.
+      'start_bounding_box': The bounding box coordinates of the start frame.
+      'start_idx': The index of the start frame in the 'bounding_boxes' list.
+
+  Raises:
+    ValueError: If necessary keys are missing or track arrays are empty.
   """
-  track_start_idx = get_start_frame(track['initial_tracking_box'])
-  track_start_id = track['frame_ids'][track_start_idx]
-  track_start_bb = track['bounding_boxes'][track_start_idx]
+  if 'initial_tracking_box' in track and track['initial_tracking_box'] and np.count_nonzero(track['initial_tracking_box']) > 0:
+    # Dev phase or phase with explicit initial_tracking_box
+    try:
+        track_start_idx_in_initial_array = get_start_frame(track['initial_tracking_box'])
+        # This track_start_idx_in_initial_array is the index within the 'frame_ids' and 'bounding_boxes' arrays
+        # that corresponds to the start of tracking.
+        track_start_idx = track_start_idx_in_initial_array
+        if track_start_idx >= len(track['frame_ids']) or track_start_idx >= len(track['bounding_boxes']):
+            raise ValueError(f"Start index {track_start_idx} from 'initial_tracking_box' is out of bounds "
+                             f"for frame_ids (len: {len(track['frame_ids'])}) or "
+                             f"bounding_boxes (len: {len(track['bounding_boxes'])}).")
+        track_start_id = track['frame_ids'][track_start_idx]
+        track_start_bb = track['bounding_boxes'][track_start_idx]
+    except ValueError as e:
+        print(f"Could not determine start from 'initial_tracking_box': {e}. Falling back to first frame.")
+        if not track.get('frame_ids') or not track.get('bounding_boxes'):
+            raise ValueError("Track has no frame_ids or bounding_boxes to infer start info after 'initial_tracking_box' failed.")
+        track_start_idx = 0
+        track_start_id = track['frame_ids'][0]
+        track_start_bb = track['bounding_boxes'][0]
+  else:
+    # Test phase or if initial_tracking_box is missing, empty, or all zeros.
+    # Assume the first frame and bbox in the provided sequence is the start.
+    if not track.get('frame_ids') or not track.get('bounding_boxes'):
+      raise ValueError("Track has no frame_ids or bounding_boxes to infer start info.")
+    track_start_idx = 0 # Index of the start frame in the 'frame_ids' and 'bounding_boxes' lists
+    track_start_id = track['frame_ids'][0]
+    track_start_bb = track['bounding_boxes'][0]
 
   return {'start_id': track_start_id,
           'start_bounding_box': track_start_bb,
@@ -260,6 +291,110 @@ def summarise_results(labels: Dict[str, Any], results: Dict[str, Any]):
     print(f"""Average IoU across moving camera videos in dataset:
           {np.array(moving_ious).mean():.3f}""")
 
+# Placeholder for video frame loading function
+def get_video_frames(video_data_item: Dict[str, Any], video_folder_path: str) -> np.ndarray:
+    """
+    Loads all frames from a video file.
+
+    Args:
+        video_data_item (Dict[str, Any]): Dictionary containing metadata for the video,
+                                       expected to have ['metadata']['video_id'] (or similar for filename)
+                                       and ['metadata']['num_frames'].
+        video_folder_path (str): Path to the folder containing the video files.
+
+    Returns:
+        np.ndarray: A numpy array of video frames (num_frames, height, width, channels).
+                    Returns a placeholder if video loading fails or is not fully implemented.
+    """
+    metadata = video_data_item.get('metadata', {})
+    video_id = metadata.get('video_id') # Or other key like 'filename'
+    num_frames = metadata.get('num_frames', 0)
+    resolution = metadata.get('resolution', (0,0)) # (height, width)
+
+    if not video_id:
+        print("Warning: video_id not found in metadata.")
+        # Fallback to placeholder if video_id is missing
+        return np.zeros((num_frames if num_frames > 0 else 1, resolution[0] if resolution[0]>0 else 1, resolution[1] if resolution[1]>0 else 1, 3), dtype=np.uint8)
+
+    # Assuming video files are named like '{video_id}.mp4' or similar. Adjust as needed.
+    # You might need to check for different extensions or a specific filename field in metadata.
+    potential_extensions = ['.mp4', '.avi', '.mov', '.mkv'] # Add other common video extensions
+    video_path = None
+    for ext in potential_extensions:
+        test_path = os.path.join(video_folder_path, f"{video_id}{ext}")
+        if os.path.exists(test_path):
+            video_path = test_path
+            break
+
+    if video_path is None: # If video_id itself might be a full filename (e.g. "myvideo.mp4")
+        test_path = os.path.join(video_folder_path, video_id)
+        if os.path.exists(test_path):
+            video_path = test_path
+
+    # Print which video is being attempted
+    if video_path and os.path.exists(video_path):
+        print(f"Loading frames for video: {video_id} from {video_path}")
+    elif video_id:
+        print(f"Attempting to find video for ID: {video_id} in {video_folder_path}")
+
+    if not video_path or not os.path.exists(video_path):
+        print(f"Warning: Video file not found for ID {video_id} in {video_folder_path} (tried extensions: {potential_extensions}, and direct ID as filename).")
+        # Fallback to placeholder if video file is missing
+        return np.zeros((num_frames if num_frames > 0 else 1, resolution[0] if resolution[0]>0 else 1, resolution[1] if resolution[1]>0 else 1, 3), dtype=np.uint8)
+
+    frames_list = []
+    try:
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            print(f"Error: Could not open video file {video_path}")
+            # Fallback to placeholder
+            return np.zeros((num_frames if num_frames > 0 else 1, resolution[0] if resolution[0]>0 else 1, resolution[1] if resolution[1]>0 else 1, 3), dtype=np.uint8)
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            # By default, OpenCV reads frames in BGR format.
+            # If RGB is expected by the model, uncomment the line below:
+            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # If frames need to be a specific resolution and differ from video's native resolution:
+            # target_height, target_width = resolution
+            # if frame.shape[0] != target_height or frame.shape[1] != target_width:
+            #     if target_height > 0 and target_width > 0:
+            #         frame = cv2.resize(frame, (target_width, target_height))
+            #     else:
+            #         print(f"Warning: Cannot resize frame for {video_id} due to invalid target resolution {resolution}")
+
+            frames_list.append(frame)
+        cap.release()
+
+        if not frames_list: # No frames read
+             print(f"Warning: No frames read from {video_path}")
+             return np.zeros((num_frames if num_frames > 0 else 1, resolution[0] if resolution[0]>0 else 1, resolution[1] if resolution[1]>0 else 1, 3), dtype=np.uint8)
+
+        loaded_frames_array = np.array(frames_list)
+
+        # Optional: Verify against num_frames from metadata
+        # if num_frames > 0 and loaded_frames_array.shape[0] != num_frames:
+        #     print(f"Warning: Mismatch in frame count for {video_id}. Metadata: {num_frames}, Actual: {loaded_frames_array.shape[0]}. Adjusting to metadata count if possible or using actual.")
+            # Decide on strategy: pad, truncate, or use actual. For now, using actual.
+            # If strict adherence to metadata num_frames is needed:
+            # if loaded_frames_array.shape[0] > num_frames:
+            #    loaded_frames_array = loaded_frames_array[:num_frames]
+            # elif loaded_frames_array.shape[0] < num_frames:
+            #    padding_shape = (num_frames - loaded_frames_array.shape[0],) + loaded_frames_array.shape[1:]
+            #    padding = np.zeros(padding_shape, dtype=loaded_frames_array.dtype) # Or pad with last frame
+            #    loaded_frames_array = np.concatenate((loaded_frames_array, padding), axis=0)
+
+
+        return loaded_frames_array
+
+    except Exception as e:
+        print(f"Error loading video {video_path}: {e}")
+        # Fallback to placeholder on error
+        return np.zeros((num_frames if num_frames > 0 else 1, resolution[0] if resolution[0]>0 else 1, resolution[1] if resolution[1]>0 else 1, 3), dtype=np.uint8)
+
 class PerceptionDataset():
   """Dataset class to store video items from dataset.
 
@@ -312,7 +447,7 @@ class PerceptionDataset():
     Returns:
       int: Total number of videos.
     """
-    return len(self.pt_db_list)
+    return len(self.task_db)
 
   def __getitem__(self, idx: int) -> Dict[str, Any]:
     """Returns the video and annotations for a given index.
@@ -327,79 +462,138 @@ class PerceptionDataset():
     annot = data_item[self.task]
 
     metadata = data_item['metadata']
-    # here we are loading a placeholder as the frames
-    # the commented out function below will actually load frames
-    vid_frames = np.zeros((metadata['num_frames'], 1, 1, 1))
-    # frames = get_video_frames(video_item, self.video_folder_path)
+
+    # Load actual video frames using the new function
+    vid_frames = get_video_frames(data_item, self.video_folder_path)
+
+    # Ensure the number of loaded frames matches metadata if critical, or handle discrepancies
+    # This check is more for information; the model will receive what's loaded.
+    # The 'num_frames' in metadata might be used by other parts of the code, so consistency can be important.
+    expected_num_frames = metadata.get('num_frames')
+    if expected_num_frames is not None and expected_num_frames > 0 and vid_frames.shape[0] != expected_num_frames:
+        print(f"Warning: Loaded frames ({vid_frames.shape[0]}) for video {metadata.get('video_id', 'Unknown')} "
+              f"does not match num_frames in metadata ({expected_num_frames}). "
+              f"The model will use the actual number of loaded frames: {vid_frames.shape[0]}.")
+        # If you need to strictly enforce the metadata's num_frames, you might need to:
+        # 1. Truncate `vid_frames` if `vid_frames.shape[0] > expected_num_frames`.
+        # 2. Pad `vid_frames` if `vid_frames.shape[0] < expected_num_frames`.
+        # For example, to truncate:
+        # if vid_frames.shape[0] > expected_num_frames:
+        #     vid_frames = vid_frames[:expected_num_frames]
+        # Padding is more complex as you need to decide what to pad with (e.g., black frames, last frame).
+        # The current implementation will proceed with the actual number of frames loaded.
 
     return {'metadata': metadata,
             self.task: annot,
             'frames': vid_frames}
 
 def evaluate_model(Method, phase):
+    MODEL_SAVE_FILENAME = "object_tracker_model.pth"
+    MODEL_SAVE_DIR = './output/saved_models/' # Centralized directory for models
+
+    # Ensure the save directory exists
+    if not os.path.exists(MODEL_SAVE_DIR):
+        os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
+    model_save_path = os.path.join(MODEL_SAVE_DIR, MODEL_SAVE_FILENAME)
+
     # 1. load test input data from dataset_filepath
     if phase == "dev":
         label_path = f'./data/{phase}/object_tracking_valid_subset.json'
+        video_folder_path = f'./data/{phase}/videos/'
         split_value = "valid"
-    else:
+    else: # Assuming this branch is for "test" or other non-dev phases
         label_path = f'./data/{phase}/object_tracking_{phase}_subset.json'
+        # Specific path for test phase videos
+        if phase == "test":
+            video_folder_path = f'./data/{phase}/test_release/videos/'
+        else:
+            # Fallback for any other potential phases
+            video_folder_path = f'./data/{phase}/videos/'
         split_value = phase
-    cfg = {'video_folder_path': './data/videos/',
+
+    cfg = {'video_folder_path': video_folder_path,
        'task': 'object_tracking',
        'split': split_value}
 
-    # when true the bounding boxes and frame IDs will be filtered to demonstrate
-    # how to submit for the subset of annotated frames which will be used for
-    # evaluation
-    filter_outputs = True
+    filter_outputs = True # This seems to be a general setting
 
     # init dataset
     tracking_dataset = PerceptionDataset(label_path, **cfg)
 
-    # 2. apply the method / model on the whole dev / test data depending on the spcified phase
-
-    # init tracking model
+    # init tracking model (Method is already an instance)
     method_instance = Method
 
-    # run model across full dataset
+    if phase == "test":
+        if hasattr(method_instance, 'load_model'):
+            print(f"Test phase: Attempting to load model from {model_save_path}")
+            method_instance.load_model(model_save_path)
+        else:
+            print(f"Warning: Method instance {type(method_instance).__name__} does not have 'load_model' capability.")
+
+    # 2. apply the method / model on the whole dev / test data
     results = {}
-    for video_item in tracking_dataset:
+    print(f"Processing {len(tracking_dataset)} videos for phase: {phase}")
+    for video_item in tqdm(tracking_dataset, desc=f"Processing videos for phase {phase}", unit="video"):
         video_id = video_item['metadata']['video_id']
         video_pred_tracks = []
+
+        if not video_item.get('object_tracking'):
+            print(f"Warning: No 'object_tracking' data for video_id {video_id}. Skipping.")
+            results[video_id] = [] # Ensure video_id is in results
+            continue
+
         for gt_track in video_item['object_tracking']:
-            start_info = get_start_info(gt_track)
-            # Prepare input arguments for the Method's run function
+            try:
+                start_info = get_start_info(gt_track)
+            except ValueError as e:
+                print(f"Skipping track in video {video_id} due to error in get_start_info: {e}")
+                continue # Skip this track if start_info cannot be determined
+
             input_args = {
                 'frames': video_item['frames'],
                 'start_info': start_info
             }
-            # Call the run method of the provided Method instance
             pred_bounding_boxes, pred_frame_ids = method_instance.run(input_args)
 
-            # filtering bounding boxes and frame IDs
             if filter_outputs:
-                pred_bounding_boxes, pred_frame_ids = (
-                    filter_pred_boxes(pred_bounding_boxes, pred_frame_ids,
-                                        gt_track['frame_ids'])
-                )
+                # Ensure gt_track['frame_ids'] is available for filtering
+                gt_frame_ids_for_filtering = np.array(gt_track.get('frame_ids', []))
+                if gt_frame_ids_for_filtering.size == 0:
+                     print(f"Warning: gt_track['frame_ids'] is empty for video {video_id}, track {gt_track.get('id')}. Cannot filter predictions.")
+                     # If gt_frame_ids is empty, filtering might not make sense or predictions should be taken as is.
+                     # For now, if gt_frame_ids is empty, we won't filter.
+                else:
+                    pred_bounding_boxes, pred_frame_ids = (
+                        filter_pred_boxes(pred_bounding_boxes, pred_frame_ids, gt_frame_ids_for_filtering)
+                    )
+
 
             pred_track = {}
-            # .tolist() to serialise without error
             pred_track['bounding_boxes'] = pred_bounding_boxes.tolist()
             pred_track['frame_ids'] = pred_frame_ids.tolist()
             pred_track['id'] = gt_track['id']
             video_pred_tracks.append(pred_track)
 
         results[video_id] = video_pred_tracks
-    # 3. save the results to a file under `./output`
-    output_dir = './output'
+
+    # 3. save the results to a file under `./output` (this is for predictions)
+    output_dir = './output' # For results.json
     if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
     output_filepath = os.path.join(output_dir, f'results_{phase}.json')
     with open(output_filepath, 'w') as f:
         json.dump(results, f, indent=4)
     print(f"Results saved to {output_filepath}")
+
+    # Save the model if in "dev" phase, after all processing for this phase is done.
+    if phase == "dev":
+        if hasattr(method_instance, 'save_model'):
+            print(f"Dev phase: Attempting to save model to {model_save_path}")
+            method_instance.save_model(model_save_path)
+        else:
+            print(f"Warning: Method instance {type(method_instance).__name__} does not have 'save_model' capability.")
+
 
 def get_score(Method, phase):
     # 1. load results from `./output`
