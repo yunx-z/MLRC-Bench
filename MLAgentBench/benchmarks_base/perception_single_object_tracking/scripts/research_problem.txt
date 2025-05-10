@@ -1,0 +1,65 @@
+The Perception Test Challenge 2024 - Task 2 - Single Object Tracking invites participants to develop and evaluate advanced multimodal video models capable of accurately tracking a specified object, identified by an initial bounding box, throughout a video sequence, using a specific subset of the Perception Test dataset.
+
+## Description
+The primary goal of this challenge is to advance the field of single object tracking in videos. Participants are tasked with developing models that, given a video and an initial bounding box identifying an object in the first (or a specified) annotated frame, can accurately predict the object's bounding box in all subsequent annotated frames of that video. This task is part of the broader Second Perception Test Challenge, designed to comprehensively evaluate the perception and reasoning skills of multimodal video models. Winners will be announced at the Perception Test ECCV 2024 workshop.
+
+The core task involves receiving a video and a single bounding box representing the target object in an early frame. The model must then output a sequence of bounding boxes, one for each subsequent annotated frame, corresponding to the tracked object's location.
+
+### Data Details
+The challenge utilizes a specific subset of the larger Perception Test dataset.
+*   **Source Videos:** The videos are high-resolution, featuring RGB channels and audio. They are up to 35 seconds long, typically encoded at 30 frames per second (fps), with a maximum resolution of 1080p.
+*   **Annotations:** Object tracks are annotated by humans at 1 frame per second (1fps), even though the original videos have a higher frame rate (e.g., 30fps). The provided annotations for the validation set include bounding boxes for each relevant frame. For the test set, only the initial bounding box for the target object will be provided.
+*   **Challenge Splits:**
+    *   **Validation Phase Data:** A randomly selected subset of 1000 videos from the main Perception Test *validation split*.
+        *   Videos: `sot_valid_videos_challenge2023.zip`
+        *   Annotations: `sot_valid_annotations_challenge2023.zip`
+        *   Statistics: 1000 videos, 16501 tracks in total across these videos. Full videos and corresponding ground-truth annotations are provided for this phase.
+    *   **Test Phase Data:** A randomly selected subset of 1000 videos from the main Perception Test *test split*.
+        *   Videos along with the initial starter bounding box for the object to track will be made available. Full ground-truth annotations for subsequent frames will remain hidden from participants.
+        *   Statistics: 1000 videos, 16339 tracks in total across these videos.
+    *   **Train Data (for model development):** Participants can use the official Perception Test *train split* for developing and training their models.
+        *   Statistics: 2184 videos, 35373 tracks. Full videos and annotations are available.
+*   **Important Note:** The full validation and test splits of the Perception Test are larger than the challenge-specific subsets used here. Participants *must* use the challenge-specific subsets for submission and for local validation if they wish to match the challenge phases. The challenge's validation and test data must not be used for training.
+*   **Download:** The main dataset, including the train split and links to the challenge-specific validation subsets, can typically be found via the Perception Test GitHub: [https://github.com/deepmind/perception_test#download-the-data-and-annotations](https://github.com/deepmind/perception_test#download-the-data-and-annotations)
+
+### Evaluation
+The primary evaluation metric for this task is the average Intersection over Union (IoU). This metric quantifies the overlap between the model's predicted bounding boxes and the ground-truth bounding boxes for each frame across all test sequences. A higher average IoU indicates better tracking performance. The final ranking will be based on performance on the hidden test set.
+
+## Developing New Methods
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method. The provided baseline methods serve as initial benchmarks:
+*   **Dummy Static Baseline:** This very simple baseline likely assumes the object remains stationary and outputs the initial bounding box for all subsequent annotated frames. Its purpose is to provide a minimal performance reference.
+*   **SiamFC (UniTrack implementation):** This is a more sophisticated baseline using the SiamFC (Siamese Fully-Convolutional) tracker, a well-known deep learning-based approach for visual object tracking. The specific implementation used is from UniTrack. This demonstrates a more competitive approach.
+
+1.  To add a new method, you need to create a new Python class that inherits from `methods/BaseMethod.py`. This class should implement at least the `__init__()` constructor and the `run()` method.
+    *   `__init__(self, **kwargs)`: Initializes your tracker. You might load models, set parameters, etc., here.
+    *   `run(self, video_frames: np.ndarray, initial_bbox: Tuple[float, float, float, float]) -> List[Tuple[float, float, float, float]]`: This is the core function. It takes a list/array of video frames and the initial bounding box `(x, y, width, height)` as input. It should return a list of predicted bounding boxes, one for each frame processed by your tracker (typically for all frames starting from the one after the initial box, or all frames including the initial one, depending on expected output format).
+    Save your new method class in a new file within the `methods/` directory (e.g., `methods/MyAwesomeTracker.py`).
+2.  Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. This involves mapping a unique string name for your method (which you'll use with the `-m` flag) to its class constructor. For example:
+    `from .MyAwesomeTracker import MyAwesomeTracker`
+    `...`
+    `return {`
+    `    'my_method': MyMethod,`
+    `    'my_awesome_tracker': MyAwesomeTracker,`
+    `}`
+3.  Ensure your new module (e.g., `MyAwesomeTracker`) is imported in `methods/__init__.py` as shown above.
+
+## Test Method
+To test and evaluate your method locally during the **development** phase, you will typically run a main script provided in the starter kit, using a command-line argument to specify your method. For example: `python main.py -m {method_name}`.
+If you implemented `MyAwesomeTracker` and registered it with the key `my_awesome_tracker`, you would execute: `python main.py -m my_awesome_tracker`.
+
+When you run this command locally:
+1.  The `main.py` script will parse the arguments and identify the `MyAwesomeTracker` class via the `all_method_handlers()` dictionary.
+2.  It will instantiate your `MyAwesomeTracker`.
+3.  The script will then iterate through the videos in the **challenge validation dataset** (e.g., the 1000 videos from `sot_valid_videos_challenge2023.zip`).
+4.  For each video, it will load the frames and the ground-truth initial bounding box for a specific track.
+5.  It will call your tracker's `run()` method, passing the video frames and the initial bounding box.
+6.  Your `run()` method is expected to return a list of predicted bounding boxes for the subsequent frames.
+7.  The evaluation pipeline within `main.py` (or an associated script) will compare these predictions against the ground-truth annotations from `sot_valid_annotations_challenge2023.zip`.
+8.  Finally, it will compute and display the evaluation metric, most importantly the average Intersection over Union (IoU) score, on this local validation set. This allows for iterative development, debugging, and performance assessment of your method before making official submissions to the validation phase on the competition platform.
+
+## Competition Rules
+Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
+*   There must be no explicit human labelling on the test videos. All tracking must be performed automatically by the submitted system.
+*   Test videos and their corresponding initial box-to-track pairs should be input to the model one at a time. Correlation amongst different bounding boxes (e.g., if a model is capable of multi-object tracking, it should still treat the given target as a single, independent problem instance for this task) or across different test videos should not be exploited to improve performance on a specific instance.
+*   The specific video data and annotations provided for the challenge's **validation split subset** and **test split subset** must *not* be used for any form of model training, fine-tuning (supervised or self-supervised), or data augmentation that involves learning directly from these specific instances. However, the official **train split** of the Perception Test dataset and any other publicly available or privately owned datasets can be used for training, fine-tuning, or prompting.
+*   There are no restrictions on the model side; any model is eligible for prizes, including models that rely on public VLM APIs (e.g., Gemini, GPT4-V, etc.), pre-trained models, model size, or computational resources, provided all other rules are followed.
