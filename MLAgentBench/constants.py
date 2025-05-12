@@ -42,6 +42,10 @@ ALL_BASE_RUNTIME = {
             "dev" : 8402.18449,
             "test" : 134.9225424,
         },
+        "perception_single_object_tracking": {
+            "dev": 31.4,
+            "test": 31.4,
+        },
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -92,5 +96,9 @@ ALL_BASE_PERFORMANCE = {
             "dev" : 0.004734474671,
             "test" : 0.02031705848,
         },
+        "perception_single_object_tracking": {
+            # range 0-1 (Average IoU)
+            "dev": 0.639,
+            "test": 0.639,
+        }
     }
-
