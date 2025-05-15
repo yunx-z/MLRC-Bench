@@ -20,9 +20,9 @@ ALL_BASE_RUNTIME = {
             "debug" : 100,
         },
         "perception_temporal_sound_localisation" : {
-            "dev" : 17.7166666667,
+            "dev" : 833.1070916,
             "test" : 200, # dummy
-            "debug" : 50,
+            "debug" : None, # random number, ignore
         },
         "machine_unlearning":{
             "dev": 353.8617296,
@@ -73,9 +73,9 @@ ALL_BASE_PERFORMANCE = {
         },
         "perception_temporal_sound_localisation" : {
             # range 0-1
-            "dev" : 0.1309442063388647,
+            "dev" : 0.1731358,
             "test" : 0.2,
-            "debug" : 0.05, # dummy
+            "debug" : None, # random number, ignore
         },
          "machine_unlearning":{
              # range 0-1

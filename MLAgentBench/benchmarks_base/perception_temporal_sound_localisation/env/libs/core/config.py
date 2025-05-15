@@ -36,7 +36,7 @@ DEFAULTS = {
         "file_prefix": "v_",
         "file_ext": ".npy",
         "input_modality": "multi",
-        "task": "action_localisation",
+        "task": "sound_localisation",
     },
     "loader": {
         "batch_size": 8,

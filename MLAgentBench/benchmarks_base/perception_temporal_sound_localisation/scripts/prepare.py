@@ -145,6 +145,17 @@ for old_name, new_name in [
     if os.path.exists(src):
         os.rename(src, dst)
 
+# update metadata split tag for test JSON
+test_json_file = os.path.join(test_path, 'challenge_sound_localisation_test.json')
+if os.path.exists(test_json_file):
+    with open(test_json_file, 'r') as f:
+        test_db = json.load(f)
+    for vid, entry in test_db.items():
+        entry['metadata']['split'] = 'test'
+    with open(test_json_file, 'w') as f:
+        json.dump(test_db, f)
+    print("Updated metadata split to 'test' in test annotations.")
+
 print("All preparation steps completed successfully!")
 with open("prepared", 'w') as writer:
     pass

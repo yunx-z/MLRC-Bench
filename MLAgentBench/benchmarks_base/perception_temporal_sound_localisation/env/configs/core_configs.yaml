@@ -2,11 +2,11 @@ devices: [0]
 dataset: {
   file_prefix: v_,
   file_ext: .npy,
-  num_classes: 63,
+  num_classes: 12,
   input_dim: 768,
   feat_stride: 16,
   num_frames: 16,
-  default_fps: 15,
+  default_fps: 30,
   trunc_thresh: 0.5,
   crop_ratio: [0.9, 1.0],
   # upsample the features to a fixed length of 192
@@ -30,7 +30,6 @@ model: {
 opt: {
   learning_rate: 0.001,
   epochs: 50,
-  warmup_epochs: 5,
   weight_decay: 0.05,
 }
 loader: {
