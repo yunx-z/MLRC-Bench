@@ -1,0 +1,8 @@
+dataset_name: perception
+train_split: ['train']
+val_split: ['test']
+dataset: {
+  json_file: ./data/pt/challenge_sound_localisation_test.json,
+  feat_folder: ./data/pt/action_localisation_test_video_features,
+  mm_feat_folder: ./data/pt/sound_localisation_test_audio_features,
+}

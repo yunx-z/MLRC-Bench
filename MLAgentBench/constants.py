@@ -19,6 +19,11 @@ ALL_BASE_RUNTIME = {
             "test" : 361.45,
             "debug" : 100,
         },
+        "perception_temporal_sound_localisation" : {
+            "dev" : 17.7166666667,
+            "test" : 200, # dummy
+            "debug" : 50,
+        },
         "machine_unlearning":{
             "dev": 353.8617296,
             "test": None, # random number, ignore
@@ -66,6 +71,12 @@ ALL_BASE_PERFORMANCE = {
             "test" : 0.1263531695,
             "debug" : 0.2
         },
+        "perception_temporal_sound_localisation" : {
+            # range 0-1
+            "dev" : 0.1309442063388647,
+            "test" : 0.2,
+            "debug" : 0.05, # dummy
+        },
          "machine_unlearning":{
              # range 0-1
             "dev": 0.05389313916,
@@ -93,4 +104,3 @@ ALL_BASE_PERFORMANCE = {
             "test" : 0.02031705848,
         },
     }
-

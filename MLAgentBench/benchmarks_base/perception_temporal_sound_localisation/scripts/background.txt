@@ -1,0 +1,58 @@
+**Paper Title:** Solution for Temporal Sound Localisation Task of ECCV Second Perception Test Challenge 2024
+**Authors:** Haowei Gu, Weihao Zhu, Yang Yang (Nanjing University of Science and Technology)
+**Contribution:** This report details the first-place winning solution for the Temporal Sound Localisation (TSL) task in the ECCV Second Perception Test Challenge 2024.
+
+**1. Core Problem & Objective:**
+The Temporal Sound Localisation (TSL) task requires systems to identify the start and end times of sound events occurring in a video and classify these events according to a predefined set of sound classes. This is a challenging problem in video understanding, crucial for tasks like scene understanding and action recognition.
+
+**2. Key Insight & Improvement over Baseline:**
+The authors built upon the champion solution from the previous year's (2023 ICCV) challenge. The prior solution treated audio and video modalities with equal importance. This paper's central hypothesis, supported by their experiments, is that **audio features play a more dominant and critical role in the TSL task.** Consequently, their primary improvement focuses on significantly enhancing the representation and impact of the audio modality.
+
+**3. Methodology - Overall Architecture & Components:**
+
+*   **Foundation Model:** The **Actionformer** model was adopted as the foundational architecture. Actionformer is known for its ability to localize moments of actions using Transformers, employing multi-scale feature representations with local self-attention and a lightweight decoder for classifying individual moments and estimating corresponding sound boundaries.
+*   **Enhanced Audio Feature Extraction:** This was a cornerstone of their approach.
+    *   **Input:** Audio was first converted into **mel-spectrograms**.
+    *   **Multiple Pre-trained Models:** To create a comprehensive and robust acoustic representation, they utilized three state-of-the-art pre-trained audio models:
+        1.  **BEATS** (Audio Pre-training with Acoustic Tokenizers).
+        2.  **CAV-MAE** (Contrastive Audio-Visual Masked Autoencoder) fine-tuned on **AudioSet**.
+        3.  **CAV-MAE** fine-tuned on **VGGSound**.
+    *   **Feature Concatenation:** Each of these models independently processed the mel-spectrograms to extract high-level features (each 768-dimensional). These three feature vectors were then concatenated, yielding a powerful **2304-dimensional audio representation**.
+*   **Video Feature Extraction:**
+    *   Visual features were extracted using two high-performing models:
+        1.  Fine-tuned **UMT-Large** (Unmasked Teacher) model.
+        2.  **VideoMAE-Large** (Masked Autoencoders for video pre-training) model.
+*   **Multimodal Fusion:**
+    *   **Temporal Alignment:** Video and audio features were temporally aligned using interpolation techniques to ensure coherence.
+    *   **Early Fusion:** An early fusion strategy was employed where the aligned video and enhanced audio features were concatenated along the channel dimension. This created a unified multimodal representation.
+*   **Temporal Sound Localization (with Actionformer):**
+    *   The fused multimodal features were fed into the Actionformer.
+    *   Actionformer's multi-scale Transformer encoder processed these features into a feature pyramid.
+    *   Shared regression and classification heads then operated on this pyramid to generate sound event candidates (category, start time, end time) at each time step.
+*   **Post-Processing:**
+    *   **Weighted Boxes Fusion (WBF):** The WBF method, commonly used in object detection for ensembling predictions, was modified and applied to the TSL task.
+    *   **Ensemble Strategy:** They trained models using different video feature extractors (UMT and VideoMAE, each combined with the concatenated audio features) for multiple epochs (20, 25, and 30 epochs). The predictions from these different model configurations and training stages were then input into the WBF module with identical fusion weights assigned to each model’s results.
+
+**4. Experimental Setup:**
+
+*   **Dataset:** The official Perception Test Challenge track3 dataset, featuring high-resolution videos (RGB + audio) with 17 predefined sound event classes. The authors relied solely on the official training data, without using any external/additional data. Official validation and test sets were used.
+*   **Evaluation Metric:** The **mean Average Precision (mAP)** was used, calculated by averaging precision across the sound classes and various Intersection over Union (IoU) thresholds (ranging from 0.1 to 0.5 in increments of 0.1).
+
+**5. Key Experimental Results & Ablation Studies (Table 1):**
+The ablation study clearly demonstrated the effectiveness of their approach, particularly the emphasis on sound features:
+*   **Baseline:** 0.3925 mAP
+*   **Cavmae (Sound only enhancement with one CAV-MAE model):** 0.4560 mAP (significantly higher than baseline and video-only).
+*   **VideoMae (Video only enhancement):** 0.4102 mAP
+*   **All (using both VideoMAE video features and Cavmae sound features, likely referring to the enhanced audio pipeline with a single CAV-MAE before the full multi-audio-model concatenation):** 0.4710 mAP
+*   **WBF (Full proposed solution including multiple audio models and WBF post-processing):** **0.4925 mAP**
+
+These results validated their hypothesis that sound features are paramount for TSL and that their multi-model audio feature enhancement strategy, coupled with WBF, yielded substantial gains.
+
+**6. Conclusion:**
+The authors successfully developed a robust solution for the TSL task by:
+*   Using the previous year's champion solution as a baseline.
+*   Critically shifting focus to **prioritize and enhance audio modality features** using multiple advanced audio embedding models.
+*   Integrating these rich audio features with strong video features within the Actionformer framework.
+*   Employing an effective WBF-based post-processing ensemble.
+
+Their method achieved a **test set mAP of 0.4925**, securing the **first position** on the ECCV Second Perception Test Challenge 2024 leaderboard for this task.
