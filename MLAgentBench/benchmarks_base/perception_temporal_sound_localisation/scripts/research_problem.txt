@@ -1,0 +1,98 @@
+# Second Perception Test Challenge (ECCV 2024 Workshop) – Temporal Sound Localisation Track
+## Description
+The goal of this challenge is to develop methods that accurately **localize and classify sound events** in untrimmed videos (up to 35 seconds long, 30 fps, max resolution 1080p) from a predefined set of sound classes. This task is part of The Second Perception Test Challenge, with winners announced at the Perception Test ECCV 2024 workshop.
+(Workshop: [https://ptchallenge-workshop.github.io/](https://ptchallenge-workshop.github.io/), Paper: [https://arxiv.org/pdf/2305.13786.pdf](https://arxiv.org/pdf/2305.13786.pdf), GitHub: [https://github.com/deepmind/perception_test](https://github.com/deepmind/perception_test))
+---
+## Data
+*   **Training Data:** You may use either of the following lists for training:
+    *   **Multimodal List (`localisation_challenge_train_id_list.csv`):**
+        *   2009 videos
+        *   Includes both **sound** and **action** annotations (use sound for this task)
+        *   Contains **video and audio features**
+    *   **Audio-only List (`sound_localisation_train_id_list.csv`):**
+        *   2149 videos
+        *   Includes **sound** annotations
+        *   Contains **audio features** (and video features, which can be ignored by audio-only models)
+    *   *Refer to dataset download for associated annotation and feature files.*
+*   **Validation Set (`localisation_challenge_validation_id_list.csv`):**
+    *   5359 videos, used to tune hyperparameters. Contains video/audio features and sound annotations.
+*   **Test Set (`localisation_challenge_test_id_list.csv`):**
+    *   Held-out set for final evaluation of your method’s performance containing 3238 videos. Video/audio features are provided; annotations are withheld.
+---
+## Output Format
+For each video in test (or val), your model should output **all sound event segments**, with:
+1.  **Start timestamp**
+2.  **End timestamp**
+3.  **Predicted sound class label**
+4.  **Confidence score**
+---
+## Evaluation
+*   The main metric is **Mean Average Precision (mAP)**, computed over your detected segments and averaged across:
+    *   Different sound classes
+    *   IoU thresholds (details typically matching other Perception Test tasks, e.g., [0.1 to 0.5])
+*   You have separate splits for train, val, and test:
+    *   Train on the training set(s).
+    *   Use the validation set (Validation Phase: June 10 - Sep 14) to tune, select models, etc.
+    *   Evaluate final performance on the **test set** (Test Phase: July 1 - Sep 14). Final ranking based on this split.
+---
+## Developing New Methods
+A starter kit is provided with an end-to-end demonstration, adapted for the sound task. The baseline code showcases an **ActionFormer-based** approach, originally for action localisation, now adapted for temporal sound localisation using pre-trained audio or multimodal features.
+### Baseline Method: ActionFormer (adapted for Sound Localisation)
+1.  **Feature Processing (Transformer-based)**
+    *   Processes the pre-extracted audio features (or video + audio features) using stack(s) of transformer layers (e.g., local self-attention).
+    *   Builds a _multi-scale_ (pyramidal) representation, capturing sound events at varying temporal scales.
+2.  **Sound Event Classification & Boundary Regression**
+    *   Each time step in the pyramid is classified into predefined sound classes vs. background.
+    *   If it is a sound event, the model regresses distances to the start and end boundaries.
+3.  **Decoding & Post-processing**
+    *   Combine classification and boundary offsets to produce sound event segments.
+    *   Apply Soft-NMS (or similar) to remove overlapping detections.
+---
+### Steps to Add Your Own Method
+1.  **Create a New File/Module**
+    *   Refer to the provided starter kit. Typically, copy a base method implementation and modify it for your approach (e.g., in a `methods/` directory).
+    *   Modify relevant functions (e.g., `__init__()`, data processing, model inference, output generation) to implement your approach.
+2.  **Register Your Method**
+    *   Ensure your new method is discoverable by the evaluation codebase, as per the starter kit's instructions.
+3.  **Extend/Innovate**
+    *   Experiment with:
+        *   Advanced audio feature representations or extraction.
+        *   Novel temporal modeling architectures for sound.
+        *   Improved boundary-refinement for sound segments.
+        *   Effective multimodal fusion strategies (if using video).
+        *   New loss functions or regularization for sound event localisation.
+---
+## Test Method
+Refer to the starter kit documentation for specific commands (e.g., `python main.py --method_name {your_method_identifier} --test_split {val_or_test}`).
+This typically runs:
+1.  **Data Loading**
+2.  **Inference** using your chosen method on the specified split
+3.  Evaluate **mAP or other relevant metrics** (if annotations are available, e.g., on validation)
+4.  Ensure adherence to all **Competition Rules**
+---
+## Competition Rules
+### Focus on Substantive Innovation
+*   Your contribution should be **meaningful**, such as:
+    *   Refined model architectures for sound localisation
+    *   New feature representation or fusion strategies for audio/multimodal inputs
+    *   Novel loss designs or training techniques for sound event detection
+*   The quality and novelty of the approach will be considered.
+
+### Data Usage
+*   Use the **provided training lists** (`multimodal list` or `audio-only list`) and their associated data for supervised training.
+*   The **validation and test sets** (videos, features):
+    *   **Cannot** be used for any form of (self-)supervised training.
+    *   **No extra annotations or human labels** may be added to val/test videos.
+*   **Data from the train split AND any other dataset (publicly available or private)** can be used for training, fine-tuning, or prompting.
+
+### Computation Constraints & Features
+*   Participants **can use the provided pretrained video/audio features OR use/extract their own features**.
+*   The primary objective is to achieve high performance and advance the state-of-the-art in temporal sound localisation.
+
+### Public VLM API Calls
+*   **There are no restrictions on the model side.**
+*   Models that rely on **public VLM APIs** (e.g., Gemini, GPT-4V, etc.) for generating labels, extracting features, or producing other model outputs **ARE eligible** for prizes.
+---
+## Goal
+Build a **temporal sound localisation system** and evaluate it rigorously on the Perception Test train/val/test splits.
+**Good luck advancing the state of the art!**
