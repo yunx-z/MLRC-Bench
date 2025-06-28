@@ -1,0 +1,21 @@
+name: causality_discovery_challenge
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - networkx
+  - scikit-learn
+  - scipy
+  - joblib
+  - tqdm
+  - pytorch
+  - pytorch-lightning
+  - matplotlib
+  - seaborn
+  - statsmodels
+  - pip
+  - gdown
+  

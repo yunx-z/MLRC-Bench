@@ -1,0 +1,55 @@
+Causality Discovery Challenge 2024 (CrunchDAO)
+
+Task Definition
+
+Terminology
+
+Directed Acyclic Graph (DAG): a graph with nodes and directed edges that contains no cycles, representing causal relationships among variables.
+
+Treatment (X) and Outcome (Y): two special nodes where X→Y is always assumed.
+
+Confounder / Collider / Mediator / Independent: one of eight possible roles a variable can play relative to X and Y (for example, a confounder K satisfies K→X and K→Y)
+
+Adjacency Matrix: a square matrix where entry (i,j)=1 indicates a causal link from variable i to variable j.
+
+Input & Output
+Input: for each instance, a CSV of 1,000 samples over 3–10 variables (including X and Y).
+Output: a CSV with columns example_id,prediction, where example_id is <dataset_id>_<source>_<target> and prediction is 0 or 1 indicating absence or presence of that edge.
+
+Evaluation
+Metrics:Multiclass balanced accuracy across the eight node roles.
+Online/offline evaluation? Online: submissions are scored automatically against hidden test DAGs.
+
+Phases:
+Dev: use the provided training split of ~14,000 labeled datasets to tune or train your method.
+
+Test: submit predictions for all 47,000 held-out datasets (observations only).
+Top human score availability:
+Top human score availability: Yes on the leaderboard 
+
+Baseline Method
+“Quickstarters PC-based Baseline” (no formal paper; implemented in the provided notebook)
+Algorithm explanation:
+Load each CSV into a DataFrame.
+Run a constraint-based learner (e.g. PC algorithm) to infer the DAG.
+For each inferred DAG, classify each non-X/Y variable into one of the eight roles based on its edges to X and Y.
+Emit a row <dataset_id>_<i>_<j>,{0 or 1} for every possible pair.
+Code & link:https://hub.crunchdao.com/competitions/causality-discovery/resources/quickstarters
+
+Running Example:
+00000_X_Y,1  
+00000_A_X,0  
+00000_B_Y,1  
+…
+
+Constraints
+Compute: designed to finish within 2 hr on one GPU (e.g. T4 or V100).
+Code stack: Python with pandas, NumPy, and a causal-discovery library (such as cdt or pgmpy).
+Data usage: only the official training split and public datasets; no manual labeling of test data.
+
+Submission format: must match the exact CSV schema described above.
+Rationale for Adding to Our MLRC-bench
+Is it method/algorithm focused?
+Yes: participants must design or adapt core structure-learning algorithms rather than call black-box APIs.
+Can it be solved via manual prompt engineering (or any trivial methods)?
+No: statistical tests and graph-search procedures over multivariate data are required, which cannot be replaced by simple prompting or off-the-shelf classifiers.
