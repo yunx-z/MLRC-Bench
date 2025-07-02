@@ -43,8 +43,8 @@ ALL_BASE_RUNTIME = {
             "test" : 134.9225424,
         },
         "causality_discovery_challenge": {
-            "dev": 2363.10,  # Placeholder, replace with actual value
-            "test": 7.35,  # Placeholder, replace with actual value
+            "dev": 2363.10,
+            "test": 7.35,
         },
     }
 
