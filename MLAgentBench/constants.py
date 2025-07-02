@@ -42,6 +42,10 @@ ALL_BASE_RUNTIME = {
             "dev" : 8402.18449,
             "test" : 134.9225424,
         },
+        "causality_discovery_challenge": {
+            "dev": 2363.10,
+            "test": 7.35,
+        },
     }
 
 ALL_BASE_PERFORMANCE = {
@@ -91,6 +95,10 @@ ALL_BASE_PERFORMANCE = {
         "weather_forcast" : {
             "dev" : 0.004734474671,
             "test" : 0.02031705848,
+        },
+        "causality_discovery_challenge": {
+            "dev": 0.7841172660544502,
+            "test": 0.785433316550407,
         },
     }
 

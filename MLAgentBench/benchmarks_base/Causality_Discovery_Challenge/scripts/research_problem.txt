@@ -1,0 +1,52 @@
+ADIA Lab Causal Discovery Challenge – Causal Graph Inference Track
+
+## Description
+The ADIA Lab Causal Discovery Challenge tasks participants with inferring the causal directed acyclic graph (DAG) underlying each observational dataset, identifying the roles of variables relative to a treatment node X and an outcome node Y. 
+
+Training Data: A collection of synthetic datasets (3–10 variables, 1,000 observations each) accompanied by ground-truth adjacency matrices for calibration and supervised learning. 
+
+Test Data: Held-out datasets for final evaluation, where participants submit predicted DAGs without access to true labels.
+
+Evaluation: Multiclass balanced accuracy computed by mapping each non–{X,Y} node to one of eight categories (confounder, collider, mediator, independent, cause/consequence of X or Y) based solely on the predicted edges to X and Y.
+
+## Developing New Methods
+You have been provided with a starter kit that includes an end-to-end submission flow for developing new methods. See `methods/MyMethod.py` for an example implementation of a baseline method.
+Baseline Method: MyMethod
+Feature Encoding: Each variable’s 1,000 observations are treated as a feature vector. An input_layer MLP maps each scalar observation to a d_model-dimensional embedding, then splits into query/key halves. 
+
+Pairwise Interaction: Computes a scaled bilinear interaction (qᵀk) for every pair of variables, akin to self-attention across dimensions. Applies a final MLP (final) to each pairwise score to produce a logit for edge existence.
+
+Training: Uses PyTorch Lightning with BCEWithLogitsLoss (pos_weight=5.0), Adam optimizer and StepLR scheduler for up to 10 epochs. Trains on {X_train, y_train} in “dev” phase.
+
+Inference & DAG Construction:Applies transform_proba_to_DAG, greedily adding highest-probability edges while preventing cycles and enforcing the mandatory X→Y.
+
+Outputs a DataFrame of binary edge predictions for every node pair.
+
+1. To add a new method, modify the `__init__()` and `run()` functions in `methods/BaseMethod.py` and save it as a new file in `methods/`.
+
+2. Add the new method to the dictionary returned by `all_method_handlers()` in `methods/__init__.py`. 
+
+3. Add the new module to `methods/__init__.py`.
+
+## Test Method
+
+Simply run `python main.py -m {method_name}`. For example, to test the baseline method, execute `python main.py -m my_method`.
+Load Training Split: The script reads in the training inputs and corresponding ground-truth labels.
+
+Train & Save, Your method’s run() kicks off: Training: builds the model (e.g., MLP + attention), optimizes loss over the training set for up to N epochs, then saves the learned weights.
+
+Inference: loads those weights and predicts edge-existence probabilities for every variable pair.
+
+Construct & Write Predictions: Converts probabilities into a valid DAG (greedy cycle removal + enforcing X→Y), then writes out a CSV of <graph_id>_<parent>_<child> → 0/1 predictions.
+
+Evaluate on Dev Set: Reloads your predictions alongside the held-out ground truth from the training split, computes accuracy and balanced accuracy, prints both metrics, and returns the balanced accuracy.
+
+## Competition Rules
+
+Focus on the development of novel methods and algorithms that offer meaningful insights. Do NOT propose something trivial like prompt engineering.
+
+Data Usage: Use only the provided training datasets; no external data or human-annotated labels.
+
+Test Set Integrity: The test set is for final scoring, do not use its labels during development.
+
+API Restrictions: No external API or VLM calls (e.g., GPT-4, Gemini) for prediction or feature extraction.
