@@ -1,0 +1,29 @@
+## 1. Exploratory Analysis & Feature Construction
+
+* Performed thorough EDA to characterize each variable’s distribution (means, variances, quantiles) and pairwise relationships (Pearson/Spearman correlations, mutual information).
+* Engineered richer inputs by adding nonlinear transforms (polynomial terms, ratios, differences) and interaction features between variable pairs.
+* Computed causal‐inference–driven statistics—conditional independence tests (e.g. distance correlation), entropy/conditional mutual information, propensity‐score estimates—to capture causal signals beyond raw associations. 
+
+## 2. Diverse Supervised Learners
+
+* Cast each directed edge (or each node’s “role” relative to X and Y) as a classification task.
+* Trained a portfolio of models on the engineered features, including:
+
+  * **Gradient-boosted trees** (LightGBM, XGBoost, CatBoost) with careful hyperparameter tuning
+  * **Deep learners** (TabNet, MLP with self-attention) to capture higher-order interactions
+* Employed 5-fold cross-validation with group splits to ensure robust estimation and prevent leakage.
+
+## 3. Stacking & Ensemble
+
+* Collected out-of-fold probability predictions from the best base learners as inputs to a lightweight meta-model.
+* Calibrated decision thresholds on validation folds to optimize multiclass balanced accuracy.
+* Built a final ensemble by averaging probabilities from top models (e.g., LightGBM, XGBoost, TabNet) before thresholding to binary edge decisions. ([github.com][1])
+
+## 4. DAG Post-Processing
+
+* Enforced the mandatory X→Y edge regardless of model scores.
+* Applied a greedy cycle-removal procedure to guarantee a valid directed acyclic graph.
+
+## 5. Performance
+
+* Achieved approximately **72–73%** multiclass balanced accuracy on the test set.
