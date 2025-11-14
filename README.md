@@ -1,7 +1,9 @@
 # MLRC-Bench: Can Language Agents Solve Machine Learning Research Challenges?
 
 # News
-- [2025.9] MLRC-Bench is accepted to NeurIPS 2025 Datasets and Benchmarks Track.
+- [2025.9] MLRC-Bench is accepted to NeurIPS 2025 Datasets and Benchmarks Track!
+
+# Introduction
 
 MLRC-Bench ([arxiv](https://arxiv.org/abs/2504.09702), [leaderboard](https://huggingface.co/spaces/launch/MLRC_Bench)) is a benchmark designed to quantify how effectively language agents can tackle challenging Machine Learning (ML) Research Competition problems by proposing and implementing novel ideas into code. 
 
